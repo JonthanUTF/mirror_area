@@ -1,0 +1,40 @@
+name: Documentation
+description: Ajouter, corriger ou améliorer la documentation
+title: "[DOC] "
+labels: ["documentation"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: "Améliorons ensemble la documentation"
+
+  - type: textarea
+    id: section
+    attributes:
+      label: Section concernée
+      placeholder: "Ex. : Guide d’installation, API, tutoriel..."
+      description: Quelle partie de la documentation est concernée ?
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Détails
+      description: Décris la modification ou l’ajout à effectuer
+      placeholder: "Il manque des détails sur..."
+
+  - type: checkboxes
+    id: related
+    attributes:
+      label: Cette issue est-elle liée à une autre ?
+      options:
+        - label: Oui (voir ci-dessous)
+        - label: Non
+
+  - type: textarea
+    id: linked_issues
+    attributes:
+      label: Issues liées
+      placeholder: "#123, #456"

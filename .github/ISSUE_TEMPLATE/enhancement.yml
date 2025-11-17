@@ -1,0 +1,74 @@
+name: Tâche technique
+description: Suivre une amélioration technique, un refactor ou une maintenance
+title: "[TECH] "
+labels: ["tech", "maintenance", "backend"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci d’ajouter une tâche technique
+        Ce type d’issue sert à documenter les changements internes : refactor, optimisation, tests, CI/CD, etc.
+
+  - type: input
+    id: area
+    attributes:
+      label: Zone concernée
+      placeholder: "Ex. : système de sauvegarde, gestion des PNJ, build pipeline..."
+      description: Quelle partie du projet est affectée par cette tâche ?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type de tâche
+      options:
+        - Refactor de code
+        - Optimisation de performance
+        - Amélioration du pipeline CI/CD
+        - Ajout ou mise à jour de tests
+        - Sécurité / Dépendances
+        - Autre
+      multiple: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description technique
+      description: Détaille ce que tu veux faire, pourquoi et comment tu comptes le faire.
+      placeholder: "Exemple : refactor de la classe Player pour séparer la logique de mouvement..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact attendu
+      description: Qu’est-ce que cette tâche va améliorer concrètement ?
+      placeholder: "Ex. : améliore la lisibilité du code, réduit le temps de compilation..."
+
+  - type: checkboxes
+    id: related
+    attributes:
+      label: Cette tâche est-elle liée à d’autres issues ?
+      options:
+        - label: Oui (spécifie ci-dessous)
+        - label: Non
+
+  - type: textarea
+    id: linked_issues
+    attributes:
+      label: Issues liées
+      placeholder: "#123, #456"
+
+  - type: checkboxes
+    id: check
+    attributes:
+      label: Checklist avant fermeture
+      options:
+        - label: Code refactorisé ou corrigé
+        - label: Tests unitaires mis à jour ou ajoutés
+        - label: Documentation technique mise à jour
+        - label: Revue de code effectuée

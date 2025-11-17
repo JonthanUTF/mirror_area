@@ -1,0 +1,42 @@
+name: Nouvelle fonctionnalité
+description: Proposer une idée ou une amélioration du projet
+title: "[FEATURE] "
+labels: ["feature", "enhancement"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: "Merci de proposer une nouvelle idée !"
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description de la fonctionnalité
+      description: Explique clairement ce que tu veux ajouter et pourquoi
+      placeholder: "Je voudrais ajouter..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Cas d’utilisation
+      description: Décris dans quel contexte cette fonctionnalité serait utile
+      placeholder: "Quand je fais X, j’aimerais pouvoir Y..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives envisagées
+      description: Y a-t-il d’autres façons de résoudre ce besoin ?
+      placeholder: "J’ai aussi pensé à..."
+
+  - type: input
+    id: linked_issue
+    attributes:
+      label: Issue liée
+      description: Si cette fonctionnalité est liée à un bug ou une autre feature, indique le numéro
+      placeholder: "#123"

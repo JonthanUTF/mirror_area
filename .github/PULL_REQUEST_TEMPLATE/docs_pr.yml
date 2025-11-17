@@ -1,0 +1,20 @@
+name: Mise à jour de documentation
+description: Modifier ou ajouter de la documentation
+title: "[Docs]: "
+labels: ["documentation"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      placeholder: "Ajout de documentation sur la scène de pêche..."
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Vérifications
+      options:
+        - label: Les informations sont à jour
+        - label: Le style est cohérent avec le reste

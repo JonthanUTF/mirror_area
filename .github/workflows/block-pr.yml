@@ -1,0 +1,16 @@
+name: Block PR to main
+
+on:
+  pull_request:
+    types: [opened, edited, reopened]
+
+jobs:
+  block-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR target
+        run: |
+          if [ "${{ github.event.pull_request.base.ref }}" == "main" ] && [ "${{ github.event.pull_request.head.ref }}" != "dev" ]; then
+            echo "❌ PR vers main interdite depuis cette branche !"
+            exit 1
+          fi

@@ -1,0 +1,34 @@
+name: Correction de bug
+description: Soumettre une PR qui corrige un bug
+title: "[Fix]: "
+labels: ["bug", "fix"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Décris le bug corrigé et comment tu l’as résolu.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Détails de la correction
+      placeholder: "Ce bug survenait quand..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: linked_issues
+    attributes:
+      label: Issues liées
+      placeholder: "Fixes #45"
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Vérifications
+      options:
+        - label: Le bug est corrigé sur toutes les plateformes
+        - label: Aucun effet de bord n’a été introduit
+        - label: Des tests ont été ajoutés ou mis à jour

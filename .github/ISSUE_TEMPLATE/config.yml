@@ -1,0 +1,55 @@
+# ==========================================================
+# Configuration des templates d'issues et de pull requests
+# ==========================================================
+
+blank_issues_enabled: true  # Empêche la création d’issues sans template
+
+contact_links:
+  - name: 💬 Discussion générale
+    url: https://github.com/JonthanUTF/mirror_area/discussions
+    about: Pose tes questions ou échange avec la communauté ici.
+  - name: 📖 Documentation du projet
+    url: https://JonthanUTF.github.io/mirror_area/
+    about: Consulte la documentation officielle du projet.
+
+issue_template:
+  - name: "🐞 Bug"
+    description: "Rapporter un problème dans le jeu ou l’éditeur"
+    labels: ["bug"]
+    file: bug_report.yml
+
+  - name: "✨ Nouvelle fonctionnalité"
+    description: "Proposer une nouvelle idée ou un ajout"
+    labels: ["feature"]
+    file: feature_request.yml
+
+  - name: "📚 Documentation"
+    description: "Problème ou ajout concernant la documentation"
+    labels: ["documentation"]
+    file: documentation.yml
+
+  - name: "🧠 Amélioration / Refactor"
+    description: "Suggestion d'amélioration du code ou des performances"
+    labels: ["enhancement"]
+    file: enhancement.yml
+
+pull_request_template:
+  - name: "🧩 Nouvelle fonctionnalité"
+    description: "Soumettre une PR pour une nouvelle feature"
+    labels: ["feature", "enhancement"]
+    file: ../PULL_REQUEST_TEMPLATE/feature_pr.yml
+
+  - name: "🐛 Correction de bug"
+    description: "Corriger un bug détecté"
+    labels: ["bug", "fix"]
+    file: ../PULL_REQUEST_TEMPLATE/bugfix_pr.yml
+
+  - name: "📘 Documentation"
+    description: "Mise à jour de la documentation"
+    labels: ["documentation"]
+    file: ../PULL_REQUEST_TEMPLATE/docs_pr.yml
+
+  - name: "⚙️ Refactor / Optimisation"
+    description: "Amélioration du code sans changement fonctionnel"
+    labels: ["refactor"]
+    file: ../PULL_REQUEST_TEMPLATE/refactor_pr.yml

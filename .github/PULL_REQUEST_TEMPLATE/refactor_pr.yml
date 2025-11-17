@@ -1,0 +1,29 @@
+name: Refactor / Optimisation
+description: PR pour améliorer la structure ou la performance du code sans changer le comportement
+title: "[Refactor]: "
+labels: ["refactor", "maintenance"]
+body:
+  - type: textarea
+    id: reason
+    attributes:
+      label: Motivation
+      placeholder: "Refactor pour améliorer la lisibilité de..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Changements effectués
+      placeholder: "- Simplification de la classe FishManager..."
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: Aucun changement fonctionnel n’a été introduit
+        - label: Les tests existants passent toujours
+        - label: Le code est plus clair / plus performant

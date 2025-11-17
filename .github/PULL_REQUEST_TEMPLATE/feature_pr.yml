@@ -1,0 +1,39 @@
+name: Nouvelle fonctionnalité
+description: Soumettre une PR pour ajouter une nouvelle fonctionnalité
+title: "[Feature]: "
+labels: ["feature", "enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de contribuer à ce projet !
+        Remplis les informations ci-dessous pour décrire ta nouvelle fonctionnalité.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Explique en quoi consiste la fonctionnalité et pourquoi elle est utile.
+      placeholder: "Cette PR ajoute la possibilité de..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: linked_issues
+    attributes:
+      label: Issues liées
+      description: |
+        Lie cette PR à une ou plusieurs issues (ex: `Closes #12`, `Fixes #8`).
+      placeholder: "Closes #12"
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: Le code compile sans erreur
+        - label: Les tests passent
+        - label: La documentation a été mise à jour
+        - label: J’ai vérifié les impacts sur les autres systèmes

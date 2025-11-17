@@ -1,0 +1,60 @@
+name: Rapport de bug
+description: Signaler un comportement anormal dans le projet
+title: "[BUG] "
+labels: ["bug"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci d’avoir pris le temps de signaler un bug  
+        Remplis les informations ci-dessous pour nous aider à le corriger.
+
+  - type: input
+    id: version
+    attributes:
+      label: Version du jeu / application
+      placeholder: ex. v1.2.3
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description du bug
+      description: Que s’est-il passé ? Quel comportement attendais-tu ?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Étapes pour reproduire le bug
+      placeholder: |
+        1. Aller dans...
+        2. Cliquer sur...
+        3. Observer que...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Journaux / Erreurs
+      description: Copie ici les logs ou messages d’erreur (si disponibles)
+      render: shell
+
+  - type: checkboxes
+    id: related
+    attributes:
+      label: Ce bug est-il lié à d’autres issues ?
+      options:
+        - label: Oui (ajoute les numéros d’issue ci-dessous)
+        - label: Non
+
+  - type: textarea
+    id: linked_issues
+    attributes:
+      label: Issues liées
+      placeholder: "#123, #456"
