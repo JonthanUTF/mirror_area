@@ -1,0 +1,622 @@
+# Guide d'Implémentation Projet AREA
+
+## 📁 Structure du Projet
+
+```
+area-project/
+├── docker-compose.yml
+├── .env.example
+├── README.md
+├── HOWTOCONTRIBUTE.md
+├── docs/
+│   ├── architecture.md
+│   ├── api-reference.md
+│   └── diagrams/
+│
+├── server/
+│   ├── Dockerfile
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── nest-cli.json
+│   ├── src/
+│   │   ├── main.ts
+│   │   ├── app.module.ts
+│   │   ├── config/
+│   │   │   ├── database.config.ts
+│   │   │   └── oauth.config.ts
+│   │   ├── auth/
+│   │   │   ├── auth.module.ts
+│   │   │   ├── auth.service.ts
+│   │   │   ├── auth.controller.ts
+│   │   │   ├── strategies/
+│   │   │   │   ├── jwt.strategy.ts
+│   │   │   │   ├── google.strategy.ts
+│   │   │   │   └── github.strategy.ts
+│   │   │   └── guards/
+│   │   │       └── jwt-auth.guard.ts
+│   │   ├── users/
+│   │   │   ├── users.module.ts
+│   │   │   ├── users.service.ts
+│   │   │   ├── users.controller.ts
+│   │   │   └── entities/
+│   │   │       └── user.entity.ts
+│   │   ├── services/
+│   │   │   ├── services.module.ts
+│   │   │   ├── services.service.ts
+│   │   │   ├── services.controller.ts
+│   │   │   ├── entities/
+│   │   │   │   ├── service.entity.ts
+│   │   │   │   └── user-service.entity.ts
+│   │   │   └── adapters/
+│   │   │       ├── base.adapter.ts
+│   │   │       ├── github.adapter.ts
+│   │   │       ├── gmail.adapter.ts
+│   │   │       ├── drive.adapter.ts
+│   │   │       ├── discord.adapter.ts
+│   │   │       ├── weather.adapter.ts
+│   │   │       └── timer.adapter.ts
+│   │   ├── areas/
+│   │   │   ├── areas.module.ts
+│   │   │   ├── areas.service.ts
+│   │   │   ├── areas.controller.ts
+│   │   │   ├── entities/
+│   │   │   │   ├── area.entity.ts
+│   │   │   │   ├── action.entity.ts
+│   │   │   │   ├── reaction.entity.ts
+│   │   │   │   └── area-execution.entity.ts
+│   │   │   └── dto/
+│   │   │       ├── create-area.dto.ts
+│   │   │       └── update-area.dto.ts
+│   │   ├── hooks/
+│   │   │   ├── hooks.module.ts
+│   │   │   ├── hooks.service.ts
+│   │   │   ├── scheduler.service.ts
+│   │   │   └── processors/
+│   │   │       └── hook.processor.ts
+│   │   ├── about/
+│   │   │   ├── about.controller.ts
+│   │   │   └── about.service.ts
+│   │   └── common/
+│   │       ├── filters/
+│   │       ├── interceptors/
+│   │       └── decorators/
+│   └── test/
+│
+├── client-web/
+│   ├── Dockerfile
+│   ├── package.json
+│   ├── vite.config.ts
+│   ├── tsconfig.json
+│   ├── index.html
+│   ├── public/
+│   ├── src/
+│   │   ├── main.tsx
+│   │   ├── App.tsx
+│   │   ├── api/
+│   │   │   ├── client.ts
+│   │   │   └── endpoints.ts
+│   │   ├── components/
+│   │   │   ├── auth/
+│   │   │   │   ├── LoginForm.tsx
+│   │   │   │   └── RegisterForm.tsx
+│   │   │   ├── areas/
+│   │   │   │   ├── AreaList.tsx
+│   │   │   │   ├── AreaCard.tsx
+│   │   │   │   ├── AreaForm.tsx
+│   │   │   │   └── AreaBuilder.tsx
+│   │   │   ├── services/
+│   │   │   │   ├── ServiceList.tsx
+│   │   │   │   └── ServiceCard.tsx
+│   │   │   ├── layout/
+│   │   │   │   ├── Header.tsx
+│   │   │   │   ├── Sidebar.tsx
+│   │   │   │   └── Footer.tsx
+│   │   │   └── common/
+│   │   │       ├── Button.tsx
+│   │   │       ├── Input.tsx
+│   │   │       └── Modal.tsx
+│   │   ├── pages/
+│   │   │   ├── Home.tsx
+│   │   │   ├── Login.tsx
+│   │   │   ├── Register.tsx
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── Areas.tsx
+│   │   │   ├── Services.tsx
+│   │   │   └── Profile.tsx
+│   │   ├── store/
+│   │   │   ├── auth.store.ts
+│   │   │   ├── areas.store.ts
+│   │   │   └── services.store.ts
+│   │   ├── hooks/
+│   │   │   ├── useAuth.ts
+│   │   │   ├── useAreas.ts
+│   │   │   └── useServices.ts
+│   │   └── utils/
+│   │       ├── constants.ts
+│   │       └── helpers.ts
+│   └── nginx.conf
+│
+└── client-mobile/
+    ├── Dockerfile
+    ├── package.json
+    ├── tsconfig.json
+    ├── app.json
+    ├── metro.config.js
+    ├── App.tsx
+    ├── src/
+    │   ├── navigation/
+    │   │   └── AppNavigator.tsx
+    │   ├── screens/
+    │   │   ├── LoginScreen.tsx
+    │   │   ├── RegisterScreen.tsx
+    │   │   ├── DashboardScreen.tsx
+    │   │   ├── AreasScreen.tsx
+    │   │   ├── CreateAreaScreen.tsx
+    │   │   ├── ServicesScreen.tsx
+    │   │   └── ProfileScreen.tsx
+    │   ├── components/
+    │   │   ├── AreaCard.tsx
+    │   │   ├── ServiceCard.tsx
+    │   │   └── common/
+    │   ├── api/
+    │   │   └── client.ts
+    │   ├── store/
+    │   └── utils/
+    └── android/
+```
+
+## 🐳 Configuration Docker
+
+### docker-compose.yml
+
+```yaml
+version: '3.8'
+
+services:
+  # Base de données PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: area_postgres
+    environment:
+      POSTGRES_DB: area_db
+      POSTGRES_USER: area_user
+      POSTGRES_PASSWORD: area_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - area_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U area_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Cache Redis
+  redis:
+    image: redis:7-alpine
+    container_name: area_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - area_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Serveur d'application NestJS
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: area_server
+    ports:
+      - "8080:8080"
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      DATABASE_URL: postgresql://area_user:area_password@postgres:5432/area_db
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - area_network
+    volumes:
+      - ./server/logs:/app/logs
+
+  # Client mobile - Build APK
+  client_mobile:
+    build:
+      context: ./client-mobile
+      dockerfile: Dockerfile
+    container_name: area_mobile_builder
+    volumes:
+      - mobile_builds:/app/android/app/build/outputs
+      - shared_volume:/shared
+    networks:
+      - area_network
+    command: sh -c "npm run build:android && cp android/app/build/outputs/apk/release/app-release.apk /shared/client.apk"
+
+  # Client web - Serveur Nginx
+  client_web:
+    build:
+      context: ./client-web
+      dockerfile: Dockerfile
+    container_name: area_web
+    ports:
+      - "8081:80"
+    environment:
+      VITE_API_URL: http://localhost:8080
+    depends_on:
+      - server
+      - client_mobile
+    networks:
+      - area_network
+    volumes:
+      - shared_volume:/usr/share/nginx/html/downloads
+
+volumes:
+  postgres_data:
+  mobile_builds:
+  shared_volume:
+
+networks:
+  area_network:
+    driver: bridge
+```
+
+## 📝 Fichiers Dockerfile
+
+### server/Dockerfile
+
+```dockerfile
+# Build stage
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+# Production stage
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY --from=builder /app/dist ./dist
+
+EXPOSE 8080
+
+CMD ["node", "dist/main"]
+```
+
+### client-web/Dockerfile
+
+```dockerfile
+# Build stage
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+# Production stage
+FROM nginx:alpine
+
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+### client-mobile/Dockerfile
+
+```dockerfile
+FROM node:18
+
+# Install Java, Android SDK
+RUN apt-get update && apt-get install -y \
+    openjdk-11-jdk \
+    wget \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Android SDK
+ENV ANDROID_SDK_ROOT=/opt/android-sdk
+RUN mkdir -p ${ANDROID_SDK_ROOT}/cmdline-tools && \
+    wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip && \
+    unzip commandlinetools-linux-9477386_latest.zip -d ${ANDROID_SDK_ROOT}/cmdline-tools && \
+    mv ${ANDROID_SDK_ROOT}/cmdline-tools/cmdline-tools ${ANDROID_SDK_ROOT}/cmdline-tools/latest && \
+    rm commandlinetools-linux-9477386_latest.zip
+
+ENV PATH=${PATH}:${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin:${ANDROID_SDK_ROOT}/platform-tools
+
+# Accept licenses and install build tools
+RUN yes | sdkmanager --licenses && \
+    sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0"
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+
+# Build APK
+RUN cd android && ./gradlew assembleRelease
+
+VOLUME ["/shared"]
+```
+
+## 🚀 Commandes de Démarrage
+
+### Développement
+
+```bash
+# Cloner le repository
+git clone <repo-url>
+cd area-project
+
+# Créer le fichier .env
+cp .env.example .env
+# Éditer .env avec vos clés API
+
+# Lancer la base de données
+docker-compose up -d postgres redis
+
+# Backend - Terminal 1
+cd server
+npm install
+npm run start:dev
+
+# Frontend Web - Terminal 2
+cd client-web
+npm install
+npm run dev
+
+# Mobile - Terminal 3
+cd client-mobile
+npm install
+npm run android  # ou npm run ios
+```
+
+### Production
+
+```bash
+# Build tous les services
+docker-compose build
+
+# Lancer tous les services
+docker-compose up -d
+
+# Vérifier les logs
+docker-compose logs -f server
+
+# Arrêter
+docker-compose down
+
+# Arrêter et supprimer les volumes
+docker-compose down -v
+```
+
+### Tests
+
+```bash
+# Tests backend
+cd server
+npm run test
+npm run test:e2e
+npm run test:cov
+
+# Tests frontend
+cd client-web
+npm run test
+
+# Linter
+npm run lint
+```
+
+## 🔑 Variables d'Environnement
+
+### .env.example
+
+```env
+# Database
+DATABASE_URL=postgresql://area_user:area_password@localhost:5432/area_db
+REDIS_URL=redis://localhost:6379
+
+# JWT
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_EXPIRATION=7d
+
+# OAuth2 - Google
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_CALLBACK_URL=http://localhost:8080/auth/google/callback
+
+# OAuth2 - GitHub
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+GITHUB_CALLBACK_URL=http://localhost:8080/auth/github/callback
+
+# OAuth2 - Facebook (optionnel)
+FACEBOOK_CLIENT_ID=your-facebook-app-id
+FACEBOOK_CLIENT_SECRET=your-facebook-app-secret
+
+# APIs Externes
+DISCORD_BOT_TOKEN=your-discord-bot-token
+WEATHER_API_KEY=your-openweathermap-api-key
+
+# Frontend
+VITE_API_URL=http://localhost:8080
+VITE_GOOGLE_CLIENT_ID=your-google-client-id
+
+# Mobile
+REACT_NATIVE_API_URL=http://10.0.2.2:8080
+```
+
+## 📚 Scripts NPM Utiles
+
+### Backend (server/package.json)
+
+```json
+{
+  "scripts": {
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node dist/main",
+    "build": "nest build",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "migration:generate": "typeorm migration:generate -n",
+    "migration:run": "typeorm migration:run",
+    "seed": "ts-node src/database/seeds/run-seed.ts"
+  }
+}
+```
+
+### Frontend (client-web/package.json)
+
+```json
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\""
+  }
+}
+```
+
+### Mobile (client-mobile/package.json)
+
+```json
+{
+  "scripts": {
+    "start": "react-native start",
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "build:android": "cd android && ./gradlew assembleRelease",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
+  }
+}
+```
+
+## 🧪 POCs à Réaliser (Milestone 1)
+
+### 1. POC NestJS + TypeORM
+
+```bash
+# Créer un nouveau projet
+nest new area-server
+cd area-server
+
+# Installer dépendances
+npm install @nestjs/typeorm typeorm pg
+npm install @nestjs/config
+
+# Créer un module simple
+nest g module users
+nest g service users
+nest g controller users
+
+# Tester la connexion DB et une route CRUD
+```
+
+### 2. POC OAuth2 Google
+
+```bash
+npm install @nestjs/passport passport passport-google-oauth20
+npm install -D @types/passport-google-oauth20
+
+# Implémenter GoogleStrategy
+# Tester le flow OAuth complet
+```
+
+### 3. POC React + API Call
+
+```bash
+npm create vite@latest area-web -- --template react-ts
+cd area-web
+npm install axios zustand react-router-dom
+
+# Créer un composant qui appelle l'API NestJS
+# Tester l'affichage des données
+```
+
+### 4. POC React Native
+
+```bash
+npx react-native init AreaMobile --template react-native-template-typescript
+cd AreaMobile
+
+# Installer navigation
+npm install @react-navigation/native @react-navigation/stack
+npm install react-native-screens react-native-safe-area-context
+
+# Créer 2-3 écrans de navigation
+npm run android
+```
+
+### 5. POC Hooks System
+
+```bash
+# Dans le backend
+npm install @nestjs/schedule @nestjs/bull bull
+
+# Créer un cron job simple qui vérifie une condition
+# Tester l'exécution toutes les minutes
+```
+
+---
+
+## 📖 Ressources Utiles
+
+- [Documentation NestJS](https://docs.nestjs.com/)
+- [Documentation React](https://react.dev/)
+- [Documentation React Native](https://reactnative.dev/)
+- [TypeORM Documentation](https://typeorm.io/)
+- [Docker Compose Documentation](https://docs.docker.com/compose/)
+- [OAuth 2.0 Guide](https://oauth.net/2/)
+
+## 🎯 Checklist Milestone 1
+
+- [ ] POC NestJS + DB fonctionne
+- [ ] POC OAuth2 Google réussi
+- [ ] POC React avec appels API
+- [ ] POC React Native avec navigation
+- [ ] docker-compose.yml créé
+- [ ] Diagramme ER de la base de données
+- [ ] Diagramme de classes
+- [ ] Planning Trello/Jira configuré
+- [ ] Repository Git avec branches
+- [ ] README.md initial
