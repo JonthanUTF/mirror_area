@@ -4,9 +4,9 @@
 
 | Technology             | Perf  | Dev Ease | Ecosystem | Background Jobs | Docker | Maintainability | Notes                                   |
 | ---------------------- | ----- | -------- | --------- | --------------- | ------ | --------------- | --------------------------------------- |
-| **Node.js (NestJS)**   | ⭐⭐⭐   | ⭐⭐⭐⭐⭐    | ⭐⭐⭐⭐⭐     | ⭐⭐⭐⭐            | ⭐⭐⭐⭐   | ⭐⭐⭐⭐            | Best ecosystem for OAuth + service SDKs |
-| **Python (FastAPI)**   | ⭐⭐⭐   | ⭐⭐⭐⭐⭐    | ⭐⭐⭐⭐      | ⭐⭐⭐             | ⭐⭐⭐    | ⭐⭐⭐⭐            | Fastest to write glue logic             |
-| **Go (Gin)**           | ⭐⭐⭐⭐  | ⭐⭐⭐      | ⭐⭐        | ⭐⭐⭐⭐⭐           | ⭐⭐⭐⭐⭐  | ⭐⭐⭐⭐⭐           | Best performance & reliability          |
+| **Node.js (NestJS)**   | ⭐⭐⭐   | ⭐⭐⭐⭐⭐    | ⭐⭐⭐⭐⭐    | ⭐⭐⭐⭐            | ⭐⭐⭐⭐   | ⭐⭐⭐⭐            | Best ecosystem for OAuth + service SDKs |
+| **Python (FastAPI)**   | ⭐⭐⭐   | ⭐⭐⭐⭐⭐    | ⭐⭐⭐⭐      | ⭐⭐⭐              | ⭐⭐⭐     | ⭐⭐⭐⭐            | Fastest to write glue logic             |
+| **Go (Gin)**           | ⭐⭐⭐⭐ | ⭐⭐⭐        | ⭐⭐          | ⭐⭐⭐⭐⭐          | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐           | Best performance & reliability          |
 
 
 ## Node.js
