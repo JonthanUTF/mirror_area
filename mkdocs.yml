@@ -4,14 +4,43 @@ site_author: jonathan
 repo_url: https://github.com/JonthanUTF/mirror_area
 theme:
   name: material
+site_name: AreaDoc - mirror_area
+site_description: Documentation de l'Area (mirror_area)
+site_author: JonthanUTF
+site_url: https://JonthanUTF.github.io/mirror_area/
+repo_url: https://github.com/JonthanUTF/mirror_area
+repo_name: JonthanUTF/mirror_area
+edit_uri: edit/main/docs
+
+theme:
+  name: material
+  language: fr
+  palette:
+    primary: indigo
+    accent: indigo
+  features:
+    - navigation.instant
+    - navigation.expand
+    - navigation.tabs
+    - content.code.copy
+    - content.code.annotate
+
 nav:
   - Accueil: index.md
-  - Usage: usage.md
   - Benchmark: BENCHMARK.md
+  - Contribuer: contributor.md
+
 plugins:
-  - search
-  - mkdocstrings
+  - search:
+      lang: fr
+
 markdown_extensions:
   - toc:
       permalink: true
   - admonition
+  - codehilite
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/JonthanUTF/mirror_area
