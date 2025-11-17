@@ -6,11 +6,10 @@ theme:
   name: material
 nav:
   - Accueil: index.md
-  - Usage: usage.md
   - Benchmark: BENCHMARK.md
+  - Contributor: contributor.md
 plugins:
   - search
-  - mkdocstrings
 markdown_extensions:
   - toc:
       permalink: true
