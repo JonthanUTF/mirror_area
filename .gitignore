@@ -24,11 +24,11 @@ node_modules/
 dist/
 build/
 public/
-site/            # mkdocs default output
+site/
 out/
 coverage/
 coverage-html/
-target/         # maven, java
+target/
 bin/
 obj/
 *.war

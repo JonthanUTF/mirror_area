@@ -1,0 +1,23 @@
+name: Deploy MkDocs
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: pip install mkdocs mkdocs-material
+      - name: Build and deploy
+        run: mkdocs gh-deploy --force
+        env:
+          # GITHUB_TOKEN is provided by Actions by default for pushing to gh-pages
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

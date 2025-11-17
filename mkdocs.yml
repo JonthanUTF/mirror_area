@@ -1,0 +1,17 @@
+site_name: AreaDoc
+site_description: Documentation de l'Area
+site_author: jonathan
+repo_url: https://github.com/JonthanUTF/mirror_area
+theme:
+  name: material
+nav:
+  - Accueil: index.md
+  - Usage: usage.md
+  - Benchmark: BENCHMARK.md
+plugins:
+  - search
+  - mkdocstrings
+markdown_extensions:
+  - toc:
+      permalink: true
+  - admonition
