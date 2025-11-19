@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>HTML/CSS/JS POC - Todo</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <h1>Pure HTML, JavaScript, CSS to do list (<span id="count">0</span>)</h1>
+
+    <div class="controls">
+      <input id="todoInput" placeholder="Add todo and press Enter" />
+      <button id="addBtn">Add</button>
+    </div>
+
+    <ul id="list" class="list" aria-live="polite"></ul>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
