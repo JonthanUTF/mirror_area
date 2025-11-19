@@ -9,7 +9,9 @@
 | **Go (Gin)**           | ⭐⭐⭐⭐ | ⭐⭐⭐        | ⭐⭐          | ⭐⭐⭐⭐⭐          | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐           | Best performance & reliability          |
 
 
-## Node.js
+## Candidates
+
+### Node.js
 
 Best ecosystem for third-party APIs (Google, GitHub, Outlook, Dropbox all have official Node SDKs).
 Excellent async model for hook polling.
@@ -25,7 +27,7 @@ Excellent async model for hook polling.
 
 - CPU-bound tasks slower (not a big issue for the project)
 
-## Python (FastAPI)
+### Python (FastAPI)
 
 FastAPI is extremely productive and perfect for glue code.
 Async is strong, but ecosystem for API SDKs is weaker than Node.
@@ -41,7 +43,7 @@ Async is strong, but ecosystem for API SDKs is weaker than Node.
 - Fewer official SDKs for big services
 - Async workers require extra config (Celery / RQ)
 
-## Go (Gin / Fiber)
+### Go (Gin / Fiber)
 
 Very good concurrency, tiny Docker images, simple deployment.
 But OAuth2 + API SDKs require more manual handling.
@@ -58,6 +60,12 @@ But OAuth2 + API SDKs require more manual handling.
 - Weak ecosystem for services like Gmail, Google Drive, etc.
 
 
+## Our choice
+
+We will choose Node.js for :
+- Ecosystem: Most major providers offer first‑class Node SDKs (Google, GitHub, Outlook, Dropbox), reducing integration effort and edge cases.
+- Deployment: Lightweight Docker images.
+
 # Backend Database
 
 | Database          | Data Modeling | Performance | Complexity | Docker Setup    | Best Use Case                         |
@@ -68,8 +76,9 @@ But OAuth2 + API SDKs require more manual handling.
 | **MongoDB**       | ⭐⭐            | ⭐⭐⭐⭐        | ⭐⭐⭐⭐       | ⭐⭐            | Unstructured data, flexible schemas   |
 | **Redis**         | ⭐             | ⭐⭐⭐⭐⭐       | ⭐⭐         | ⭐⭐⭐⭐             | Caching, deduplication, queues        |
 
+## Candidate
 
-## PostgreSQL — Recommended
+### PostgreSQL
 
 PostgreSQL is the strongest contender for an automation platform.
 
@@ -93,7 +102,7 @@ PostgreSQL is the strongest contender for an automation platform.
 - Heavier than SQLite
 - Requires a bit more setup
 
-## MySQL / MariaDB
+### MySQL / MariaDB
 
 Solid alternative if the team is familiar with it.
 
@@ -106,7 +115,7 @@ Solid alternative if the team is familiar with it.
 - Weaker JSON support than PostgreSQL
 - Less flexible for dynamic config structures
 
-## SQLite
+### SQLite
 
 Useful only for:
 - Prototyping
@@ -125,3 +134,13 @@ Useful only for:
 - No real user management system
 - Bad for a multi-user automation platform
 - Hard to scale
+
+## Our choice
+
+We will choose postgreSql because
+
+- Highly relational
+- Requires clean schemas
+- Requires user/OAuth/workflow modeling
+- Needs JSONB for flexible configs
+- Needs strong integrity
