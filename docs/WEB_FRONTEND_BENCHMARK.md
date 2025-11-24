@@ -113,3 +113,13 @@ Medium, too complex for this project.
 **Docker Image Size:**
 
 About 80-120 MB
+
+## Our choice
+
+We will choose React + Vite for :
+- Its largest ecosystem and community
+- Thousands of integrations (OAuth2, forms, routing…)
+- Perfect for modular UI-driven projects
+- Vite offers extremely fast dev environment
+- Lightweight and easy to dockerize
+- Perfect for beginners or mixed-experience groups
