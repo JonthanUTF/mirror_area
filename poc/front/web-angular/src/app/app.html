@@ -1,0 +1,13 @@
+<div class="container">
+  <div class="counter-card">
+    <h1 class="title">{{ title() }}</h1>
+
+    <div class="value" aria-live="polite">{{ count() }}</div>
+
+    <div class="controls">
+      <button class="btn btn-decr" (click)="decrement()">−</button>
+      <button class="btn btn-reset" (click)="reset()">Reset</button>
+      <button class="btn btn-incr" (click)="increment()">+</button>
+    </div>
+  </div>
+</div>
