@@ -1,0 +1,54 @@
+macbookpro@MacBook-Pro-de-MacBookPro mirror_area % ab -n 10000 -c 100 http://127.0.0.1:8080/about.json
+This is ApacheBench, Version 2.3 <$Revision: 1913912 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 127.0.0.1 (be patient)
+Completed 1000 requests
+Completed 2000 requests
+Completed 3000 requests
+Completed 4000 requests
+Completed 5000 requests
+Completed 6000 requests
+Completed 7000 requests
+Completed 8000 requests
+Completed 9000 requests
+Completed 10000 requests
+Finished 10000 requests
+
+
+Server Software:        Werkzeug/3.1.3
+Server Hostname:        127.0.0.1
+Server Port:            8080
+
+Document Path:          /about.json
+Document Length:        915 bytes
+
+Concurrency Level:      100
+Time taken for tests:   7.349 seconds
+Complete requests:      10000
+Failed requests:        0
+Total transferred:      10820000 bytes
+HTML transferred:       9150000 bytes
+Requests per second:    1360.68 [#/sec] (mean)
+Time per request:       73.493 [ms] (mean)
+Time per request:       0.735 [ms] (mean, across all concurrent requests)
+Transfer rate:          1437.75 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.2      0       3
+Processing:    16   73   7.3     72     113
+Waiting:        3   61   7.1     60     102
+Total:         17   73   7.2     72     113
+
+Percentage of the requests served within a certain time (ms)
+  50%     72
+  66%     73
+  75%     74
+  80%     74
+  90%     76
+  95%     79
+  98%    104
+  99%    106
+ 100%    113 (longest request)

@@ -1,0 +1,8 @@
+GO = meilleures perf car goroutines = cheaté, multithread
+langage de stage de Baptiste
+
+Node.js = excellent pour les I/O asynchrones
+moins performant que GO sur du calcul ou concurrence CPU
+
+Python (flask) = easy à dev
+plus lent que go et node.js
