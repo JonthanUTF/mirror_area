@@ -1,0 +1,31 @@
+@startuml
+title Architecture - High Level Sequence
+actor "User" as U
+participant "WebClient" as WC
+participant "MobileClient" as MC
+participant "Application Server" as S
+participant "Database" as DB
+participant "ExternalService (OAuth)" as ES
+
+U -> WC: open UI / Create AREA
+WC -> S: POST /areas {action, reactions, config}
+S -> DB: INSERT area
+DB --> S: area_id
+S --> WC: 201 Created {area_id}
+WC --> U: show confirmation
+
+note over S: Background scheduler (hooks) periodically polls
+
+loop every N seconds/minutes
+    S -> ES: poll for action events (for connected user services)
+    ES --> S: event data (if any)
+    alt event matches AREA condition
+        S -> DB: fetch AREA(s) for user
+        DB --> S: areas
+        S -> S: trigger REActions
+        S -> ES: call external API to perform REAction
+        ES --> S: 200 OK
+        S -> DB: log execution
+    end
+end
+@enduml

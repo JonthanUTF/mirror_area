@@ -1,59 +1,36 @@
-# WebAngular
+# Angular (Standalone) POC
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.0.
+POC Angular moderne (standalone components) pour évaluer l'approche framework complet : CLI, routing et opinionated architecture.
 
-## Development server
+Technos
+- Angular (dernière version)
+- Standalone components / ApplicationConfig
+- Outils de build & test fournis par Angular CLI
 
-To start a local development server, run:
+Pourquoi Angular pour AREA ?
+- Architecture opinionnée pour applications larges / enterprise
+- Outils intégrés (CLI, tests, AOT, bundling)
+- Bon pour équipes préférant conventions fortes
 
+Screenshots
+![Angular - App](/docs/poc/web-angular-home.png)
+*Interface principale du POC Angular — structure et styles globaux.*
+
+![Angular - Counter](/docs/poc/web-angular-counter.png)
+*Composant de démonstration (counter) — montre le cycle de vie et bindings.*
+
+Run local
 ```bash
-ng serve
+cd poc/front/web-angular
+npm ci
+npm run start
+# build prod
+npm run build
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Integration points
+- Entrée et config : [poc/front/web-angular/src/app/app.config.ts](poc/front/web-angular/src/app/app.config.ts)
+- Exemple de composant : [poc/front/web-angular/src/app/app.ts](poc/front/web-angular/src/app/app.ts)
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Compléments
+- Placez les captures d'écran dans [docs/poc](docs/poc) et mettez à jour les chemins d'images ci-dessus si nécessaire.

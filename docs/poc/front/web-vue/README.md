@@ -13,11 +13,11 @@ Points forts pour AREA
 - Docker / CI friendly (cf. [poc/front/web-vue/vite.config.ts](poc/front/web-vue/vite.config.ts))
 
 Screenshots
-![Vue - Home](/docs/poc/web-vue-home.png)
-*Page d'accueil du POC Vue — montre layout et typographie.*
+![Vue - Home](assets/Screenshot%20from%202025-11-24%2019-00-20.png)
+*Page d'accueil du POC Vue.*
 
-![Vue - Counter](/docs/poc/web-vue-counter.png)
-*Exemple d'interaction réactive (counter) — illustre Composition API et binding.*
+<!-- ![Vue - Counter](/docs/poc/web-vue-counter.png)
+*Exemple d'interaction réactive (counter) — illustre Composition API et binding.* -->
 
 Run local
 ```bash
@@ -28,9 +28,4 @@ npm run dev
 npm run build
 ```
 
-Integration points
-- Entrée : [poc/front/web-vue/src/main.ts](poc/front/web-vue/src/main.ts)
-- Style : [poc/front/web-vue/src/style.css](poc/front/web-vue/src/style.css)
-
-Compléments
-- Ajoutez d'autres captures dans [docs/poc](docs/poc) et ajustez les chemins si nécessaire.
+Voir le code source réel dans `/poc/front/web-vue` du dépôt.

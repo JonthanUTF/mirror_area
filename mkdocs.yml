@@ -1,9 +1,3 @@
-site_name: AreaDoc
-site_description: Documentation de l'Area
-site_author: jonathan
-repo_url: https://github.com/JonthanUTF/mirror_area
-theme:
-  name: material
 site_name: AreaDoc - mirror_area
 site_description: Documentation de l'Area (mirror_area)
 site_author: JonthanUTF
@@ -27,18 +21,44 @@ theme:
 
 nav:
   - Accueil: index.md
-  - Benchmark: BENCHMARK.md
+  - Benchmarks:
+    - Backend: BACKEND_BENCHMARK.md
+    - Web Frontend: WEB_FRONTEND_BENCHMARK.md
+    - POCs:
+        - React: poc/front/web-react/README.md
+        - Vue: poc/front/web-vue/README.md
+        - Angular: poc/front/web-angular/README.md
+  - Cahier des charges:
+      - Introduction: cahier_des_charges/index.md
+      - Contexte & Objectifs: cahier_des_charges/01_contexte_objectifs.md
+      - Architecture globale: cahier_des_charges/02_architecture_globale.md
+      - Spécifications fonctionnelles: cahier_des_charges/03_spec_fonctionnelles.md
+      - Spécifications techniques: cahier_des_charges/04_spec_techniques.md
+      - API REST: cahier_des_charges/05_api_rest.md
+      - Base de données: cahier_des_charges/06_base_de_donnees.md
+      - Organisation & planning: cahier_des_charges/07_organisation_planning.md
+      - Livrables: cahier_des_charges/08_livrables.md
+      - Annexes: cahier_des_charges/09_annexes.md
   - Contribuer: contributor.md
+  - API Reference: api-reference.md
 
 plugins:
   - search:
       lang: fr
 
 markdown_extensions:
-  - toc:
-      permalink: true
-  - admonition
-  - codehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: plantuml
+          class: plantuml
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.plantuml:
+      format: svg
+      # Par défaut on pointe vers un serveur PlantUML local.
+      # Option 1 (recommandée en local) : lance un serveur PlantUML via Docker et laisse l'URL ci-dessous.
+      server: http://localhost:8080/plantuml
+      # Option 2 (publique, moins privée) : utilise le serveur officiel
+      # server: http://www.plantuml.com/plantuml
 
 extra:
   social:
