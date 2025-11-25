@@ -5,7 +5,7 @@
 Select the optimal front-end stack for building the Web Client that stick with:
 
 - Interacts with the Application Server via REST Api
-- Manages OAuth2 identification flows
+- Manages OAuth2 authentification
 - Delivers accessibility, maintainability, and scalability
 - Runs inside Docker
 
@@ -15,19 +15,20 @@ This benchmark will compare the most relevant front-end stacks for this project.
 Functional requirements:
 
 - User registration & login (password + OAuth2)
-- AREA creation UI (Action → REAction linking)
+- AREA creation UI (Action + REAction linking)
 - Display available services
 - Trigger REST calls to server
 
 Non-functional requirements:
 
-- Accessibility (WCAG compliance)
+- Accessibility
 - Easy integration with OAuth2 flows
 - Separation from business logic
 - Fast development with low risk of technical issues
 - Good documentation
 - High ecosystem maturity
 - Compatibility with Docker
+- 
 
 ## Simple benchark table
 | Stack            | Maturity | Performance | Learning Curve | OAuth2 Support | Notes                  |
@@ -35,7 +36,6 @@ Non-functional requirements:
 | **React + Vite** | ⭐⭐⭐⭐⭐    | ⭐⭐⭐⭐        | ⭐⭐⭐            | Excellent      | Most popular           |
 | **Vue 3 + Vite** | ⭐⭐⭐⭐     | ⭐⭐⭐⭐        | ⭐⭐⭐⭐⭐          | Excellent      | Easier for beginners   |
 | **Angular 17**   | ⭐⭐⭐⭐⭐    | ⭐⭐⭐         | ⭐              | Excellent      | Enterprise-level       |
-| **SvelteKit**    | ⭐⭐⭐⭐     | ⭐⭐⭐⭐⭐       | ⭐⭐⭐            | Good           | Very fast, less common |
 
 ## Detailed benchmark
 ### 1. React + Vite
@@ -43,7 +43,7 @@ Non-functional requirements:
 
 - Largest ecosystem and community
 - Thousands of integrations (OAuth2, forms, routing…)
-- Perfect for modular UI-driven projects
+- Perfect for modular UI projects
 - Vite offers extremely fast dev environment
 - Easy to dockerize
 - Plenty of UI libraries (MUI, Tailwind, Chakra…)
@@ -53,11 +53,10 @@ Non-functional requirements:
 **Cons:**
 
 - Not a full framework, requires assembling libraries
-- Routing and architecture conventions depend on the team
 
 **Fit for this project:**
 
-Excellent. Entire project matches React's SPA patterns:
+Excellent. Entire project matches React's patterns:
 
 - Simple REST calls
 - Dynamic forms for user/service/AREA creation
@@ -72,10 +71,9 @@ About 40-60 MB
 ### 2. Vue 3 + Vite
 **Pros:**
 
-- Easiest to learn (excellent documentation)
+- Easiest to learn
 - Reactive template syntax feels natural
 - Extremely fast with Vite
-- Very clean state management (Pinia)
 - Great for small-to-medium projects
 
 **Cons:**
@@ -95,10 +93,8 @@ About 35-55 MB
 **Pros:**
 
 - Complete all-in-one framework
-- Enforces architecture → great for large teams
-- Built-in TypeScript & Dependency Injection
-- Official form handling and HTTP modules
-- Great for large enterprise projects
+- Enforces architecture: great for large teams
+- Built-in TypeScript
 
 **Cons:**
 
