@@ -52,13 +52,13 @@ markdown_extensions:
         - name: plantuml
           class: plantuml
           format: !!python/name:pymdownx.superfences.fence_code_format
-  - pymdownx.plantuml:
-      format: svg
-      # Par défaut on pointe vers un serveur PlantUML local.
-      # Option 1 (recommandée en local) : lance un serveur PlantUML via Docker et laisse l'URL ci-dessous.
-      server: http://localhost:8080/plantuml
-      # Option 2 (publique, moins privée) : utilise le serveur officiel
-      # server: http://www.plantuml.com/plantuml
+  # - pymdownx.plantuml:
+  #     format: svg
+  #     # Par défaut on pointe vers un serveur PlantUML local.
+  #     # Option 1 (recommandée en local) : lance un serveur PlantUML via Docker et laisse l'URL ci-dessous.
+  #     server: http://localhost:8080/plantuml
+  #     # Option 2 (publique, moins privée) : utilise le serveur officiel
+  #     # server: http://www.plantuml.com/plantuml
 
 extra:
   social:
