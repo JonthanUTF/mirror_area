@@ -22,12 +22,24 @@ theme:
 nav:
   - Accueil: index.md
   - Benchmarks:
-    - Backend: BACKEND_BENCHMARK.md
+    - Backend:
+        - Overview: BACKEND_BENCHMARK.md
+        - Implementations:
+            - Go (Gin): poc/backend/go.md
+            - Node.js (Fastify): poc/backend/node-js.md
+            - Python (FastAPI): poc/backend/python.md
     - Web Frontend: WEB_FRONTEND_BENCHMARK.md
     - POCs:
         - React: poc/front/web-react/README.md
         - Vue: poc/front/web-vue/README.md
         - Angular: poc/front/web-angular/README.md
+  - Services:
+    - Introduction: services/index.md
+    - Gmail: services/gmail.md
+    - Github: services/github.md
+    - Twitter: services/twitter.md
+    - DropBox: services/dropbox.md
+    - Timer: services/timer.md
   - Cahier des charges:
       - Introduction: cahier_des_charges/index.md
       - Contexte & Objectifs: cahier_des_charges/01_contexte_objectifs.md
