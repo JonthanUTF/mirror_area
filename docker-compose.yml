@@ -1,30 +1,37 @@
 version: '3.8'
 
 services:
-  # Base de données PostgreSQL
+  # ===========================================
+  # PostgreSQL Database
+  # ===========================================
   postgres:
     image: postgres:15-alpine
     container_name: area_postgres
+    restart: unless-stopped
+    env_file: .env
     environment:
-      POSTGRES_DB: area_db
-      POSTGRES_USER: area_user
-      POSTGRES_PASSWORD: area_password
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
     ports:
-      - "5432:5432"
+      - "${DATABASE_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - area_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U area_user"]
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Cache Redis
+  # ===========================================
+  # Redis Cache
+  # ===========================================
   redis:
     image: redis:7-alpine
     container_name: area_redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
     networks:
@@ -35,51 +42,52 @@ services:
       timeout: 5s
       retries: 5
 
-  # Serveur d'application NestJS
+  # ===========================================
+  # Backend - NestJS Server
+  # ===========================================
   server:
     build:
       context: ./server
       dockerfile: Dockerfile
     container_name: area_server
-    ports:
-      - "8080:8080"
+    restart: unless-stopped
+    env_file: .env
     environment:
       NODE_ENV: production
       PORT: 8080
-      DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
-      DATABASE_USER: area_user
-      DATABASE_PASSWORD: area_password
-      DATABASE_NAME: area_db
+
+      # Necessary for Prisma
+      DATABASE_URL: "postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@postgres:5432/${DATABASE_NAME}?schema=public"
+
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
-      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+    ports:
+      - "8080:8080"
     networks:
       - area_network
-    volumes:
-      - ./server/logs:/app/logs
 
-  # Client web - Serveur Nginx
+  # ===========================================
+  # Client Web (Vite + Nginx)
+  # ===========================================
   client_web:
     build:
       context: ./client-web
       dockerfile: Dockerfile
     container_name: area_web
-    ports:
-      - "8081:80"
+    env_file: .env
     environment:
-      VITE_API_URL: http://localhost:8080
+      VITE_API_URL: http://server:8080
     depends_on:
       - server
+    ports:
+      - "8081:80"
     networks:
       - area_network
 
