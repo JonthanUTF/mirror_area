@@ -1,8 +1,7 @@
-FROM node:18
+FROM openjdk:17-slim
 
-# Install Java, Android SDK dependencies
+# Install Android SDK dependencies
 RUN apt-get update && apt-get install -y \
-    openjdk-11-jdk \
     wget \
     unzip \
     && rm -rf /var/lib/apt/lists/*
@@ -23,14 +22,17 @@ RUN yes | sdkmanager --licenses && \
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci
+# Copy Gradle files
+COPY build.gradle.kts settings.gradle.kts gradlew gradle.properties ./
+COPY gradle gradle
 
-COPY . .
+# Copy app module
+COPY app app
 
-# Placeholder for build command
-# In production, you would run: cd android && ./gradlew assembleRelease
+# Make gradlew executable
+RUN chmod +x gradlew
 
-EXPOSE 19000 19001 19002
+# Build APK
+# Use this command to build: ./gradlew assembleDebug or assembleRelease
+CMD ["./gradlew", "assembleDebug"]
 
-CMD ["npm", "start"]
