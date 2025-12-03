@@ -1,0 +1,23 @@
+{
+  "name": "area",
+  "version": "1.0.0",
+  "prisma": {
+    "seed": "ts-node database/prisma/seed.ts",
+    "schema": "database/prisma/schema.prisma"
+  },
+  "scripts": {
+    "db:init": "bash database/scripts/init-db.sh",
+    "db:backup": "bash database/scripts/backup.sh",
+    "db:restore": "bash database/scripts/restore.sh",
+    "db:migrate": "npx prisma migrate dev",
+    "db:studio": "npx prisma studio",
+    "db:seed": "npx prisma db seed",
+    "db:reset": "npx prisma migrate reset"
+  },
+  "devDependencies": {
+    "@prisma/client": "^5.22.0",
+    "prisma": "^5.22.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.0"
+  }
+}
