@@ -44,6 +44,10 @@ export default function Login() {
     }
   };
 
+  const handleGoogleLogin = () => {
+    console.log("Google login clicked");
+  };
+
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", minWidth: "100vw" }}>
       {/* Left: login */}
@@ -58,6 +62,14 @@ export default function Login() {
       >
         <Card sx={{ width: "100%", maxWidth: 420 }}>
           <CardContent>
+            <Button
+              variant="outlined"
+              fullWidth
+              onClick={handleGoogleLogin}
+              sx={{ mt: 1 }}
+            >
+              Continue with Google
+            </Button>
             <Typography variant="h5" component="h2" gutterBottom>
               Login
             </Typography>
@@ -67,7 +79,7 @@ export default function Login() {
                 label="Email"
                 sx={{ mb: 2 }}
                 value={email}
-                onChange={(e) => { 
+                onChange={(e) => {
                   setEmail(e.target.value)
                   setEmailError(validator.isEmail(e.target.value) ? "" : "Invalid email");
                 }}

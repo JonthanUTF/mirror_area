@@ -45,6 +45,10 @@ export default function Signup() {
         }
     };
 
+    const handleGoogleLogin = () => {
+        console.log("Google login clicked");
+    };
+
     return (
         <Box sx={{ display: "flex", minHeight: "100vh", minWidth: "100vw" }}>
             {/* Left */}
@@ -59,6 +63,14 @@ export default function Signup() {
             >
                 <Card sx={{ width: "100%", maxWidth: 420 }}>
                     <CardContent>
+                        <Button
+                            variant="outlined"
+                            fullWidth
+                            onClick={handleGoogleLogin}
+                            sx={{ mt: 1 }}
+                        >
+                            Continue with Google
+                        </Button>
                         <Typography variant="h5" component="h2" gutterBottom>
                             Sign Up
                         </Typography>
