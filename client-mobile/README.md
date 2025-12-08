@@ -1,21 +1,21 @@
 # AREA - Android Application
 
-Application mobile native Android en Kotlin avec Jetpack Compose pour la plateforme d'automatisation AREA.
+Native Android mobile application built with Kotlin and Jetpack Compose for the AREA automation platform.
 
-## 🚀 Fonctionnalités
+## 🚀 Features
 
-- ✅ Authentification (Login/Register)
-- ✅ Dashboard avec statistiques
-- ✅ Gestion des AREAs (Actions-REActions)
-- ✅ Liste des services disponibles
-- ✅ Journal d'activité
-- ✅ Paramètres utilisateur
-- ✅ Interface moderne avec Material Design 3
-- ✅ Thème sombre
+- ✅ Authentication (Login/Register)
+- ✅ Dashboard with statistics
+- ✅ AREA Management (Actions-REActions)
+- ✅ Available services list
+- ✅ Activity log
+- ✅ User settings
+- ✅ Modern interface with Material Design 3
+- ✅ Dark theme
 
 ## 🛠️ Technologies
 
-- **Langage**: Kotlin
+- **Language**: Kotlin
 - **UI Framework**: Jetpack Compose
 - **Architecture**: MVVM
 - **Dependency Injection**: Hilt
@@ -24,17 +24,17 @@ Application mobile native Android en Kotlin avec Jetpack Compose pour la platefo
 - **Minimum SDK**: 24 (Android 7.0)
 - **Target SDK**: 34 (Android 14)
 
-## 📦 Structure du projet
+## 📦 Project Structure
 
 ```
 app/src/main/java/com/area/mobile/
 ├── data/
-│   ├── model/          # Modèles de données
-│   └── repository/     # Repository avec données mockées
-├── di/                 # Modules Hilt
+│   ├── model/          # Data models
+│   └── repository/     # Repository with mocked data
+├── di/                 # Hilt modules
 ├── ui/
-│   ├── screen/         # Écrans Compose
-│   ├── theme/          # Thème et couleurs
+│   ├── screen/         # Compose screens
+│   ├── theme/          # Theme and colors
 │   └── viewmodel/      # ViewModels
 ├── AreaApplication.kt
 └── MainActivity.kt
@@ -42,55 +42,53 @@ app/src/main/java/com/area/mobile/
 
 ## 🔧 Installation
 
-### Prérequis
-- Android Studio Hedgehog ou supérieur
+### Prerequisites
+- Android Studio Hedgehog or higher
 - JDK 17
-- Device Android ou Émulateur avec API 24+
+- Android device or Emulator with API 24+
 
 ### Build & Run
 
 ```bash
-# Depuis le dossier client-mobile
+# From the client-mobile folder
 ./gradlew assembleDebug
 
-# Pour installer directement sur device connecté
+# To install directly on connected device
 ./gradlew installDebug
-
-# Ou via Android Studio: Run > Run 'app'
 ```
 
-## 📱 Écrans disponibles
+## 📱 Available Screens
 
-1. **Login/Register** - Authentification avec OAuth et email
-2. **Dashboard** - Vue d'ensemble des AREAs avec statistiques
-3. **Services** - Liste des services connectables
-4. **Activity** - Journal d'exécution des AREAs
-5. **AREA Builder** - Création/Édition d'automatisations
-6. **Settings** - Paramètres et profil utilisateur
+1. **Login/Register** - Authentication with OAuth and email
+2. **Dashboard** - AREA overview with statistics
+3. **Services** - List of connectable services
+4. **Activity** - AREA execution log
+5. **AREA Builder** - Create/Edit automations
+6. **Settings** - Settings and user profile
 
 ## 🎨 Design
 
-L'application suit le design system défini dans Figma_mobile avec:
-- Palette de couleurs violette/slate
-- Components Material 3
-- Animations et transitions fluides
-- Support du dark mode
+The application follows the design system defined in Figma_mobile with:
+- Purple/slate color palette
+- Material 3 components
+- Smooth animations and transitions
+- Dark mode support
 
-## 🔌 API Backend
+## 🔌 Backend API
 
-Actuellement l'application utilise des données mockées. Pour connecter à l'API réelle:
+Currently the application uses mocked data. To connect to the real API:
 
-1. Créer un service Retrofit dans `data/remote/`
-2. Implémenter les endpoints dans `data/remote/api/`
-3. Modifier le `MockRepository` pour utiliser l'API
+1. Create a Retrofit service in `data/remote/`
+2. Implement endpoints in `data/remote/api/`
+3. Modify the `MockRepository` to use the API
 
 ## 📝 Notes
 
-- L'application est actuellement en mode de développement avec données mockées
-- Tous les écrans sont fonctionnels et navigables
-- L'authentification simule une connexion réussie
-- Les statistiques et logs sont générés dynamiquement
+- The application is currently in development mode with mocked data
+- All screens are functional and navigable
+- Authentication simulates a successful login
+- Statistics and logs are dynamically generated
 
-## 🤝 Contribution
+## 🤝 Contributing
 
-Voir HOWTOCONTRIBUTE.md à la racine du projet.
+See HOWTOCONTRIBUTE.md at the project root.
