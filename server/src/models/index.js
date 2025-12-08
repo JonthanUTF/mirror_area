@@ -106,11 +106,15 @@ const Area = sequelize.define('Area', {
 User.hasMany(Area, { foreignKey: 'userId', as: 'areas' });
 Area.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+const Service = require('./Service')(sequelize);
+
+
 const db = {
   sequelize,
   Sequelize,
   User,
-  Area
+  Area,
+  Service
 };
 
 module.exports = db;

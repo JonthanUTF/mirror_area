@@ -4,6 +4,8 @@ const cors = require('cors');
 const passport = require('./config/passport');
 const { sequelize } = require('./models');
 const { startAutomationLoop } = require('./services/automation');
+const { loadServices } = require('./services/loader');
+
 const { getAboutJson } = require('./services/aboutService');
 const { router: authRouter } = require('./routes/auth');
 const areasRouter = require('./routes/areas');
@@ -81,6 +83,7 @@ async function startServer() {
     await sequelize.sync({ alter: process.env.NODE_ENV === 'development' });
     console.log('Database models synchronized.');
 
+    loadServices();
     startAutomationLoop();
 
     app.listen(PORT, '0.0.0.0', () => {
