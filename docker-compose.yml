@@ -21,20 +21,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # Cache Redis
-  redis:
-    image: redis:7-alpine
-    container_name: area_redis
-    ports:
-      - "6379:6379"
-    networks:
-      - area_network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   # Serveur d'application Node.js/Express
   server:
     build:
@@ -62,21 +48,6 @@ services:
       - area_network
     volumes:
       - ./server/src:/app/src
-
-  # Client web - Serveur Nginx
-  client_web:
-    build:
-      context: ./client-web
-      dockerfile: Dockerfile
-    container_name: area_web
-    ports:
-      - "8081:80"
-    environment:
-      VITE_API_URL: http://localhost:8080
-    depends_on:
-      - server
-    networks:
-      - area_network
 
 volumes:
   postgres_data:
