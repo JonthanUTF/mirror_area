@@ -1,148 +1,184 @@
-# AREA - Client Mobile
+# AREA - Client Mobile (Auth + Dashboard Module)
 
-Application mobile Android native en Kotlin pour la plateforme d'automatisation AREA.
+Application mobile Android native en Kotlin avec Jetpack Compose pour la plateforme d'automatisation AREA.
 
-## 🚀 Technologies choisies
+## 📱 Issue actuelle: `pages-mobile--dashboard`
+
+Ce module implémente le flow complet d'authentification ET l'interface dashboard principale de l'application mobile.
+
+## ✅ Fonctionnalités implémentées
+
+### Écrans d'authentification (Issue précédente)
+- ✅ **Splash Screen** - Écran de démarrage avec animation
+- ✅ **Onboarding** - Présentation de l'app (3 pages)
+- ✅ **Login** - Connexion avec email/password
+- ✅ **Register** - Inscription avec validation
+- ✅ **Email Verification** - Vérification d'email
+
+### Écrans Dashboard (Issue actuelle)
+- ✅ **Dashboard** - Vue d'ensemble avec statistiques
+- ✅ **Profile** - Profil utilisateur avec informations
+- ✅ **Settings** - Paramètres de l'application
+
+### Navigation
+- ✅ **Bottom Navigation Bar** - Navigation entre Dashboard, Profile, Settings
+- ✅ **Top App Bar** - Barre supérieure avec logo et logout
+- ✅ **MainScaffold** - Structure de navigation réutilisable
+
+## 🛠️ Technologies
 
 - **Langage**: Kotlin
-- **SDK**: Android SDK 33
-- **Build System**: Gradle (Kotlin DSL)
-- **Architecture**: MVVM (à implémenter)
-- **UI**: XML layouts (base), migration vers Jetpack Compose prévue
+- **UI Framework**: Jetpack Compose
+- **Architecture**: MVVM
+- **Dependency Injection**: Hilt/Dagger
+- **Navigation**: Navigation Compose
+- **Async**: Kotlin Coroutines & Flow
+- **Minimum SDK**: 24 (Android 7.0)
+- **Target SDK**: 34 (Android 14)
 
 ## 📦 Structure du projet
 
 ```
-client-mobile/
-├── build.gradle.kts           # Configuration Gradle du projet
-├── settings.gradle.kts         # Settings Gradle
-├── gradle.properties           # Propriétés Gradle
-├── gradlew                     # Gradle wrapper (Unix)
-├── Dockerfile                  # Build Docker pour génération APK
-├── app/
-│   ├── build.gradle.kts       # Configuration Gradle du module app
-│   ├── proguard-rules.pro     # Règles ProGuard
-│   └── src/
-│       └── main/
-│           ├── AndroidManifest.xml
-│           ├── java/com/area/mobile/
-│           │   ├── MainActivity.kt       # Activity principale
-│           │   └── AreaApplication.kt    # Application class
-│           └── res/
-│               ├── layout/
-│               │   └── activity_main.xml # Layout de base
-│               ├── values/               # Ressources (strings, colors)
-│               ├── drawable/             # Drawables
-│               └── mipmap-*/            # Icônes de launcher
-└── gradle/
-    └── wrapper/                # Gradle wrapper files
+app/src/main/java/com/area/mobile/
+├── data/
+│   ├── model/
+│   │   └── User.kt                  # Modèle utilisateur
+│   └── repository/
+│       └── MockRepository.kt        # Mock auth
+├── di/
+│   └── AppModule.kt                 # Module Hilt
+├── ui/
+│   ├── navigation/
+│   │   └── MainScaffold.kt         # ✅ Scaffold avec Bottom Nav + Top Bar
+│   ├── screen/
+│   │   ├── SplashScreen.kt         # ✅ Auth
+│   │   ├── OnboardingScreen.kt     # ✅ Auth
+│   │   ├── LoginScreen.kt          # ✅ Auth
+│   │   ├── RegisterScreen.kt       # ✅ Auth
+│   │   ├── EmailVerificationScreen.kt # ✅ Auth
+│   │   ├── DashboardScreen.kt      # ✅ Dashboard
+│   │   ├── ProfileScreen.kt        # ✅ Dashboard
+│   │   └── SettingsScreen.kt       # ✅ Dashboard
+│   ├── theme/
+│   │   ├── Color.kt                # Couleurs du thème
+│   │   ├── Theme.kt                # Configuration thème
+│   │   └── Type.kt                 # Typography
+│   └── viewmodel/
+│       ├── AuthViewModel.kt        # ViewModel auth
+│       └── DashboardViewModel.kt   # ViewModel dashboard
+├── AreaApplication.kt              # Application class
+└── MainActivity.kt                 # Navigation auth + dashboard
 ```
 
-## 🔧 Installation & Développement
+## 🔧 Installation & Build
 
 ### Prérequis
-- JDK 17+
-- Android SDK 33
-- Android Studio (recommandé) ou IntelliJ IDEA
+- Android Studio Hedgehog ou supérieur
+- JDK 17
+- Device Android ou Émulateur avec API 24+
 
-### Build local
+### Build & Run
 
 ```bash
 # Depuis le dossier client-mobile
-
-# Build debug APK
 ./gradlew assembleDebug
 
-# Build release APK
-./gradlew assembleRelease
-
-# Installer sur device/émulateur connecté
+# Installer sur device connecté
 ./gradlew installDebug
+
+# Via Android Studio: Run > Run 'app'
 ```
 
-Les APK générés se trouvent dans :
-- Debug: `app/build/outputs/apk/debug/app-debug.apk`
-- Release: `app/build/outputs/apk/release/app-release.apk`
-
-## 🐳 Build Docker
-
-Le Dockerfile permet de générer un APK dans un environnement isolé:
+### Build Docker
 
 ```bash
-# Build de l'image Docker
+# Build l'image
 docker build -t area-mobile .
 
-# Générer l'APK debug
-docker run -v $(pwd)/app/build:/app/app/build area-mobile ./gradlew assembleDebug
-
-# Générer l'APK release
+# Générer l'APK
 docker run -v $(pwd)/app/build:/app/app/build area-mobile ./gradlew assembleRelease
 ```
 
-L'APK généré sera disponible dans `app/build/outputs/apk/`.
+L'APK sera dans `app/build/outputs/apk/`.
 
-## 📱 Configuration Android
+## 🎯 Flow de l'application
 
-- **Package**: `com.area.mobile`
-- **Min SDK**: 24 (Android 7.0)
-- **Target SDK**: 33 (Android 13)
-- **Compile SDK**: 33
-
-### Permissions déclarées
-- `INTERNET` - Accès réseau pour l'API
-- `ACCESS_NETWORK_STATE` - Vérifier la connectivité
-
-## 🔗 Volume partagé
-
-Les builds APK peuvent être partagés avec `client-web` via un volume Docker commun défini dans `docker-compose.yml`.
-
-Exemple de configuration docker-compose:
-```yaml
-volumes:
-  mobile-builds:
-    driver: local
-
-services:
-  mobile:
-    build: ./client-mobile
-    volumes:
-      - mobile-builds:/app/app/build/outputs/apk
-  
-  web:
-    volumes:
-      - mobile-builds:/app/public/downloads
+```
+Splash (2s)
+    ├─> Onboarding (si première utilisation)
+    │       └─> Login
+    └─> Login (si déjà utilisé)
+            ├─> Register → Email Verification → Login
+            └─> Dashboard (après login réussi)
+                    ├─> Profile (bottom nav)
+                    ├─> Settings (bottom nav)
+                    └─> Logout → Login
 ```
 
-## 📝 Prochaines étapes
+## 🎨 Design
 
-### Fonctionnalités à implémenter
-- [ ] Authentification (Login/Register)
-- [ ] Dashboard avec statistiques
-- [ ] Gestion des AREAs (Actions-REActions)
-- [ ] Liste des services disponibles
-- [ ] Journal d'activité
-- [ ] Paramètres utilisateur
+### Navigation
+- **Bottom Navigation Bar** : 3 onglets (Dashboard, Profile, Settings)
+- **Top App Bar** : Logo AREA + Bouton Logout
+- **Drawer Menu** : Non implémenté dans cette issue (préparé pour évolution future)
 
-### Améliorations techniques
-- [ ] Migration vers Jetpack Compose pour l'UI
-- [ ] Implémenter l'architecture MVVM
-- [ ] Ajouter Retrofit pour les appels API
-- [ ] Intégrer Hilt/Dagger pour l'injection de dépendances
-- [ ] Ajouter les tests unitaires et d'intégration
-- [ ] Configurer CI/CD pour les builds automatiques
+### Écrans Dashboard
 
-## 🛠️ Dépendances principales
+#### Dashboard Screen
+- Vue d'ensemble des automatisations
+- Statistiques (nombre d'AREAs, exécutions, etc.)
+- Liste des AREAs actifs
+- FAB pour créer une nouvelle AREA (préparé pour issue suivante)
 
-Actuellement minimales pour le setup de base. À ajouter progressivement :
-- **Networking**: Retrofit, OkHttp
-- **DI**: Hilt/Dagger
-- **UI**: Jetpack Compose, Material 3
-- **Async**: Coroutines, Flow
-- **Navigation**: Navigation Component
+#### Profile Screen
+- Avatar utilisateur
+- Informations du compte (nom, email)
+- Date d'inscription
+- Bouton logout
 
-## 📚 Ressources
+#### Settings Screen
+- Paramètres de l'application
+- Préférences utilisateur
+- Gestion du compte
 
-- [Documentation Android](https://developer.android.com/docs)
-- [Guide Kotlin](https://kotlinlang.org/docs/home.html)
-- [Jetpack Compose](https://developer.android.com/jetpack/compose)
-- [Architecture MVVM](https://developer.android.com/topic/architecture)
+## 🔗 Navigation principale
+
+Le `MainScaffold` fournit une structure cohérente avec:
+- Top bar personnalisable
+- Bottom navigation bar
+- Support pour FAB (Floating Action Button)
+- Gestion automatique du padding
+
+## 📝 Prochaines issues
+
+Les fonctionnalités suivantes seront implémentées dans les issues à venir:
+
+- [ ] **Services Management** - Connexion et gestion des services (Gmail, GitHub, etc.)
+- [ ] **AREA Builder** - Création et édition d'automatisations
+- [ ] **Activity Log** - Historique détaillé des exécutions
+- [ ] **Notifications** - Alertes et notifications push
+
+## 🐛 État actuel
+
+### ✅ Fonctionnel
+- Tous les écrans d'auth
+- Navigation complète auth → dashboard
+- Bottom navigation entre les 3 écrans dashboard
+- Logout depuis n'importe quel écran dashboard
+- Design cohérent Material 3
+
+### ⚠️ En développement (mocked)
+- AuthViewModel simule l'authentification
+- DashboardViewModel affiche des données mockées
+- Statistiques générées aléatoirement
+- Liste d'AREAs simulée
+
+### 📌 Non implémenté (issues futures)
+- Drawer menu latéral (préparé mais pas activé)
+- Connexion réelle à l'API backend
+- Gestion réelle des services
+- Création/édition d'AREAs
+
+## 🤝 Contribution
+
+Voir HOWTOCONTRIBUTE.md à la racine du projet.
