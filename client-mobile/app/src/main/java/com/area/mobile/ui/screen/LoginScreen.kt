@@ -28,11 +28,12 @@ import com.area.mobile.ui.viewmodel.AuthViewModel
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
-    onNavigateToRegister: () -> Unit,
     viewModel: AuthViewModel = hiltViewModel()
 ) {
+    var isLogin by remember { mutableStateOf(true) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     
     val uiState by viewModel.uiState.collectAsState()
@@ -78,7 +79,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = "Welcome Back",
+                text = if (isLogin) "Welcome Back" else "Create Account",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -87,7 +88,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "Sign in to continue to AREA",
+                text = if (isLogin) "Sign in to continue to AREA" else "Start automating your digital life",
                 fontSize = 14.sp,
                 color = Slate400
             )
@@ -125,6 +126,30 @@ fun LoginScreen(
             }
             
             Spacer(modifier = Modifier.height(24.dp))
+            
+            if (!isLogin) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Full Name") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Person, contentDescription = "Name")
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PurplePrimary,
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
+                        focusedLabelColor = PurplePrimary,
+                        unfocusedLabelColor = Slate400,
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        cursorColor = PurplePrimary
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+            }
             
             OutlinedTextField(
                 value = email,
@@ -180,13 +205,15 @@ fun LoginScreen(
                 shape = RoundedCornerShape(12.dp)
             )
             
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                TextButton(onClick = { }) {
-                    Text("Forgot password?", color = PurplePrimary)
+            if (isLogin) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = { }) {
+                        Text("Forgot password?", color = PurplePrimary)
+                    }
                 }
             }
             
@@ -194,7 +221,11 @@ fun LoginScreen(
             
             Button(
                 onClick = {
-                    viewModel.login(email, password)
+                    if (isLogin) {
+                        viewModel.login(email, password)
+                    } else {
+                        viewModel.register(name, email, password)
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -212,7 +243,7 @@ fun LoginScreen(
                     )
                 } else {
                     Text(
-                        text = "Sign In",
+                        text = if (isLogin) "Sign In" else "Create Account",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -232,13 +263,13 @@ fun LoginScreen(
             
             Row {
                 Text(
-                    text = "Don't have an account? ",
+                    text = if (isLogin) "Don't have an account? " else "Already have an account? ",
                     color = Slate400,
                     fontSize = 14.sp
                 )
-                TextButton(onClick = onNavigateToRegister) {
+                TextButton(onClick = { isLogin = !isLogin }) {
                     Text(
-                        text = "Sign Up",
+                        text = if (isLogin) "Sign Up" else "Sign In",
                         color = PurplePrimary,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold

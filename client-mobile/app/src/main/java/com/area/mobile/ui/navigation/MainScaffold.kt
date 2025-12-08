@@ -124,10 +124,23 @@ fun BottomNavigationBar(
             )
         )
         NavigationBarItem(
-            icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
-            label = { Text("Profile") },
-            selected = currentRoute == "profile",
-            onClick = { onNavigate("profile") },
+            icon = { Icon(Icons.Default.List, contentDescription = "Services") },
+            label = { Text("Services") },
+            selected = currentRoute == "services",
+            onClick = { onNavigate("services") },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = PurplePrimary,
+                selectedTextColor = PurplePrimary,
+                unselectedIconColor = Slate400,
+                unselectedTextColor = Slate400,
+                indicatorColor = PurplePrimary.copy(alpha = 0.2f)
+            )
+        )
+        NavigationBarItem(
+            icon = { Icon(Icons.Default.Star, contentDescription = "Activity") },
+            label = { Text("Activity") },
+            selected = currentRoute == "activity",
+            onClick = { onNavigate("activity") },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = PurplePrimary,
                 selectedTextColor = PurplePrimary,
