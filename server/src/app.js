@@ -4,9 +4,12 @@ const cors = require('cors');
 const passport = require('./config/passport');
 const { sequelize } = require('./models');
 const { startAutomationLoop } = require('./services/automation');
+const { loadServices } = require('./services/loader');
+
 const { getAboutJson } = require('./services/aboutService');
 const { router: authRouter } = require('./routes/auth');
 const areasRouter = require('./routes/areas');
+const usersRouter = require('./routes/users');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -22,7 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
 
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'AREA Backend API',
     version: '1.0.0',
     endpoints: {
@@ -45,17 +48,18 @@ app.get('/', (req, res) => {
 });
 
 app.get('/about.json', (req, res) => {
-  const clientIp = req.headers['x-forwarded-for'] || 
-                   req.connection.remoteAddress || 
-                   req.socket.remoteAddress ||
-                   req.ip;
-  
+  const clientIp = req.headers['x-forwarded-for'] ||
+    req.connection.remoteAddress ||
+    req.socket.remoteAddress ||
+    req.ip;
+
   const aboutData = getAboutJson(clientIp);
   res.json(aboutData);
 });
 
 app.use('/auth', authRouter);
 app.use('/areas', areasRouter);
+app.use('/users', usersRouter);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
@@ -63,7 +67,7 @@ app.use((req, res) => {
 
 app.use((err, req, res, next) => {
   console.error('Error:', err);
-  res.status(err.status || 500).json({ 
+  res.status(err.status || 500).json({
     error: err.message || 'Internal server error',
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
@@ -79,6 +83,7 @@ async function startServer() {
     await sequelize.sync({ alter: process.env.NODE_ENV === 'development' });
     console.log('Database models synchronized.');
 
+    loadServices();
     startAutomationLoop();
 
     app.listen(PORT, '0.0.0.0', () => {
