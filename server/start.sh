@@ -36,6 +36,7 @@ if docker-compose ps | grep -q "area_server"; then
     echo ""
     echo "📍 Service URLs:"
     echo "   - Backend API: http://localhost:8080"
+    echo "   - Frontend Web: http://localhost:8081"
     echo "   - PostgreSQL: localhost:5432"
     echo ""
     echo "🧪 Test the API:"

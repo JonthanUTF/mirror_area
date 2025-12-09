@@ -10,9 +10,9 @@ const JWT_EXPIRES_IN = '7d';
 
 function generateToken(user) {
   return jwt.sign(
-    { 
-      id: user.id, 
-      email: user.email 
+    {
+      id: user.id,
+      email: user.email
     },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN }
@@ -24,15 +24,15 @@ router.post('/register', async (req, res) => {
     const { email, password, name } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ 
-        error: 'Email and password are required' 
+      return res.status(400).json({
+        error: 'Email and password are required'
       });
     }
 
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
-      return res.status(409).json({ 
-        error: 'User with this email already exists' 
+      return res.status(409).json({
+        error: 'User with this email already exists'
       });
     }
 
@@ -57,9 +57,9 @@ router.post('/register', async (req, res) => {
     });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to register user',
-      details: error.message 
+      details: error.message
     });
   }
 });
@@ -69,28 +69,28 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ 
-        error: 'Email and password are required' 
+      return res.status(400).json({
+        error: 'Email and password are required'
       });
     }
 
     const user = await User.findOne({ where: { email } });
     if (!user || !user.password) {
-      return res.status(401).json({ 
-        error: 'Invalid email or password' 
+      return res.status(401).json({
+        error: 'Invalid email or password'
       });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(401).json({ 
-        error: 'Invalid email or password' 
+      return res.status(401).json({
+        error: 'Invalid email or password'
       });
     }
 
     const token = generateToken(user);
 
-    res.status(200).json({
+    return res.status(200).json({
       message: 'Login successful',
       token,
       user: {
@@ -101,29 +101,32 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to login',
-      details: error.message 
+      details: error.message
     });
   }
 });
 
-router.get('/google',
-  passport.authenticate('google', { 
+router.get('/google', (req, res, next) => {
+  console.log('[Auth] Initiating Google Login...');
+  next();
+},
+  passport.authenticate('google', {
     scope: ['profile', 'email'],
     session: false
   })
 );
 
 router.get('/google/callback',
-  passport.authenticate('google', { 
+  passport.authenticate('google', {
     session: false,
-    failureRedirect: '/login' 
+    failureRedirect: '/login'
   }),
   (req, res) => {
     try {
       const token = generateToken(req.user);
-      
+
       res.redirect(`${process.env.CLIENT_URL || 'http://localhost:8081'}/auth/callback?token=${token}`);
     } catch (error) {
       console.error('Google callback error:', error);
