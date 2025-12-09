@@ -29,6 +29,8 @@ services:
     container_name: area_server
     ports:
       - "8080:8080"
+    env_file:
+      - ./server/.env
     environment:
       NODE_ENV: production
       PORT: 8080
@@ -38,9 +40,8 @@ services:
       DB_PASSWORD: area
       DB_NAME: area_db
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-http://localhost:8080/auth/google/callback}
+      # Google credentials are now loaded from ./server/.env
     depends_on:
       db:
         condition: service_healthy
@@ -48,6 +49,19 @@ services:
       - area_network
     volumes:
       - ./server/src:/app/src
+
+  # Client Web React/Vite
+  web:
+    build:
+      context: ./front-web
+      dockerfile: Dockerfile
+    container_name: area_web
+    ports:
+      - "8081:80"
+    depends_on:
+      - server
+    networks:
+      - area_network
 
 volumes:
   postgres_data:

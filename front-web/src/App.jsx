@@ -4,6 +4,8 @@ import Home from "./pages/Home";
 import Signup from "./pages/Signup";
 import CreateActionReaction from "./pages/createActionReaction";
 
+import AuthCallback from "./pages/AuthCallback";
+
 function App() {
   return (
     <Routes>
@@ -11,6 +13,7 @@ function App() {
       <Route path="/createActionReaction" element={<CreateActionReaction />} />
       <Route path="/Signup" element={<Signup />} />
       <Route path="/home" element={<Home />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/" element={<Navigate to="/login" replace />} />
     </Routes>
   );

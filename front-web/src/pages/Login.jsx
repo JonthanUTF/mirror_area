@@ -50,7 +50,7 @@ export default function Login() {
   };
 
   const handleGoogleLogin = () => {
-    console.log("Google login clicked");
+    window.location.href = "http://localhost:8080/auth/google";
   };
 
   return (
@@ -62,6 +62,8 @@ export default function Login() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          backgroundImage: "linear-gradient(135deg, #1b092dff 0%, #1b092dff 100%)",
+          color: "#492f64ff",
           p: 3,
         }}
       >
