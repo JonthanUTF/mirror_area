@@ -10,7 +10,8 @@ const authFactories = {
         getAuthUrl: () => {
             const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
             const options = {
-                redirect_uri: process.env.GOOGLE_CALLBACK_URL?.replace('/auth/google/callback', '/services/google/callback') || 'http://localhost:8080/services/google/callback',
+                // Redirect to Frontend to handle the code (because backend route calls require JWT)
+                redirect_uri: (process.env.CLIENT_URL || 'http://localhost:8081') + '/services/callback',
                 client_id: process.env.GOOGLE_CLIENT_ID,
                 access_type: 'offline', // Essential for refresh_token
                 response_type: 'code',
@@ -79,7 +80,7 @@ router.post('/:serviceName/callback', authenticateToken, async (req, res) => {
         // 1. Exchange Code for Tokens
         // Determine redirect URI (should match what was used in connect)
         // For simplicity, we assume generic or passed from frontend
-        const finalRedirectUri = redirectUri || (process.env.GOOGLE_CALLBACK_URL?.replace('/auth/google/callback', '/services/google/callback') || 'http://localhost:8080/services/google/callback');
+        const finalRedirectUri = redirectUri || ((process.env.CLIENT_URL || 'http://localhost:8081') + '/services/callback');
 
         const tokenData = await factory.exchangeCode(code, finalRedirectUri);
 
