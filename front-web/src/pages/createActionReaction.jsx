@@ -141,15 +141,17 @@ export default function CreateActionReaction() {
 
     const handleGoogleServiceConnection = async () => {
         try {
-            const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
-            const token = localStorage.getItem("authToken");
-            const res = await fetch(`${API_BASE}/services/google/connect`, {
-                method: "GET",
-                headers: {
-                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                    "Content-Type": "application/json",
-                },
-            });
+            // remember where to come back after OAuth (creation page)
+            localStorage.setItem('oauth_return', window.location.pathname || '/');
+             const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
+             const token = localStorage.getItem("authToken");
+             const res = await fetch(`${API_BASE}/services/google/connect`, {
+                 method: "GET",
+                 headers: {
+                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                     "Content-Type": "application/json",
+                 },
+             });
 
             if (!res.ok) {
                 const txt = await res.text();
