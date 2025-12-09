@@ -51,7 +51,7 @@ export default function Signup() {
     };
 
     const handleGoogleLogin = () => {
-        navigate("http://localhost:8080/auth/google");
+        window.location.href = "http://localhost:8080/auth/google";
     };
 
     return (

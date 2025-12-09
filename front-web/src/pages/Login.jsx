@@ -50,7 +50,7 @@ export default function Login() {
   };
 
   const handleGoogleLogin = () => {
-    navigate("http://localhost:8080/auth/google/callback");
+    window.location.href = "http://localhost:8080/auth/google";
   };
 
   return (
