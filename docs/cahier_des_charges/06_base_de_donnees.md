@@ -7,33 +7,33 @@
 entity User {
   id: UUID
   email: string
-  password: hash
+  password: string (hash)
+  googleId: string
+  name: string
 }
 
 entity Service {
   id: UUID
   name: string
-}
-
-entity UserService {
-  user_id
-  service_id
-  oauth_token
+  active: boolean
 }
 
 entity Area {
   id: UUID
-  user_id
-  action_id
+  user_id: UUID
+  name: string
+  
+  actionService: string
+  actionType: string
+  
+  reactionService: string
+  reactionType: string
+  
+  parameters: JSONB
+  active: boolean
+  lastTriggered: Date
 }
 
-entity Reaction {
-  id: UUID
-  area_id
-  type
-}
-
-User ||--o{ UserService
-User ||--o{ Area
-Area ||--o{ Reaction
+User ||--o{ Area : has
+User ||--o{ Service : connects (via OAuth tokens - à faire)
 @enduml
