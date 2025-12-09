@@ -25,7 +25,17 @@ class EmailService extends ServiceBase {
         // NOTE: In routes/services.js we used the serviceName from URL.
         // If we registered "EmailService" as "email", we should consistent.
 
-        const service = await Service.findOne({ where: { name: 'email' } });
+        // try by canonical name
+        let service = await Service.findOne({ where: { name: 'email' } });
+
+        // fallback: try seeded label or any gmail-like service
+        if (!service) {
+            service = await Service.findOne({ where: { label: 'Gmail' } })
+                || await Service.findOne({ where: { name: 'google' } })
+                || await Service.findOne({ where: { label: 'Google' } })
+                || await Service.findOne({ where: { name: 'gmail' } });
+        }
+
         if (!service) throw new Error('Service "email" not found in DB');
 
         const userService = await UserService.findOne({
