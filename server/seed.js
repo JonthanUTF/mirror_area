@@ -2,8 +2,8 @@ const { Service, sequelize } = require('./src/models');
 
 const services = [
     {
-        name: 'email',
-        label: 'Gmail',
+        name: 'google',
+        label: 'Google (Gmail)',
         icon: 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg',
         active: true
     },

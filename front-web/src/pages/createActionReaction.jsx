@@ -73,7 +73,7 @@ export default function CreateActionReaction() {
             actionType === "interval" ? "timer" :
             actionService;
         const computedReactionService =
-            reactionType === "send_email" ? "email" :
+            reactionType === "send_email" ? "google" :
             reactionType === "log_message" ? "log_message" :
             reactionService;
         setActionService(computedActionService);
