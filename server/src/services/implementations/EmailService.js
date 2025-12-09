@@ -4,7 +4,7 @@ const { UserService, Service } = require('../../models');
 
 class EmailService extends ServiceBase {
     constructor() {
-        super('google', 'Google (Gmail)', 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg');
+        super('email', 'Gmail', 'http://localhost:8080/assets/gmail-icon.png');
 
         this.registerAction('new_email', 'Triggers when a new email is received', {
             from: 'string', // Filter by sender
@@ -25,8 +25,18 @@ class EmailService extends ServiceBase {
         // NOTE: In routes/services.js we used the serviceName from URL.
         // If we registered "EmailService" as "email", we should consistent.
 
-        const service = await Service.findOne({ where: { name: 'google' } });
-        if (!service) throw new Error('Service "google" not found in DB');
+        // try by canonical name
+        let service = await Service.findOne({ where: { name: 'email' } });
+
+        // fallback: try seeded label or any gmail-like service
+        if (!service) {
+            service = await Service.findOne({ where: { label: 'Gmail' } })
+                || await Service.findOne({ where: { name: 'google' } })
+                || await Service.findOne({ where: { label: 'Google' } })
+                || await Service.findOne({ where: { name: 'gmail' } });
+        }
+
+        if (!service) throw new Error('Service "email" not found in DB');
 
         const userService = await UserService.findOne({
             where: { userId, serviceId: service.id }
