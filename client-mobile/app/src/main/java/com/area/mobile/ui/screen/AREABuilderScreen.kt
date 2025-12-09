@@ -16,18 +16,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.area.mobile.ui.theme.*
+import com.area.mobile.ui.viewmodel.DashboardViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AREABuilderScreen(
     areaId: String?,
     onBack: () -> Unit,
-    onSave: () -> Unit
+    onSave: () -> Unit,
+    viewModel: DashboardViewModel = hiltViewModel()
 ) {
     var areaName by remember { mutableStateOf("") }
     var selectedActionService by remember { mutableStateOf<String?>(null) }
+    var selectedActionType by remember { mutableStateOf<String?>(null) }
     var selectedReactionService by remember { mutableStateOf<String?>(null) }
+    var selectedReactionType by remember { mutableStateOf<String?>(null) }
+    
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
     
     Scaffold(
         topBar = {
@@ -41,16 +49,44 @@ fun AREABuilderScreen(
                 actions = {
                     TextButton(
                         onClick = {
-                            onSave()
-                            onBack()
+                            if (areaName.isNotBlank() && 
+                                selectedActionService != null && 
+                                selectedActionType != null &&
+                                selectedReactionService != null &&
+                                selectedReactionType != null) {
+                                viewModel.createArea(
+                                    name = areaName,
+                                    actionService = selectedActionService!!,
+                                    actionType = selectedActionType!!,
+                                    reactionService = selectedReactionService!!,
+                                    reactionType = selectedReactionType!!,
+                                    onSuccess = {
+                                        onSave()
+                                        onBack()
+                                    }
+                                )
+                            }
                         },
                         enabled = areaName.isNotBlank() && 
                                  selectedActionService != null && 
-                                 selectedReactionService != null
+                                 selectedActionType != null &&
+                                 selectedReactionService != null &&
+                                 selectedReactionType != null &&
+                                 !isLoading
                     ) {
-                        Text("Save", color = if (areaName.isNotBlank() && 
-                                 selectedActionService != null && 
-                                 selectedReactionService != null) PurplePrimary else Slate400)
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = PurplePrimary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text("Save", color = if (areaName.isNotBlank() && 
+                                     selectedActionService != null && 
+                                     selectedActionType != null &&
+                                     selectedReactionService != null &&
+                                     selectedReactionType != null) PurplePrimary else Slate400)
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -149,7 +185,10 @@ fun AREABuilderScreen(
                         Spacer(modifier = Modifier.height(16.dp))
                         
                         Button(
-                            onClick = { selectedActionService = "GitHub" },
+                            onClick = { 
+                                selectedActionService = "weather"
+                                selectedActionType = "check_temp"
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (selectedActionService != null) 
@@ -163,7 +202,7 @@ fun AREABuilderScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 if (selectedActionService != null) 
-                                    "Action: $selectedActionService - New PR" 
+                                    "Action: Weather - Check Temperature" 
                                 else 
                                     "Choose Action Service"
                             )
@@ -227,7 +266,10 @@ fun AREABuilderScreen(
                         Spacer(modifier = Modifier.height(16.dp))
                         
                         Button(
-                            onClick = { selectedReactionService = "Discord" },
+                            onClick = { 
+                                selectedReactionService = "console"
+                                selectedReactionType = "log_message"
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (selectedReactionService != null) 
@@ -242,7 +284,7 @@ fun AREABuilderScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 if (selectedReactionService != null) 
-                                    "Reaction: $selectedReactionService - Send Message" 
+                                    "Reaction: Console - Log Message" 
                                 else 
                                     "Choose Reaction Service"
                             )
@@ -254,6 +296,35 @@ fun AREABuilderScreen(
                                 text = "✓ Action configured",
                                 fontSize = 12.sp,
                                 color = PurplePrimary
+                            )
+                        }
+                    }
+                }
+                
+                if (error != null) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = RedError.copy(alpha = 0.1f)
+                        ),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = "Error",
+                                tint = RedError,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = error ?: "An error occurred",
+                                fontSize = 12.sp,
+                                color = RedError
                             )
                         }
                     }

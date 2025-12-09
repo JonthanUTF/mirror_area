@@ -37,6 +37,11 @@ fun DashboardScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val stats = viewModel.getStats()
     
+    // Recharger les areas quand on arrive sur l'écran
+    LaunchedEffect(Unit) {
+        viewModel.loadAreas()
+    }
+    
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()

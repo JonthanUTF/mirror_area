@@ -100,6 +100,40 @@ class DashboardViewModel @Inject constructor(
         }
     }
     
+    fun createArea(
+        name: String,
+        actionService: String,
+        actionType: String,
+        reactionService: String,
+        reactionType: String,
+        onSuccess: () -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            try {
+                val result = areaRepository.createArea(
+                    name = name,
+                    actionService = actionService,
+                    actionType = actionType,
+                    reactionService = reactionService,
+                    reactionType = reactionType,
+                    parameters = emptyMap()
+                )
+                result.onSuccess {
+                    loadAreas()
+                    onSuccess()
+                }.onFailure { error ->
+                    _error.value = error.message ?: "Failed to create area"
+                }
+            } catch (e: Exception) {
+                _error.value = e.message ?: "An error occurred"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+    
     fun getStats(): DashboardStats {
         val totalAreas = _areas.value.size
         val activeAreas = _areas.value.count { it.isActive }

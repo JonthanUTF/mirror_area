@@ -8,6 +8,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -15,13 +17,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.area.mobile.ui.theme.*
+import com.area.mobile.ui.viewmodel.AuthViewModel
 
 @Composable
 fun SettingsScreen(
     paddingValues: PaddingValues,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    viewModel: AuthViewModel = hiltViewModel()
 ) {
+    val currentUser by viewModel.currentUser.collectAsState()
+    
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -56,13 +63,13 @@ fun SettingsScreen(
                             }
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                text = "John Doe",
+                                text = currentUser?.name ?: "User",
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
                             )
                             Text(
-                                text = "john.doe@example.com",
+                                text = currentUser?.email ?: "user@example.com",
                                 fontSize = 14.sp,
                                 color = Slate400
                             )
