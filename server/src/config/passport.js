@@ -16,6 +16,7 @@ passport.deserializeUser(async (id, done) => {
 });
 
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  console.log('Registering Google OAuth strategy...');
   passport.use(
     new GoogleStrategy(
       {
@@ -25,8 +26,9 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
+          console.log('Google OAuth callback received...');
           let user = await User.findOne({ where: { googleId: profile.id } });
-          
+
           if (!user) {
             user = await User.create({
               googleId: profile.id,
@@ -34,9 +36,10 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
               name: profile.displayName
             });
           }
-          
+
           return done(null, user);
         } catch (error) {
+          console.error('Error during Google OAuth callback:', error);
           return done(error, null);
         }
       }

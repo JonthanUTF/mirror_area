@@ -57,6 +57,7 @@ router.get('/:serviceName/connect', authenticateToken, async (req, res) => {
         }
 
         const url = factory.getAuthUrl();
+        console.log(`[Services] Generated Auth URL for ${serviceName}:`, url);
         res.json({ url });
     } catch (error) {
         console.error('Auth URL generation error:', error);
