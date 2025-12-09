@@ -39,6 +39,11 @@ export default function Signup() {
                 }
                 throw new Error(msg);
             }
+            const data = await res.json();
+            const token = data.token;
+            if (token) {
+                localStorage.setItem("authToken", token);
+            }
             navigate("/home");
         } catch (err) {
             setError(err.message);

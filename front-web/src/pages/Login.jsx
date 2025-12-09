@@ -36,7 +36,12 @@ export default function Login() {
           const text = await res.text();
           if (text) msg = text;
         }
-        throw new Error("ok " + msg);
+        throw new Error(msg);
+      }
+      const data = await res.json();
+      const token = data.token;
+      if (token) {
+        localStorage.setItem("authToken", token);
       }
       navigate("/home");
     } catch (err) {

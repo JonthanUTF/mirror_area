@@ -1,5 +1,4 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('./index').sequelize;
 
 // Note: This model is for caching metadata and OAuth tokens if needed.
 // The source of truth for definitions is the ServiceRegistry code.
