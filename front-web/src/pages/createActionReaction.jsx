@@ -157,10 +157,42 @@ export default function CreateActionReaction() {
             }
 
             const data = await res.json();
+
+            // If server returned an auth code / token, POST it to the callback endpoint
+            const codeFromServer = data.code || data.token || data.authCode;
+            if (codeFromServer) {
+                const callbackBody = {
+                    code: codeFromServer,
+                    redirectUri: data.redirectUri || (process.env.REACT_APP_CLIENT_URL || "http://localhost:8081") + "/services/callback",
+                };
+                const cbRes = await fetch(`${API_BASE}/services/google/callback`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                    body: JSON.stringify(callbackBody),
+                });
+
+                const cbRaw = await cbRes.text();
+                let cbParsed;
+                try { cbParsed = JSON.parse(cbRaw); } catch { cbParsed = null; }
+                const cbMessage = cbParsed?.message || cbParsed?.error || cbRaw || `HTTP ${cbRes.status}`;
+
+                setResponseOk(cbRes.ok);
+                setResponseText(cbMessage);
+                setDialogOpen(true);
+
+                if (!cbRes.ok) {
+                    setError(cbMessage);
+                }
+
+                return;
+            }
+
+            // Otherwise open OAuth URL in a new tab so user can complete consent
             const connectUrl = data.url || data.connectUrl || data;
             if (!connectUrl) throw new Error("No connect URL returned from server");
-
-            // Open OAuth URL in a new tab so user can complete consent
             window.open(connectUrl, "_blank", "noopener,noreferrer");
         } catch (err) {
             const msg = err?.message || "Failed to open connect URL";
@@ -251,7 +283,7 @@ export default function CreateActionReaction() {
                                     onClick={handleGoogleServiceConnection}
                                     fullWidth
                                 >
-                                    Connect Gmail
+                                    Connect Google
                                 </Button>
                             </Grid>
 
