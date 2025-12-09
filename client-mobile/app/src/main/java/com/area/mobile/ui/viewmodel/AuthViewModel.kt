@@ -3,7 +3,7 @@ package com.area.mobile.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.area.mobile.data.model.User
-import com.area.mobile.data.repository.MockRepository
+import com.area.mobile.data.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +13,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val repository: MockRepository
+    private val authRepository: AuthRepository
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
@@ -22,11 +22,19 @@ class AuthViewModel @Inject constructor(
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
     
+    init {
+        // Load current user if logged in
+        viewModelScope.launch {
+            val user = authRepository.getCurrentUser()
+            _currentUser.value = user
+        }
+    }
+    
     fun login(email: String, password: String) {
         viewModelScope.launch {
             _uiState.value = AuthUiState.Loading
             try {
-                val result = repository.login(email, password)
+                val result = authRepository.login(email, password)
                 result.onSuccess { user ->
                     _currentUser.value = user
                     _uiState.value = AuthUiState.Success(user)
@@ -43,7 +51,7 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = AuthUiState.Loading
             try {
-                val result = repository.register(name, email, password)
+                val result = authRepository.register(email, password, name)
                 result.onSuccess { user ->
                     _currentUser.value = user
                     _uiState.value = AuthUiState.Success(user)
@@ -57,8 +65,11 @@ class AuthViewModel @Inject constructor(
     }
     
     fun logout() {
-        _currentUser.value = null
-        _uiState.value = AuthUiState.Idle
+        viewModelScope.launch {
+            authRepository.logout()
+            _currentUser.value = null
+            _uiState.value = AuthUiState.Idle
+        }
     }
     
     fun resetState() {

@@ -3,7 +3,7 @@ package com.area.mobile.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.area.mobile.data.model.Service
-import com.area.mobile.data.repository.MockRepository
+import com.area.mobile.data.repository.ServiceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +13,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ServicesViewModel @Inject constructor(
-    private val repository: MockRepository
+    private val serviceRepository: ServiceRepository
 ) : ViewModel() {
     
     private val _services = MutableStateFlow<List<Service>>(emptyList())
@@ -34,8 +34,11 @@ class ServicesViewModel @Inject constructor(
             _isLoading.value = true
             _error.value = null
             try {
-                repository.getServices().collect { serviceList ->
+                val result = serviceRepository.getAllServices()
+                result.onSuccess { serviceList ->
                     _services.value = serviceList
+                }.onFailure { exception ->
+                    _error.value = exception.message ?: "Failed to load services"
                 }
             } catch (e: Exception) {
                 _error.value = e.message ?: "Failed to load services"
