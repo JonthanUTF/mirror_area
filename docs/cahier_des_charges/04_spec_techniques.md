@@ -11,8 +11,12 @@
 ## 4.2 Architecture Modulaire
 L'application utilise un **Service Registry** dynamique :
 - `ServiceBase` : Classe parente pour tous les services
-- `ServiceRegistry` : Singleton gérant le chargement des services
-- `automation.js` : Boucle d'exécution agnostique (ne connait pas les services spécifiques)
+    - `registerAction(name, desc, params)`
+    - `registerReaction(name, desc, params)`
+    - `checkTrigger(action, area, params)` : Méthode à redéfinir
+    - `executeReaction(reaction, area, params)` : Méthode à redéfinir
+- `ServiceRegistry` : Singleton gérant le chargement des services (`register`, `getService`, `getAllServices`)
+- `automation.js` : Boucle d'exécution agnostique (ne connait pas les services spécifiques) qui itère sur les AREA actives toutes les 10s (configurable).
 
 ## 4.3 API REST
 Endpoints exposés :
