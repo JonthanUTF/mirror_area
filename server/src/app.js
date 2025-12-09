@@ -10,6 +10,7 @@ const { getAboutJson } = require('./services/aboutService');
 const { router: authRouter } = require('./routes/auth');
 const areasRouter = require('./routes/areas');
 const usersRouter = require('./routes/users');
+const servicesRouter = require('./routes/services');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -60,6 +61,7 @@ app.get('/about.json', (req, res) => {
 app.use('/auth', authRouter);
 app.use('/areas', areasRouter);
 app.use('/users', usersRouter);
+app.use('/services', servicesRouter);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });

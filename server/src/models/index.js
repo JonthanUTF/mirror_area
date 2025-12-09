@@ -107,6 +107,16 @@ User.hasMany(Area, { foreignKey: 'userId', as: 'areas' });
 Area.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 const Service = require('./Service')(sequelize);
+const UserService = require('./UserService')(sequelize);
+
+User.belongsToMany(Service, { through: UserService, foreignKey: 'userId', as: 'connectedServices' });
+Service.belongsToMany(User, { through: UserService, foreignKey: 'serviceId', as: 'users' });
+
+User.hasMany(UserService, { foreignKey: 'userId', as: 'serviceConnections' });
+UserService.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+Service.hasMany(UserService, { foreignKey: 'serviceId', as: 'connections' });
+UserService.belongsTo(Service, { foreignKey: 'serviceId', as: 'service' });
 
 
 const db = {
@@ -114,7 +124,8 @@ const db = {
   Sequelize,
   User,
   Area,
-  Service
+  Service,
+  UserService
 };
 
 module.exports = db;
