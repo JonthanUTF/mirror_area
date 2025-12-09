@@ -5,6 +5,7 @@ import Signup from "./pages/Signup";
 import CreateActionReaction from "./pages/createActionReaction";
 
 import AuthCallback from "./pages/AuthCallback";
+import ServicesCallback from "./pages/servicesCallback.jsx";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
       <Route path="/Signup" element={<Signup />} />
       <Route path="/home" element={<Home />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/services/callback" element={<ServicesCallback />} />
       <Route path="/" element={<Navigate to="/login" replace />} />
     </Routes>
   );
