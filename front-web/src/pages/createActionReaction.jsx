@@ -38,7 +38,6 @@ export default function CreateActionReaction() {
 
     const [error, setError] = useState("");
 
-    // dialog state for server response
     const [dialogOpen, setDialogOpen] = useState(false);
     const [responseText, setResponseText] = useState("");
     const [responseOk, setResponseOk] = useState(null);
@@ -140,6 +139,38 @@ export default function CreateActionReaction() {
         }
     };
 
+    const handleGoogleServiceConnection = async () => {
+        try {
+            const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
+            const token = localStorage.getItem("authToken");
+            const res = await fetch(`${API_BASE}/services/google/connect`, {
+                method: "GET",
+                headers: {
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!res.ok) {
+                const txt = await res.text();
+                throw new Error(txt || `HTTP ${res.status}`);
+            }
+
+            const data = await res.json();
+            const connectUrl = data.url || data.connectUrl || data;
+            if (!connectUrl) throw new Error("No connect URL returned from server");
+
+            // Open OAuth URL in a new tab so user can complete consent
+            window.open(connectUrl, "_blank", "noopener,noreferrer");
+        } catch (err) {
+            const msg = err?.message || "Failed to open connect URL";
+            setResponseOk(false);
+            setResponseText(msg);
+            setDialogOpen(true);
+            setError(msg);
+        }
+    };
+
     const intervalInvalid =
         actionType === "interval" && (!intervalS || isNaN(Number(intervalS)) || Number(intervalS) <= 0);
 
@@ -211,6 +242,17 @@ export default function CreateActionReaction() {
                                         ))}
                                     </Select>
                                 </FormControl>
+                            </Grid>
+
+                            {/* Connect Google button */}
+                            <Grid item xs={12} sm={6} sx={{ display: 'flex', alignItems: 'center' }}>
+                                <Button
+                                    variant="outlined"
+                                    onClick={handleGoogleServiceConnection}
+                                    fullWidth
+                                >
+                                    Connect Gmail
+                                </Button>
                             </Grid>
 
                             {/* conditional fields for reaction */}
