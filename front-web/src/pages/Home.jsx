@@ -35,7 +35,6 @@ export default function Home() {
         const txt = await res.text();
         throw new Error(txt || `HTTP ${res.status}`);
       }
-      // remove from local list
       setAreas((prev) => prev.filter((a) => a.id !== id));
     } catch (err) {
       console.error("Failed to delete area:", err);

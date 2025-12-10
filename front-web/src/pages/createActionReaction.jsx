@@ -141,7 +141,6 @@ export default function CreateActionReaction() {
 
     const handleGoogleServiceConnection = async () => {
         try {
-            // remember where to come back after OAuth (creation page)
             localStorage.setItem('oauth_return', window.location.pathname || '/');
              const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
              const token = localStorage.getItem("authToken");
@@ -160,8 +159,7 @@ export default function CreateActionReaction() {
 
             const data = await res.json();
 
-            // If server returned an auth code / token, POST it to the callback endpoint
-            const codeFromServer = data.code || data.token || data.authCode;
+            const codeFromServer = data.token;
             if (codeFromServer) {
                 const callbackBody = {
                     code: codeFromServer,
@@ -192,7 +190,6 @@ export default function CreateActionReaction() {
                 return;
             }
 
-            // Otherwise open OAuth URL in a new tab so user can complete consent
             const connectUrl = data.url || data.connectUrl || data;
             if (!connectUrl) throw new Error("No connect URL returned from server");
             window.open(connectUrl, "_blank", "noopener,noreferrer");

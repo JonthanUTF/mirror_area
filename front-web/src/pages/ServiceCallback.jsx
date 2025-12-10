@@ -12,7 +12,7 @@ export default function ServiceCallback() {
             const code = searchParams.get("code");
             const error = searchParams.get("error");
 
-            const serviceName = 'google'; // Hardcoded for now as per MVP plan
+            const serviceName = 'google';
 
             if (error) {
                 setStatus("Error: " + error);

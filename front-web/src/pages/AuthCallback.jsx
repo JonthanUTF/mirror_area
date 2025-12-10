@@ -11,12 +11,10 @@ export default function AuthCallback() {
 
     if (token) {
       localStorage.setItem('authToken', token);
-      // optional: clear query string and go to home
       navigate('/home', { replace: true });
       return;
     }
 
-    // fallback on error
     navigate(`/login${error ? `?error=${encodeURIComponent(error)}` : ''}`, { replace: true });
   }, [navigate]);
 

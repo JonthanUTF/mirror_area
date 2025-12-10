@@ -55,7 +55,7 @@ export default function Login() {
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", minWidth: "100vw" }}>
-      {/* Left: login */}
+      {/* Left */}
       <Box
         sx={{
           width: "50%",
@@ -119,7 +119,7 @@ export default function Login() {
 
       </Box>
 
-      {/* Right: hero / illustration */}
+      {/* Right */}
       <Box
         sx={{
           width: "50%",

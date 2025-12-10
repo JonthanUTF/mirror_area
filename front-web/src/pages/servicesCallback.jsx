@@ -41,11 +41,8 @@ export default function ServicesCallback() {
         setMessage(err?.message || "Network error");
         setOk(false);
       } finally {
-        // redirect back to page that initiated OAuth
         const returnTo = localStorage.getItem("oauth_return") || "/home";
-        // clear saved value
         localStorage.removeItem("oauth_return");
-        // give user a second to read message then navigate
         setTimeout(() => navigate(returnTo), 1500);
       }
     })();
