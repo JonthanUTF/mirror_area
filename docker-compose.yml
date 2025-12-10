@@ -1,14 +1,14 @@
-version: '3.8'
+
 
 services:
   # Base de données PostgreSQL
-  postgres:
+  db:
     image: postgres:15-alpine
     container_name: area_postgres
     environment:
       POSTGRES_DB: area_db
-      POSTGRES_USER: area_user
-      POSTGRES_PASSWORD: area_password
+      POSTGRES_USER: area
+      POSTGRES_PASSWORD: area
     ports:
       - "5432:5432"
     volumes:
@@ -16,26 +16,12 @@ services:
     networks:
       - area_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U area_user"]
+      test: ["CMD-SHELL", "pg_isready -U area"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Cache Redis
-  redis:
-    image: redis:7-alpine
-    container_name: area_redis
-    ports:
-      - "6379:6379"
-    networks:
-      - area_network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Serveur d'application NestJS
+  # Serveur d'application Node.js/Express
   server:
     build:
       context: ./server
@@ -43,41 +29,35 @@ services:
     container_name: area_server
     ports:
       - "8080:8080"
+    env_file:
+      - ./server/.env
     environment:
       NODE_ENV: production
       PORT: 8080
-      DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
-      DATABASE_USER: area_user
-      DATABASE_PASSWORD: area_password
-      DATABASE_NAME: area_db
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
-      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: area
+      DB_PASSWORD: area
+      DB_NAME: area_db
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-http://localhost:8080/auth/google/callback}
+      # Google credentials are now loaded from ./server/.env
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
+      db:
         condition: service_healthy
     networks:
       - area_network
     volumes:
-      - ./server/logs:/app/logs
+      - ./server/src:/app/src
 
-  # Client web - Serveur Nginx
-  client_web:
+  # Client Web React/Vite
+  web:
     build:
-      context: ./client-web
+      context: ./front-web
       dockerfile: Dockerfile
     container_name: area_web
     ports:
       - "8081:80"
-    environment:
-      VITE_API_URL: http://localhost:8080
     depends_on:
       - server
     networks:

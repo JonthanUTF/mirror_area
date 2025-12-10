@@ -1,20 +1,34 @@
 # 5. API REST
 
-## 5.1 Auth
+## 5.1 Auth (`/auth`)
 ### POST /auth/register
+Création de compte (email/password).
 ### POST /auth/login
-### GET  /auth/oauth/{provider}/callback
+Connexion (retourne un JWT).
+### GET /auth/google
+Initiation OAuth2 Google.
+### GET /auth/me
+Récupère l'utilisateur courant.
 
-## 5.2 Services
-### GET /services
-### POST /services/{name}/connect
-### DELETE /services/{name}
+## 5.2 Users (`/users`)
+### GET /users/:id
+Récupère le profil d'un utilisateur.
+### PUT /users/:id
+Met à jour le profil (nom, mot de passe).
+### DELETE /users/:id
+Supprime le compte.
 
-## 5.3 AREA
+## 5.3 AREA (`/areas`)
 ### GET /areas
+Liste les AREA de l'utilisateur.
+### GET /areas/:id
+Détails d'une AREA spécifique.
 ### POST /areas
-### PUT /areas/{id}
-### DELETE /areas/{id}
+Création d'une AREA (Action + Réaction + Paramètres).
+### PUT /areas/:id
+Modification d'une AREA.
+### DELETE /areas/:id
+Suppression d'une AREA.
 
 ## 5.4 about.json
 ### GET /about.json
