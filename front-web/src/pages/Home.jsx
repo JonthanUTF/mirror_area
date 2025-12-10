@@ -9,7 +9,9 @@ import {
   Switch,
   Paper,
   Grid,
+  IconButton,
 } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
 
 export default function Home() {
@@ -17,6 +19,28 @@ export default function Home() {
   const [areas, setAreas] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const deleteArea = async (id) => {
+    if (!window.confirm("Delete this workflow?")) return;
+    try {
+      const token = localStorage.getItem("authToken");
+      const res = await fetch(`http://localhost:8080/areas/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || `HTTP ${res.status}`);
+      }
+      setAreas((prev) => prev.filter((a) => a.id !== id));
+    } catch (err) {
+      console.error("Failed to delete area:", err);
+      setError(err?.message || "Failed to delete workflow");
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -54,13 +78,23 @@ export default function Home() {
       <Card sx={{ minWidth: 675, display: "flex",}}>
         <CardContent>
           <Box sx={{ display: "flex",  width: "100%" }}>
-            <Box>
+            <Box sx={{ flex: 1 }}>
               <Typography variant="h6">{item.name}</Typography>
               <Typography variant="caption" color="text.secondary">
                 {item.active ? "Active" : "Inactive"}
               </Typography>
             </Box>
-            <Switch checked={!!item.active} disabled  />
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Switch checked={!!item.active} disabled />
+              <IconButton
+                aria-label="delete"
+                color="error"
+                onClick={() => deleteArea(item.id)}
+                size="large"
+              >
+                <DeleteIcon />
+              </IconButton>
+            </Box>
           </Box>
 
           <Box sx={{ mt: 2 }}>

@@ -1,36 +1,22 @@
 import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function AuthCallback() {
-    const navigate = useNavigate();
-    const location = useLocation();
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        // Parse query params to get token
-        const searchParams = new URLSearchParams(location.search);
-        const token = searchParams.get("token");
-        const error = searchParams.get("error");
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token') || params.get('access_token') || params.get('authToken');
+    const error = params.get('error');
 
-        if (token) {
-            console.log("OAuth successful, saving token...");
-            localStorage.setItem("authToken", token);
-            navigate("/home");
-        } else {
-            console.error("OAuth failed:", error);
-            navigate("/login?error=" + (error || "auth_failed"));
-        }
-    }, [location, navigate]);
+    if (token) {
+      localStorage.setItem('authToken', token);
+      navigate('/home', { replace: true });
+      return;
+    }
 
-    return (
-        <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '100vh',
-            background: '#1b092d',
-            color: 'white'
-        }}>
-            <h2>Processing Login...</h2>
-        </div>
-    );
+    navigate(`/login${error ? `?error=${encodeURIComponent(error)}` : ''}`, { replace: true });
+  }, [navigate]);
+
+  return null;
 }

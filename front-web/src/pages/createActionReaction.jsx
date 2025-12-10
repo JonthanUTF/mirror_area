@@ -38,7 +38,6 @@ export default function CreateActionReaction() {
 
     const [error, setError] = useState("");
 
-    // dialog state for server response
     const [dialogOpen, setDialogOpen] = useState(false);
     const [responseText, setResponseText] = useState("");
     const [responseOk, setResponseOk] = useState(null);
@@ -74,7 +73,7 @@ export default function CreateActionReaction() {
             actionType === "interval" ? "timer" :
             actionService;
         const computedReactionService =
-            reactionType === "send_email" ? "email" :
+            reactionType === "send_email" ? "google" :
             reactionType === "log_message" ? "log_message" :
             reactionService;
         setActionService(computedActionService);
@@ -133,6 +132,69 @@ export default function CreateActionReaction() {
             }
         } catch (err) {
             const msg = err?.message || "Network error";
+            setResponseOk(false);
+            setResponseText(msg);
+            setDialogOpen(true);
+            setError(msg);
+        }
+    };
+
+    const handleGoogleServiceConnection = async () => {
+        try {
+            localStorage.setItem('oauth_return', window.location.pathname || '/');
+             const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
+             const token = localStorage.getItem("authToken");
+             const res = await fetch(`${API_BASE}/services/google/connect`, {
+                 method: "GET",
+                 headers: {
+                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                     "Content-Type": "application/json",
+                 },
+             });
+
+            if (!res.ok) {
+                const txt = await res.text();
+                throw new Error(txt || `HTTP ${res.status}`);
+            }
+
+            const data = await res.json();
+
+            const codeFromServer = data.token;
+            if (codeFromServer) {
+                const callbackBody = {
+                    code: codeFromServer,
+                    redirectUri: data.redirectUri || (process.env.REACT_APP_CLIENT_URL || "http://localhost:8081") + "/services/callback",
+                };
+                const cbRes = await fetch(`${API_BASE}/services/google/callback`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                    body: JSON.stringify(callbackBody),
+                });
+
+                const cbRaw = await cbRes.text();
+                let cbParsed;
+                try { cbParsed = JSON.parse(cbRaw); } catch { cbParsed = null; }
+                const cbMessage = cbParsed?.message || cbParsed?.error || cbRaw || `HTTP ${cbRes.status}`;
+
+                setResponseOk(cbRes.ok);
+                setResponseText(cbMessage);
+                setDialogOpen(true);
+
+                if (!cbRes.ok) {
+                    setError(cbMessage);
+                }
+
+                return;
+            }
+
+            const connectUrl = data.url || data.connectUrl || data;
+            if (!connectUrl) throw new Error("No connect URL returned from server");
+            window.open(connectUrl, "_blank", "noopener,noreferrer");
+        } catch (err) {
+            const msg = err?.message || "Failed to open connect URL";
             setResponseOk(false);
             setResponseText(msg);
             setDialogOpen(true);
@@ -211,6 +273,17 @@ export default function CreateActionReaction() {
                                         ))}
                                     </Select>
                                 </FormControl>
+                            </Grid>
+
+                            {/* Connect Google button */}
+                            <Grid item xs={12} sm={6} sx={{ display: 'flex', alignItems: 'center' }}>
+                                <Button
+                                    variant="outlined"
+                                    onClick={handleGoogleServiceConnection}
+                                    fullWidth
+                                >
+                                    Connect Google
+                                </Button>
                             </Grid>
 
                             {/* conditional fields for reaction */}
