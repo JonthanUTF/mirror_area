@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Grid from "@mui/material/Grid";
 import {
   Box,
   Card,
@@ -7,8 +8,6 @@ import {
   Typography,
   CircularProgress,
   Switch,
-  Paper,
-  Grid,
   IconButton,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -94,9 +93,9 @@ export default function Home() {
     };
   }, []);
 
-  const renderAreaCard = (item, idx) => (
-    <Grid item xs={12} sm={6} key={item.id ?? `${item.name}-${idx}`}>
-      <Card sx={{ width: "100%", display: "flex", backgroundColor: "rgba(255,255,255,0.05)" }}>
+  const renderAreaCard = (item) => (
+    <Grid size={{ xs: 12, sm: 6 }} key={item}>
+      <Card sx={{ width: "100%", display: "flex", backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 6 }}>
         <CardContent>
           <Box sx={{ display: "flex", width: "100%" }}>
             <Box sx={{ flex: 1 }}>
@@ -174,7 +173,7 @@ export default function Home() {
       </Box>
 
       {/* Stats grid */}
-      <Box sx={{ width: "100%", mt: 4 }}>
+      <Box sx={{ width: "100%", mt: 2 }}>
         <Box
           sx={{
             display: "flex",
@@ -189,7 +188,7 @@ export default function Home() {
               <Box
                 key={index}
                 sx={{
-                  width: { xs: "50%", lg: "25%" }, // mimic Grid xs=6 lg=3
+                  width: "25%",
                   boxSizing: "border-box",
                   p: 0,
                 }}
@@ -255,8 +254,8 @@ export default function Home() {
         ) : areas.length === 0 ? (
           <Typography color="text.secondary">No workflows found.</Typography>
         ) : (
-          <Grid container spacing={2} sx={{ width: "100%" }}> {/* parent full width */}
-             {areas.map((item, idx) => renderAreaCard(item, idx))}
+          <Grid container spacing={2}>
+             {areas.map((item) => renderAreaCard(item))}
            </Grid>
          )}
       </Box>
