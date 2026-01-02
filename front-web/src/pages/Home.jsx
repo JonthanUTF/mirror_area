@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
+import Sidebar from "../Sidebar";
 
 
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
@@ -131,6 +132,7 @@ export default function Home() {
   );
 
   return (
+    <>
     <Box
       sx={{
         display: "flex",
@@ -142,7 +144,6 @@ export default function Home() {
         color: "#fff",
       }}
     >
-      {/* Header: title + description on the left, action button aligned right */}
       <Box sx={{ width: "100%", mt: 2 }}>
         <Box
           sx={{
@@ -153,12 +154,10 @@ export default function Home() {
             py: 1,
           }}
         >
-          <Box>
+          <Box sx= {{ display: "flex", alignItems: "center", gap: 3 }}>
+            <Sidebar />
             <Typography variant="h4" component="h1">
               Dashboard
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Manage and monitor your automations
             </Typography>
           </Box>
 
@@ -255,10 +254,11 @@ export default function Home() {
           <Typography color="text.secondary">No workflows found.</Typography>
         ) : (
           <Grid container spacing={2}>
-             {areas.map((item) => renderAreaCard(item))}
-           </Grid>
-         )}
+            {areas.map((item) => renderAreaCard(item))}
+          </Grid>
+        )}
       </Box>
     </Box>
+    </>
   );
 }
