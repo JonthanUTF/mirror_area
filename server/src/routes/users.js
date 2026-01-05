@@ -30,17 +30,23 @@ router.get('/:id', authenticateToken, async (req, res) => {
 // Update user profile
 router.put('/:id', authenticateToken, async (req, res) => {
     try {
+        console.log("Update user");
         if (req.user.id !== req.params.id) {
             return res.status(403).json({ error: 'Unauthorized access' });
         }
 
-        const { name, password } = req.body;
+        console.log("Update user 1");
+
+        const { name, email, password } = req.body;
         const updates = {};
 
         if (name) updates.name = name;
+        if (email) updates.email = email;
         if (password) {
             updates.password = await bcrypt.hash(password, 10);
         }
+
+        console.log("Update user 2");
 
         const [updated] = await User.update(updates, {
             where: { id: req.params.id }

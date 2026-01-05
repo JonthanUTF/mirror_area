@@ -41,8 +41,14 @@ export default function Signup() {
             }
             const data = await res.json();
             const token = data.token;
+            const user = data.user;
             if (token) {
                 localStorage.setItem("authToken", token);
+            }
+            if (user) {
+                localStorage.setItem("userId", user.id);
+                localStorage.setItem("userName", user.name);
+                localStorage.setItem("userEmail", user.email);
             }
             navigate("/home");
         } catch (err) {
