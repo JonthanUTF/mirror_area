@@ -45,34 +45,35 @@ const authFactories = {
             return response.data;
         }
     },
-    twitch: {
-        getAuthUrl: (state) => {
-            const rootUrl = 'https://id.twitch.tv/oauth2/authorize';
+    github: {
+        getAuthUrl: () => {
+            const rootUrl = 'https://github.com/login/oauth/authorize';
             const options = {
-                client_id: process.env.TWITCH_CLIENT_ID,
-                redirect_uri: process.env.TWITCH_CALLBACK_URL || 'http://localhost:8080/auth/twitch/callback',
-                response_type: 'code',
-                scope: 'user:read:follows user:manage:blocked_users',
-                state: state || ''
+                client_id: process.env.GITHUB_CLIENT_ID,
+                redirect_uri: (process.env.CLIENT_URL || 'http://localhost:8081') + '/services/callback',
+                scope: [
+                    'repo',
+                    'read:org',
+                    'user'
+                ].join(' ')
             };
 
             const qs = new URLSearchParams(options);
             return `${rootUrl}?${qs.toString()}`;
         },
         exchangeCode: async (code, redirectUri) => {
-            const tokenUrl = 'https://id.twitch.tv/oauth2/token';
+            const tokenUrl = 'https://github.com/login/oauth/access_token';
             const values = {
+                client_id: process.env.GITHUB_CLIENT_ID,
+                client_secret: process.env.GITHUB_CLIENT_SECRET,
                 code,
-                client_id: process.env.TWITCH_CLIENT_ID,
-                client_secret: process.env.TWITCH_CLIENT_SECRET,
-                redirect_uri: redirectUri || process.env.TWITCH_CALLBACK_URL || 'http://localhost:8080/auth/twitch/callback',
-                grant_type: 'authorization_code',
+                redirect_uri: redirectUri
             };
 
-            const response = await axios.post(tokenUrl, new URLSearchParams(values).toString(), {
+            const response = await axios.post(tokenUrl, values, {
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
+                    'Accept': 'application/json'
+                }
             });
             return response.data;
         }

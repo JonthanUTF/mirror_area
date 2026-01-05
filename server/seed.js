@@ -8,6 +8,12 @@ const services = [
         active: true
     },
     {
+        name: 'github',
+        label: 'GitHub',
+        icon: 'https://cdn-icons-png.flaticon.com/512/25/25231.png',
+        active: true
+    },
+    {
         name: 'weather',
         label: 'Météo',
         icon: 'https://cdn-icons-png.flaticon.com/512/4052/4052984.png',
