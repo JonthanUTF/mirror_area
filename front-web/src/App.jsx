@@ -19,8 +19,6 @@ const PrivateRoute = () => {
 }
 
 function App() {
-  console.log("TEST log");
-  localStorage.setItem("authToken", "");
   return (
     <Routes>
       {/* Public routes */}

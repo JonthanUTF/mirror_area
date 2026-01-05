@@ -36,6 +36,17 @@ export default function CreateActionReaction() {
     const [subject, setSubject] = useState("");
     const [body, setBody] = useState("");
 
+    // GitHub parameters
+    const [githubOwner, setGithubOwner] = useState("");
+    const [githubRepo, setGithubRepo] = useState("");
+    const [githubBranch, setGithubBranch] = useState("main");
+    const [githubTitle, setGithubTitle] = useState("");
+    const [githubBody, setGithubBody] = useState("");
+    const [githubPath, setGithubPath] = useState("");
+    const [githubContent, setGithubContent] = useState("");
+    const [githubIssueNumber, setGithubIssueNumber] = useState("");
+    const [githubTagName, setGithubTagName] = useState("");
+
     const [error, setError] = useState("");
 
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -45,11 +56,20 @@ export default function CreateActionReaction() {
     const actionTypeOptions = [
         { value: "interval", label: "Interval Timer" },
         { value: "check_temp", label: "Check Condition (rain, snow, clear)" },
+        { value: "issue_created", label: "GitHub: Issue Created" },
+        { value: "pr_opened", label: "GitHub: PR Opened" },
+        { value: "push_committed", label: "GitHub: Push/Commit" },
+        { value: "release_published", label: "GitHub: Release Published" },
+        { value: "repo_starred", label: "GitHub: Repo Starred" },
     ];
 
     const reactionTypeOptions = [
         { value: "send_email", label: "Send Mail" },
         { value: "log_message", label: "Console Log" },
+        { value: "create_issue", label: "GitHub: Create Issue" },
+        { value: "comment_issue", label: "GitHub: Comment Issue" },
+        { value: "create_file", label: "GitHub: Create File" },
+        { value: "create_release", label: "GitHub: Create Release" },
     ];
 
 
@@ -71,10 +91,12 @@ export default function CreateActionReaction() {
         const computedActionService =
             actionType === "check_temp" ? "weather" :
             actionType === "interval" ? "timer" :
+            ["issue_created", "pr_opened", "push_committed", "release_published", "repo_starred"].includes(actionType) ? "github" :
             actionService;
         const computedReactionService =
             reactionType === "send_email" ? "google" :
-            reactionType === "log_message" ? "log_message" :
+            reactionType === "log_message" ? "console" :
+            ["create_issue", "comment_issue", "create_file", "create_release"].includes(reactionType) ? "github" :
             reactionService;
         setActionService(computedActionService);
         setReactionService(computedReactionService);
@@ -88,12 +110,68 @@ export default function CreateActionReaction() {
             mergedParams = { ...mergedParams, interval: intervalS ? Number(intervalS) : null };
         }
 
+        // GitHub action parameters
+        if (["issue_created", "pr_opened", "push_committed", "release_published", "repo_starred"].includes(actionType)) {
+            mergedParams = {
+                ...mergedParams,
+                owner: githubOwner,
+                repo: githubRepo,
+            };
+            if (actionType === "push_committed") {
+                mergedParams.branch = githubBranch;
+            }
+        }
+
         if (reactionType === "send_email") {
             mergedParams = {
                 ...mergedParams,
                 recipient,
                 subject,
                 body,
+            };
+        }
+
+        // GitHub reaction parameters
+        if (reactionType === "create_issue") {
+            mergedParams = {
+                ...mergedParams,
+                owner: githubOwner,
+                repo: githubRepo,
+                title: githubTitle,
+                body: githubBody,
+            };
+        }
+
+        if (reactionType === "comment_issue") {
+            mergedParams = {
+                ...mergedParams,
+                owner: githubOwner,
+                repo: githubRepo,
+                issue_number: Number(githubIssueNumber),
+                body: githubBody,
+            };
+        }
+
+        if (reactionType === "create_file") {
+            mergedParams = {
+                ...mergedParams,
+                owner: githubOwner,
+                repo: githubRepo,
+                path: githubPath,
+                content: githubContent,
+                message: githubTitle || `Update ${githubPath}`,
+                branch: githubBranch,
+            };
+        }
+
+        if (reactionType === "create_release") {
+            mergedParams = {
+                ...mergedParams,
+                owner: githubOwner,
+                repo: githubRepo,
+                tag_name: githubTagName,
+                name: githubTitle,
+                body: githubBody,
             };
         }
 
@@ -202,6 +280,37 @@ export default function CreateActionReaction() {
         }
     };
 
+    const handleGitHubServiceConnection = async () => {
+        try {
+            localStorage.setItem('oauth_return', window.location.pathname || '/');
+            const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
+            const token = localStorage.getItem("authToken");
+            const res = await fetch(`${API_BASE}/services/github/connect`, {
+                method: "GET",
+                headers: {
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!res.ok) {
+                const txt = await res.text();
+                throw new Error(txt || `HTTP ${res.status}`);
+            }
+
+            const data = await res.json();
+            const connectUrl = data.url || data.connectUrl;
+            if (!connectUrl) throw new Error("No connect URL returned from server");
+            window.open(connectUrl, "_blank", "noopener,noreferrer");
+        } catch (err) {
+            const msg = err?.message || "Failed to connect GitHub";
+            setResponseOk(false);
+            setResponseText(msg);
+            setDialogOpen(true);
+            setError(msg);
+        }
+    };
+
     const intervalInvalid =
         actionType === "interval" && (!intervalS || isNaN(Number(intervalS)) || Number(intervalS) <= 0);
 
@@ -285,6 +394,257 @@ export default function CreateActionReaction() {
                                     Connect Google
                                 </Button>
                             </Grid>
+
+                            {/* Connect GitHub button */}
+                            <Grid item xs={12} sm={6} sx={{ display: 'flex', alignItems: 'center' }}>
+                                <Button
+                                    variant="outlined"
+                                    onClick={handleGitHubServiceConnection}
+                                    fullWidth
+                                >
+                                    Connect GitHub
+                                </Button>
+                            </Grid>
+
+                            {/* GitHub Action Parameters */}
+                            {["issue_created", "pr_opened", "push_committed", "release_published", "repo_starred"].includes(actionType) && (
+                                <>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            label="GitHub Owner"
+                                            fullWidth
+                                            required
+                                            value={githubOwner}
+                                            onChange={(e) => setGithubOwner(e.target.value)}
+                                            placeholder="octocat"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            label="Repository Name"
+                                            fullWidth
+                                            required
+                                            value={githubRepo}
+                                            onChange={(e) => setGithubRepo(e.target.value)}
+                                            placeholder="my-repo"
+                                        />
+                                    </Grid>
+                                    {actionType === "push_committed" && (
+                                        <Grid item xs={12} sm={6}>
+                                            <TextField
+                                                label="Branch"
+                                                fullWidth
+                                                value={githubBranch}
+                                                onChange={(e) => setGithubBranch(e.target.value)}
+                                                placeholder="main"
+                                            />
+                                        </Grid>
+                                    )}
+                                </>
+                            )}
+
+                            {/* GitHub Reaction Parameters */}
+                            {reactionType === "create_issue" && (
+                                <>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            label="GitHub Owner"
+                                            fullWidth
+                                            required
+                                            value={githubOwner}
+                                            onChange={(e) => setGithubOwner(e.target.value)}
+                                            placeholder="octocat"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            label="Repository Name"
+                                            fullWidth
+                                            required
+                                            value={githubRepo}
+                                            onChange={(e) => setGithubRepo(e.target.value)}
+                                            placeholder="my-repo"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            label="Issue Title"
+                                            fullWidth
+                                            required
+                                            value={githubTitle}
+                                            onChange={(e) => setGithubTitle(e.target.value)}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            label="Issue Body"
+                                            fullWidth
+                                            multiline
+                                            minRows={3}
+                                            value={githubBody}
+                                            onChange={(e) => setGithubBody(e.target.value)}
+                                        />
+                                    </Grid>
+                                </>
+                            )}
+
+                            {reactionType === "comment_issue" && (
+                                <>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            label="GitHub Owner"
+                                            fullWidth
+                                            required
+                                            value={githubOwner}
+                                            onChange={(e) => setGithubOwner(e.target.value)}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            label="Repository Name"
+                                            fullWidth
+                                            required
+                                            value={githubRepo}
+                                            onChange={(e) => setGithubRepo(e.target.value)}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            label="Issue/PR Number"
+                                            fullWidth
+                                            required
+                                            type="number"
+                                            value={githubIssueNumber}
+                                            onChange={(e) => setGithubIssueNumber(e.target.value)}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            label="Comment"
+                                            fullWidth
+                                            required
+                                            multiline
+                                            minRows={3}
+                                            value={githubBody}
+                                            onChange={(e) => setGithubBody(e.target.value)}
+                                        />
+                                    </Grid>
+                                </>
+                            )}
+
+                            {reactionType === "create_file" && (
+                                <>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            label="GitHub Owner"
+                                            fullWidth
+                                            required
+                                            value={githubOwner}
+                                            onChange={(e) => setGithubOwner(e.target.value)}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            label="Repository Name"
+                                            fullWidth
+                                            required
+                                            value={githubRepo}
+                                            onChange={(e) => setGithubRepo(e.target.value)}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            label="File Path"
+                                            fullWidth
+                                            required
+                                            value={githubPath}
+                                            onChange={(e) => setGithubPath(e.target.value)}
+                                            placeholder="path/to/file.txt"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            label="Branch"
+                                            fullWidth
+                                            value={githubBranch}
+                                            onChange={(e) => setGithubBranch(e.target.value)}
+                                            placeholder="main"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            label="Commit Message"
+                                            fullWidth
+                                            value={githubTitle}
+                                            onChange={(e) => setGithubTitle(e.target.value)}
+                                            placeholder="Update file"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            label="File Content"
+                                            fullWidth
+                                            required
+                                            multiline
+                                            minRows={4}
+                                            value={githubContent}
+                                            onChange={(e) => setGithubContent(e.target.value)}
+                                        />
+                                    </Grid>
+                                </>
+                            )}
+
+                            {reactionType === "create_release" && (
+                                <>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            label="GitHub Owner"
+                                            fullWidth
+                                            required
+                                            value={githubOwner}
+                                            onChange={(e) => setGithubOwner(e.target.value)}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            label="Repository Name"
+                                            fullWidth
+                                            required
+                                            value={githubRepo}
+                                            onChange={(e) => setGithubRepo(e.target.value)}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            label="Tag Name"
+                                            fullWidth
+                                            required
+                                            value={githubTagName}
+                                            onChange={(e) => setGithubTagName(e.target.value)}
+                                            placeholder="v1.0.0"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            label="Release Name"
+                                            fullWidth
+                                            value={githubTitle}
+                                            onChange={(e) => setGithubTitle(e.target.value)}
+                                            placeholder="Version 1.0.0"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            label="Release Description"
+                                            fullWidth
+                                            multiline
+                                            minRows={3}
+                                            value={githubBody}
+                                            onChange={(e) => setGithubBody(e.target.value)}
+                                        />
+                                    </Grid>
+                                </>
+                            )}
 
                             {/* conditional fields for reaction */}
                             {reactionType === "send_email" && (
