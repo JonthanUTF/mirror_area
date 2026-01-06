@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../Sidebar";
+import Sidebar from "../components/Sidebar";
 
 
 import AccountTreeIcon from '@mui/icons-material/AccountTree';

@@ -3,7 +3,8 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { useState } from 'react';
 import validator from "validator";
 
-import Sidebar from  "../Sidebar";
+import Sidebar from "../components/Sidebar";
+
 
 
 export default function Settings() {
