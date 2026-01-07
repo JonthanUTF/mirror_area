@@ -4,11 +4,62 @@ const bcrypt = require('bcryptjs');
 const { User } = require('../models');
 const { authenticateToken } = require('./auth');
 
+// helper to detect admin users (support isAdmin boolean or role string)
+const isAdmin = (user) => {
+    if (!user) return false;
+    if (user.role && String(user.role).toLowerCase() === 'admin') return true;
+    return false;
+};
+
+// Get all users (requires auth)
+router.get('/', authenticateToken, async (req, res) => {
+    try {
+        // only admins may list all users
+        if (!isAdmin(req.user)) {
+            return res.status(403).json({ error: 'Admin privileges required' });
+        }
+
+        const users = await User.findAll({
+            attributes: ['id', 'email', 'name', 'role', 'googleId', 'createdAt', 'updatedAt']
+        });
+        res.json({ users });
+    } catch (error) {
+        console.error('Get users error:', error);
+        res.status(500).json({ error: 'Failed to retrieve users' });
+    }
+});
+
+// Create a new user (admin only)
+router.post('/create', authenticateToken, async (req, res) => {
+    try {
+        if (!isAdmin(req.user)) {
+            return res.status(403).json({ error: 'Admin privileges required' });
+        }
+
+        const { name, email, password, role } = req.body;
+        if (!email || !password) {
+            return res.status(400).json({ error: 'Email and password are required' });
+        }
+
+        const hashed = await bcrypt.hash(password, 10);
+        const newUser = await User.create({ name, email, password: hashed, role });
+
+        const user = await User.findByPk(newUser.id, {
+            attributes: ['id', 'email', 'name', 'role', 'googleId', 'createdAt', 'updatedAt']
+        });
+
+        res.status(201).json({ user });
+    } catch (error) {
+        console.error('Create user error:', error);
+        res.status(500).json({ error: 'Failed to create user' });
+    }
+});
+
 // Get user profile
 router.get('/:id', authenticateToken, async (req, res) => {
     try {
-        // Users can only access their own profile
-        if (req.user.id !== req.params.id) {
+        // Users can access their own profile, admins can access any
+        if (!isAdmin(req.user) && String(req.user.id) !== String(req.params.id)) {
             return res.status(403).json({ error: 'Unauthorized access' });
         }
 
@@ -31,11 +82,10 @@ router.get('/:id', authenticateToken, async (req, res) => {
 router.put('/:id', authenticateToken, async (req, res) => {
     try {
         console.log("Update user");
-        if (req.user.id !== req.params.id) {
+        // allow admins to update other users
+        if (!isAdmin(req.user) && String(req.user.id) !== String(req.params.id)) {
             return res.status(403).json({ error: 'Unauthorized access' });
         }
-
-        console.log("Update user 1");
 
         const { name, email, password } = req.body;
         const updates = {};
@@ -45,8 +95,6 @@ router.put('/:id', authenticateToken, async (req, res) => {
         if (password) {
             updates.password = await bcrypt.hash(password, 10);
         }
-
-        console.log("Update user 2");
 
         const [updated] = await User.update(updates, {
             where: { id: req.params.id }
@@ -73,7 +121,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
 // Delete user account
 router.delete('/:id', authenticateToken, async (req, res) => {
     try {
-        if (req.user.id !== req.params.id) {
+        // allow admins to delete other users
+        if (!isAdmin(req.user) && String(req.user.id) !== String(req.params.id)) {
             return res.status(403).json({ error: 'Unauthorized access' });
         }
 
