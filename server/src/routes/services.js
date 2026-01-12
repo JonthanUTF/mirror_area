@@ -163,12 +163,17 @@ router.post('/:serviceName/callback', authenticateToken, async (req, res) => {
         }
 
         // 3. Save to UserService (Upsert)
+        // Note: GitHub tokens don't expire (no expires_in), so we set a far-future date
+        const expiresAt = tokenData.expires_in
+            ? new Date(Date.now() + tokenData.expires_in * 1000)
+            : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 year for GitHub
+
         const [userService, created] = await UserService.upsert({
             userId: req.user.id,
             serviceId: service.id,
             accessToken: tokenData.access_token,
-            refreshToken: tokenData.refresh_token, // Only present if access_type=offline
-            expiresAt: new Date(Date.now() + tokenData.expires_in * 1000)
+            refreshToken: tokenData.refresh_token || null,
+            expiresAt: expiresAt
         }, {
             returning: true
         });
