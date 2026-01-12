@@ -16,3 +16,4 @@ Chaque service dispose de :
 - [OneDrive](onedrive.md)
 - [Twitter (X)](twitter.md)
 - [Timer](timer.md)
+- [Spotify](spotify.md)
