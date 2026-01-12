@@ -1,6 +1,6 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const SpotifyStrategy = require('passport-spotify').Strategy;
+const TwitchStrategy = require('passport-twitch-new').Strategy;
 const { User } = require('../models');
 
 passport.serializeUser((user, done) => {
@@ -48,34 +48,29 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   );
 }
 
-// Spotify OAuth Strategy
-if (process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET) {
-  console.log('Registering Spotify OAuth strategy...');
+// Twitch OAuth Strategy
+if (process.env.TWITCH_CLIENT_ID && process.env.TWITCH_CLIENT_SECRET) {
+  console.log('Registering Twitch OAuth strategy...');
   passport.use(
-    new SpotifyStrategy(
+    new TwitchStrategy(
       {
-        clientID: process.env.SPOTIFY_CLIENT_ID,
-        clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-        callbackURL: process.env.SPOTIFY_CALLBACK_URL || 'http://localhost:8080/auth/spotify/callback',
-        scope: [
-          'user-library-read',
-          'playlist-modify-public',
-          'playlist-modify-private',
-          'user-modify-playback-state'
-        ],
+        clientID: process.env.TWITCH_CLIENT_ID,
+        clientSecret: process.env.TWITCH_CLIENT_SECRET,
+        callbackURL: process.env.TWITCH_CALLBACK_URL || 'http://localhost:8080/auth/twitch/callback',
+        scope: ['user:read:follows', 'user:manage:blocked_users'],
         passReqToCallback: true
       },
-      async (req, accessToken, refreshToken, expiresIn, profile, done) => {
+      async (req, accessToken, refreshToken, profile, done) => {
         try {
-          console.log('Spotify OAuth callback received...');
+          console.log('Twitch OAuth callback received...');
           
-          // User must be authenticated via JWT to connect Spotify
+          // User must be authenticated via JWT to connect Twitch
           if (!req.user) {
-            return done(null, false, { message: 'User must be logged in to connect Spotify' });
+            return done(null, false, { message: 'User must be logged in to connect Twitch' });
           }
 
-          // Calculate token expiration date
-          const expiresAt = new Date(Date.now() + expiresIn * 1000);
+          // Calculate token expiration (Twitch tokens typically expire in ~4 hours)
+          const expiresAt = new Date(Date.now() + 4 * 60 * 60 * 1000);
 
           // Find user by ID from JWT token
           const user = await User.findByPk(req.user.id);
@@ -84,18 +79,19 @@ if (process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET) {
             return done(null, false, { message: 'User not found' });
           }
 
-          // Update user with Spotify credentials
+          // Update user with Twitch credentials
           await user.update({
-            spotifyAccessToken: accessToken,
-            spotifyRefreshToken: refreshToken,
-            spotifyTokenExpiresAt: expiresAt,
-            spotifyUserId: profile.id
+            twitchAccessToken: accessToken,
+            twitchRefreshToken: refreshToken,
+            twitchTokenExpiresAt: expiresAt,
+            twitchId: profile.id,
+            twitchUsername: profile.login
           });
 
-          console.log(`Spotify connected for user ${user.id}`);
+          console.log(`Twitch connected for user ${user.id}`);
           return done(null, user);
         } catch (error) {
-          console.error('Spotify Strategy Error:', error);
+          console.error('Twitch Strategy Error:', error);
           return done(error, null);
         }
       }

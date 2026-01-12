@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
@@ -19,31 +18,22 @@ const PrivateRoute = () => {
   return <Outlet />;
 }
 
-const initializeLocalStorage = () => {
-  const defaults = {
-    authToken: "",
-    userId: "",
-    userName: "",
-    userEmail: "",
-    oauth_return: "",
-  };
-
-  Object.entries(defaults).forEach(([key, defaultValue]) => {
-    if (localStorage.getItem(key) === null) {
-      localStorage.setItem(key, defaultValue);
-    }
-  });
-};
-
 function App() {
-  useEffect(() => {
-    initializeLocalStorage();
-  }, []);
+  // Note: Do NOT clear localStorage here as it logs users out on every page load
+  // Only initialize values if they don't exist
+  if (!localStorage.getItem("authToken")) {
+    localStorage.setItem("authToken", "");
+  }
+  if (!localStorage.getItem("oauth_return")) {
+    localStorage.setItem("oauth_return", "");
+  }
+
   return (
     <Routes>
       {/* Public routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/admin" element={<AdminPage />} />
 
       {/* Protected routes */}
       <Route element={<PrivateRoute/>}>
@@ -52,7 +42,6 @@ function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path='/settings' element={<Settings/>} />
         <Route path='/home' element={<Home/>} />
-        <Route path="/admin" element={<AdminPage />} />
       </Route>
       
       <Route path="/" element={<Navigate to="/login" replace />} />

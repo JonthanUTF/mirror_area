@@ -153,25 +153,55 @@ router.get('/me', authenticateToken, async (req, res) => {
   }
 });
 
-// ===== SPOTIFY OAUTH ROUTES =====
+// ===== TWITCH OAUTH ROUTES =====
 
 /**
- * @route   GET /auth/spotify
- * @desc    Initiate Spotify OAuth flow
- * @access  Private (requires JWT authentication)
+ * @route   GET /auth/twitch
+ * @desc    Initiate Twitch OAuth flow
+ * @access  Private (requires JWT authentication) OR with state param
  */
-router.get('/spotify', authenticateToken, async (req, res, next) => {
-  console.log('[Auth] Initiating Spotify OAuth...');
-  // Pass user info through request for passport strategy
+router.get('/twitch', (req, res, next) => {
+  console.log('[Auth] Initiating Twitch OAuth...');
+  
+  // Get JWT from Authorization header OR from state query param
+  let token = null;
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  } else if (req.query.state) {
+    token = req.query.state;
+  }
+  
+  if (!token) {
+    return res.status(401).json({ error: 'Authentication required. Please login first.' });
+  }
+  
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    req.user = { id: payload.id, email: payload.email };
+    // Store token in session for callback
+    req.session = req.session || {};
+    req.session.jwtToken = token;
+  } catch (err) {
+    return res.status(403).json({ error: 'Invalid or expired token' });
+  }
+  
   next();
-}, passport.authenticate('spotify', { session: false }));
+}, (req, res, next) => {
+  // Pass the JWT as state to Twitch OAuth
+  const token = req.session?.jwtToken || req.query.state;
+  passport.authenticate('twitch', { 
+    session: false,
+    state: token
+  })(req, res, next);
+});
 
 /**
- * @route   GET /auth/spotify/callback
- * @desc    Spotify OAuth callback
- * @access  Public (handled by Spotify)
+ * @route   GET /auth/twitch/callback
+ * @desc    Twitch OAuth callback
+ * @access  Public (handled by Twitch)
  */
-router.get('/spotify/callback', 
+router.get('/twitch/callback', 
   // Extract JWT from query or state
   (req, res, next) => {
     const token = req.query.state || req.query.token;
@@ -180,32 +210,32 @@ router.get('/spotify/callback',
         const payload = jwt.verify(token, JWT_SECRET);
         req.user = { id: payload.id, email: payload.email };
       } catch (err) {
-        console.error('Token verification failed in Spotify callback:', err);
+        console.error('Token verification failed in Twitch callback:', err);
       }
     }
     next();
   },
-  passport.authenticate('spotify', { 
+  passport.authenticate('twitch', { 
     session: false,
-    failureRedirect: `${process.env.CLIENT_URL || 'http://localhost:8081'}/settings?spotify_error=auth_failed`
+    failureRedirect: `${process.env.CLIENT_URL || 'http://localhost:8081'}/settings?twitch_error=auth_failed`
   }),
   (req, res) => {
     try {
-      console.log('[Auth] Spotify connected successfully');
-      res.redirect(`${process.env.CLIENT_URL || 'http://localhost:8081'}/settings?spotify_connected=true`);
+      console.log('[Auth] Twitch connected successfully');
+      res.redirect(`${process.env.CLIENT_URL || 'http://localhost:8081'}/settings?twitch_connected=true`);
     } catch (error) {
-      console.error('Spotify callback error:', error);
-      res.redirect(`${process.env.CLIENT_URL || 'http://localhost:8081'}/settings?spotify_error=callback_failed`);
+      console.error('Twitch callback error:', error);
+      res.redirect(`${process.env.CLIENT_URL || 'http://localhost:8081'}/settings?twitch_error=callback_failed`);
     }
   }
 );
 
 /**
- * @route   POST /auth/spotify/disconnect
- * @desc    Disconnect Spotify account
+ * @route   POST /auth/twitch/disconnect
+ * @desc    Disconnect Twitch account
  * @access  Private
  */
-router.post('/spotify/disconnect', authenticateToken, async (req, res) => {
+router.post('/twitch/disconnect', authenticateToken, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);
     
@@ -214,45 +244,47 @@ router.post('/spotify/disconnect', authenticateToken, async (req, res) => {
     }
 
     await user.update({
-      spotifyAccessToken: null,
-      spotifyRefreshToken: null,
-      spotifyTokenExpiresAt: null,
-      spotifyUserId: null,
-      spotifyLastSavedTrackId: null
+      twitchAccessToken: null,
+      twitchRefreshToken: null,
+      twitchTokenExpiresAt: null,
+      twitchId: null,
+      twitchUsername: null,
+      twitchStreamLastStatus: null
     });
 
     res.json({ 
       success: true, 
-      message: 'Spotify disconnected successfully' 
+      message: 'Twitch disconnected successfully' 
     });
   } catch (error) {
-    console.error('Error disconnecting Spotify:', error);
+    console.error('Error disconnecting Twitch:', error);
     res.status(500).json({ 
-      error: 'Failed to disconnect Spotify' 
+      error: 'Failed to disconnect Twitch' 
     });
   }
 });
 
 /**
- * @route   GET /auth/spotify/status
- * @desc    Check Spotify connection status
+ * @route   GET /auth/twitch/status
+ * @desc    Check Twitch connection status
  * @access  Private
  */
-router.get('/spotify/status', authenticateToken, async (req, res) => {
+router.get('/twitch/status', authenticateToken, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
-      attributes: ['spotifyAccessToken', 'spotifyRefreshToken', 'spotifyUserId']
+      attributes: ['twitchAccessToken', 'twitchRefreshToken', 'twitchId', 'twitchUsername']
     });
 
-    const isConnected = !!(user && user.spotifyAccessToken && user.spotifyRefreshToken);
+    const isConnected = !!(user && user.twitchAccessToken && user.twitchRefreshToken);
 
     res.json({
       connected: isConnected,
-      userId: user?.spotifyUserId || null
+      twitchId: user?.twitchId || null,
+      twitchUsername: user?.twitchUsername || null
     });
   } catch (error) {
-    console.error('Error checking Spotify status:', error);
-    res.status(500).json({ error: 'Failed to check Spotify status' });
+    console.error('Error checking Twitch status:', error);
+    res.status(500).json({ error: 'Failed to check Twitch status' });
   }
 });
 

@@ -53,27 +53,32 @@ const User = sequelize.define('User', {
       isIn: [['user', 'admin']]
     }
   },
-  // Spotify OAuth tokens
-  spotifyAccessToken: {
+  // Twitch OAuth tokens
+  twitchAccessToken: {
     type: DataTypes.TEXT,
     allowNull: true
   },
-  spotifyRefreshToken: {
+  twitchRefreshToken: {
     type: DataTypes.TEXT,
     allowNull: true
   },
-  spotifyTokenExpiresAt: {
+  twitchTokenExpiresAt: {
     type: DataTypes.DATE,
     allowNull: true
   },
-  spotifyUserId: {
+  twitchId: {
     type: DataTypes.STRING,
     allowNull: true
   },
-  // Trigger state tracking for Spotify
-  spotifyLastSavedTrackId: {
+  twitchUsername: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  // Trigger state tracking for Twitch
+  twitchStreamLastStatus: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    defaultValue: {}
   }
 }, {
   tableName: 'users',
