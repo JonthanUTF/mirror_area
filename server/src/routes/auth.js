@@ -41,7 +41,8 @@ router.post('/register', async (req, res) => {
     const user = await User.create({
       email,
       password: hashedPassword,
-      name: name || null
+      name: name || null,
+      role: "user"
     });
 
     const token = generateToken(user);
@@ -152,21 +153,38 @@ router.get('/me', authenticateToken, async (req, res) => {
   }
 });
 
-function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+async function authenticateToken(req, res, next) {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
 
-  if (!token) {
-    return res.status(401).json({ error: 'Access token required' });
-  }
+    if (!token) {
+      return res.status(401).json({ error: 'Access token required' });
+    }
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) {
+    let payload;
+    try {
+      payload = jwt.verify(token, JWT_SECRET);
+    } catch (err) {
       return res.status(403).json({ error: 'Invalid or expired token' });
     }
-    req.user = user;
+
+    // Load full user from DB to get role and other fields
+    const user = await User.findByPk(payload.id, {
+      attributes: ['id', 'email', 'name', 'role']
+    });
+
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    // attach minimal safe user info
+    req.user = { id: user.id, email: user.email, name: user.name, role: user.role };
     next();
-  });
+  } catch (err) {
+    console.error('Auth middleware error:', err);
+    res.status(500).json({ error: 'Internal auth error' });
+  }
 }
 
 module.exports = { router, authenticateToken };
