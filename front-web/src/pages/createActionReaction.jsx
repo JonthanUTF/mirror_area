@@ -47,6 +47,16 @@ export default function CreateActionReaction() {
     const [githubIssueNumber, setGithubIssueNumber] = useState("");
     const [githubTagName, setGithubTagName] = useState("");
 
+    // Microsoft / OneDrive / Outlook parameters
+    const [microsoftPath, setMicrosoftPath] = useState("");
+    const [msUploadPath, setMsUploadPath] = useState("");
+    const [msUploadContent, setMsUploadContent] = useState("");
+    const [msUploadContentType, setMsUploadContentType] = useState("text/plain");
+    const [msSharePath, setMsSharePath] = useState("");
+    const [msShareType, setMsShareType] = useState("view");
+    const [outlookSender, setOutlookSender] = useState("");
+    const [outlookKeyword, setOutlookKeyword] = useState("");
+
     const [error, setError] = useState("");
 
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -61,6 +71,10 @@ export default function CreateActionReaction() {
         { value: "push_committed", label: "GitHub: Push/Commit" },
         { value: "release_published", label: "GitHub: Release Published" },
         { value: "repo_starred", label: "GitHub: Repo Starred" },
+        { value: "onedrive_new_file", label: "OneDrive: New File in Directory" },
+        { value: "onedrive_file_shared", label: "OneDrive: File Shared With Me" },
+        { value: "outlook_new_from", label: "Outlook: New Message From" },
+        { value: "outlook_subject_contains", label: "Outlook: Subject Contains" },
     ];
 
     const reactionTypeOptions = [
@@ -70,6 +84,9 @@ export default function CreateActionReaction() {
         { value: "comment_issue", label: "GitHub: Comment Issue" },
         { value: "create_file", label: "GitHub: Create File" },
         { value: "create_release", label: "GitHub: Create Release" },
+        { value: "onedrive_upload_file", label: "OneDrive: Upload File" },
+        { value: "onedrive_create_share", label: "OneDrive: Create Share Link" },
+        { value: "outlook_send_email", label: "Outlook: Send Email" },
     ];
 
 
@@ -92,18 +109,24 @@ export default function CreateActionReaction() {
             actionType === "check_temp" ? "weather" :
             actionType === "interval" ? "timer" :
             ["issue_created", "pr_opened", "push_committed", "release_published", "repo_starred"].includes(actionType) ? "github" :
+            ["onedrive_new_file", "onedrive_file_shared", "outlook_new_from", "outlook_subject_contains"].includes(actionType) ? "microsoft" :
             actionService;
+
         const computedReactionService =
             reactionType === "send_email" ? "google" :
             reactionType === "log_message" ? "console" :
             ["create_issue", "comment_issue", "create_file", "create_release"].includes(reactionType) ? "github" :
+            ["onedrive_upload_file", "onedrive_create_share", "outlook_send_email"].includes(reactionType) ? "microsoft" :
             reactionService;
+
         setActionService(computedActionService);
         setReactionService(computedReactionService);
 
-        let mergedParams = paramsPayload;
-        if (typeof mergedParams !== "object" || mergedParams === null) {
-            mergedParams = { raw: mergedParams };
+        let mergedParams = {};
+
+        // Add raw params if they exist
+        if (typeof paramsPayload === "object" && paramsPayload !== null) {
+            mergedParams = { ...paramsPayload };
         }
 
         if (actionType === "interval") {
@@ -122,10 +145,32 @@ export default function CreateActionReaction() {
             }
         }
 
+        // Microsoft action parameters
+        if (actionType === "onedrive_new_file" || actionType === "onedrive_file_shared") {
+            console.log('[Frontend] microsoftPath value:', microsoftPath);  // Debug
+            mergedParams = { ...mergedParams, watchPath: microsoftPath };
+        }
+        if (actionType === "outlook_new_from") {
+            mergedParams = { ...mergedParams, sender: outlookSender };
+        }
+        if (actionType === "outlook_subject_contains") {
+            mergedParams = { ...mergedParams, keyword: outlookKeyword };
+        }
+
         if (reactionType === "send_email") {
             mergedParams = {
                 ...mergedParams,
                 recipient,
+                subject,
+                body,
+            };
+        }
+
+        // Outlook
+        if (reactionType === "outlook_send_email") {
+            mergedParams = {
+                ...mergedParams,
+                to: recipient,
                 subject,
                 body,
             };
@@ -172,6 +217,24 @@ export default function CreateActionReaction() {
                 tag_name: githubTagName,
                 name: githubTitle,
                 body: githubBody,
+            };
+        }
+
+        // Microsoft reactions
+        if (reactionType === "onedrive_upload_file") {
+            mergedParams = {
+                ...mergedParams,
+                uploadPath: msUploadPath,
+                content: msUploadContent,
+                contentType: msUploadContentType || 'text/plain'
+            };
+        }
+
+        if (reactionType === "onedrive_create_share") {
+            mergedParams = {
+                ...mergedParams,
+                sharePath: msSharePath,
+                type: msShareType || 'view'
             };
         }
 
@@ -241,7 +304,7 @@ export default function CreateActionReaction() {
             if (codeFromServer) {
                 const callbackBody = {
                     code: codeFromServer,
-                    redirectUri: data.redirectUri || (process.env.REACT_APP_CLIENT_URL || "http://localhost:8081") + "/services/callback",
+                    redirectUri: data.redirectUri || (process.env.CLIENT_URL || "http://localhost:8081") + "/services/callback",
                 };
                 const cbRes = await fetch(`${API_BASE}/services/google/callback`, {
                     method: "POST",
@@ -311,6 +374,38 @@ export default function CreateActionReaction() {
         }
     };
 
+    const handleMicrosoftServiceConnection = async () => {
+        try {
+            localStorage.setItem('oauth_return', window.location.pathname || '/');
+            localStorage.setItem('oauth_service', 'microsoft');
+            const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
+            const token = localStorage.getItem("authToken");
+            const res = await fetch(`${API_BASE}/services/microsoft/connect`, {
+                method: "GET",
+                headers: {
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!res.ok) {
+                const txt = await res.text();
+                throw new Error(txt || `HTTP ${res.status}`);
+            }
+
+            const data = await res.json();
+            const connectUrl = data.url || data.connectUrl;
+            if (!connectUrl) throw new Error("No connect URL returned from server");
+            window.open(connectUrl, "_blank", "noopener,noreferrer");
+        } catch (err) {
+            const msg = err?.message || "Failed to connect Microsoft";
+            setResponseOk(false);
+            setResponseText(msg);
+            setDialogOpen(true);
+            setError(msg);
+        }
+    }
+
     const intervalInvalid =
         actionType === "interval" && (!intervalS || isNaN(Number(intervalS)) || Number(intervalS) <= 0);
 
@@ -366,6 +461,50 @@ export default function CreateActionReaction() {
                                 </Grid>
                             )}
 
+                            {/* Microsoft Action fields */}
+                            {actionType === "onedrive_new_file" && (
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        label="OneDrive Folder Path (ex: Reports/Daily)"
+                                        fullWidth
+                                        value={microsoftPath}
+                                        onChange={(e) => setMicrosoftPath(e.target.value)}
+                                    />
+                                </Grid>
+                            )}
+                            {actionType === "onedrive_file_shared" && (
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        label="Optional path to filter shared items"
+                                        fullWidth
+                                        value={microsoftPath}
+                                        onChange={(e) => setMicrosoftPath(e.target.value)}
+                                    />
+                                </Grid>
+                            )}
+                            {actionType === "outlook_new_from" && (
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        label="Sender email"
+                                        fullWidth
+                                        value={outlookSender}
+                                        onChange={(e) => setOutlookSender(e.target.value)}
+                                        placeholder="sender@example.com"
+                                    />
+                                </Grid>
+                            )}
+                            {actionType === "outlook_subject_contains" && (
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        label="Keyword in subject"
+                                        fullWidth
+                                        value={outlookKeyword}
+                                        onChange={(e) => setOutlookKeyword(e.target.value)}
+                                        placeholder="urgent"
+                                    />
+                                </Grid>
+                            )}
+
                             <Grid item xs={12} sm={6}>
                                 <FormControl fullWidth sx={{ minWidth: 150 }}>
                                     <InputLabel id="reaction-type-label">Reaction Type</InputLabel>
@@ -403,6 +542,17 @@ export default function CreateActionReaction() {
                                     fullWidth
                                 >
                                     Connect GitHub
+                                </Button>
+                            </Grid>
+
+                            {/* Connect Microsoft button */}
+                            <Grid item xs={12} sm={6} sx={{ display: 'flex', alignItems: 'center' }}>
+                                <Button
+                                    variant="outlined"
+                                    onClick={handleMicrosoftServiceConnection}
+                                    fullWidth
+                                >
+                                    Connect Microsoft
                                 </Button>
                             </Grid>
 
@@ -646,8 +796,69 @@ export default function CreateActionReaction() {
                                 </>
                             )}
 
-                            {/* conditional fields for reaction */}
-                            {reactionType === "send_email" && (
+                            {/* Microsoft reaction: Upload file */}
+                            {reactionType === "onedrive_upload_file" && (
+                                <>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            label="OneDrive Path (path/to/file.txt)"
+                                            fullWidth
+                                            value={msUploadPath}
+                                            onChange={(e) => setMsUploadPath(e.target.value)}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            label="Content-Type"
+                                            fullWidth
+                                            value={msUploadContentType}
+                                            onChange={(e) => setMsUploadContentType(e.target.value)}
+                                            placeholder="text/plain"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            label="File content"
+                                            fullWidth
+                                            multiline
+                                            minRows={4}
+                                            value={msUploadContent}
+                                            onChange={(e) => setMsUploadContent(e.target.value)}
+                                        />
+                                    </Grid>
+                                </>
+                            )}
+
+                            {/* Microsoft reaction: Create share */}
+                            {reactionType === "onedrive_create_share" && (
+                                <>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            label="OneDrive Path to share"
+                                            fullWidth
+                                            value={msSharePath}
+                                            onChange={(e) => setMsSharePath(e.target.value)}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <FormControl fullWidth>
+                                            <InputLabel id="ms-share-type">Share Type</InputLabel>
+                                            <Select
+                                                labelId="ms-share-type"
+                                                value={msShareType}
+                                                label="Share Type"
+                                                onChange={(e) => setMsShareType(e.target.value)}
+                                            >
+                                                <MenuItem value="view">view</MenuItem>
+                                                <MenuItem value="edit">edit</MenuItem>
+                                            </Select>
+                                        </FormControl>
+                                    </Grid>
+                                </>
+                            )}
+
+                            {/* Outlook / Email fields (shared with Google send_email UI) */}
+                            {(reactionType === "send_email" || reactionType === "outlook_send_email") && (
                                 <>
                                     <Grid item xs={12}>
                                         <TextField

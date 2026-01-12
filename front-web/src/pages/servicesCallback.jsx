@@ -11,6 +11,7 @@ export default function ServicesCallback() {
     (async () => {
       const params = new URLSearchParams(window.location.search);
       const code = params.get("code");
+      const service = params.get('service') || localStorage.getItem('oauth_service') || 'google';
       if (!code) {
         setMessage("No code in URL");
         setOk(false);
@@ -20,9 +21,9 @@ export default function ServicesCallback() {
       try {
         const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
         const token = localStorage.getItem("authToken");
-        const redirectUri = window.location.origin + "/services/callback";
+        const redirectUri = (process.env.CLIENT_URL || window.location.origin) + "/services/callback";
 
-        const res = await fetch(`${API_BASE}/services/google/callback`, {
+        const res = await fetch(`${API_BASE}/services/${service}/callback`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -43,6 +44,7 @@ export default function ServicesCallback() {
       } finally {
         const returnTo = localStorage.getItem("oauth_return") || "/home";
         localStorage.removeItem("oauth_return");
+        localStorage.removeItem('oauth_service');
         setTimeout(() => navigate(returnTo), 1500);
       }
     })();

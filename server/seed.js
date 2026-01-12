@@ -31,6 +31,13 @@ const services = [
         icon: 'https://cdn-icons-png.flaticon.com/512/120/120093.png',
         active: true
     }
+    ,
+    {
+        name: 'microsoft',
+        label: 'Microsoft (OneDrive / Outlook)',
+        icon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Microsoft_logo_%282012%29.svg/960px-Microsoft_logo_%282012%29.svg.png',
+        active: true
+    }
 ];
 
 async function seed() {
