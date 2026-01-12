@@ -90,14 +90,14 @@ export default function CreateActionReaction() {
 
         const computedActionService =
             actionType === "check_temp" ? "weather" :
-            actionType === "interval" ? "timer" :
-            ["issue_created", "pr_opened", "push_committed", "release_published", "repo_starred"].includes(actionType) ? "github" :
-            actionService;
+                actionType === "interval" ? "timer" :
+                    ["issue_created", "pr_opened", "push_committed", "release_published", "repo_starred"].includes(actionType) ? "github" :
+                        actionService;
         const computedReactionService =
             reactionType === "send_email" ? "google" :
-            reactionType === "log_message" ? "console" :
-            ["create_issue", "comment_issue", "create_file", "create_release"].includes(reactionType) ? "github" :
-            reactionService;
+                reactionType === "log_message" ? "console" :
+                    ["create_issue", "comment_issue", "create_file", "create_release"].includes(reactionType) ? "github" :
+                        reactionService;
         setActionService(computedActionService);
         setReactionService(computedReactionService);
 
@@ -220,15 +220,16 @@ export default function CreateActionReaction() {
     const handleGoogleServiceConnection = async () => {
         try {
             localStorage.setItem('oauth_return', window.location.pathname || '/');
-             const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
-             const token = localStorage.getItem("authToken");
-             const res = await fetch(`${API_BASE}/services/google/connect`, {
-                 method: "GET",
-                 headers: {
-                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                     "Content-Type": "application/json",
-                 },
-             });
+            localStorage.setItem('pending_service', 'google');
+            const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
+            const token = localStorage.getItem("authToken");
+            const res = await fetch(`${API_BASE}/services/google/connect`, {
+                method: "GET",
+                headers: {
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    "Content-Type": "application/json",
+                },
+            });
 
             if (!res.ok) {
                 const txt = await res.text();
@@ -283,6 +284,7 @@ export default function CreateActionReaction() {
     const handleGitHubServiceConnection = async () => {
         try {
             localStorage.setItem('oauth_return', window.location.pathname || '/');
+            localStorage.setItem('pending_service', 'github');
             const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
             const token = localStorage.getItem("authToken");
             const res = await fetch(`${API_BASE}/services/github/connect`, {
@@ -703,7 +705,7 @@ export default function CreateActionReaction() {
                                 variant="contained"
                                 disabled={!actionType || !reactionType || !name.trim() || intervalInvalid}
                             >
-                               Create
+                                Create
                             </Button>
 
                             <Button

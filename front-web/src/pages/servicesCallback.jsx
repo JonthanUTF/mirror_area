@@ -18,11 +18,19 @@ export default function ServicesCallback() {
       }
 
       try {
+        const serviceName = localStorage.getItem("pending_service");
+        if (!serviceName) {
+          setMessage("Unknown service (no pending_service found)");
+          setOk(false);
+          return;
+        }
+        localStorage.removeItem("pending_service");
+
         const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
         const token = localStorage.getItem("authToken");
         const redirectUri = window.location.origin + "/services/callback";
 
-        const res = await fetch(`${API_BASE}/services/google/callback`, {
+        const res = await fetch(`${API_BASE}/services/${serviceName}/callback`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
