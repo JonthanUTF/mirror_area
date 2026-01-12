@@ -153,6 +153,109 @@ router.get('/me', authenticateToken, async (req, res) => {
   }
 });
 
+// ===== SPOTIFY OAUTH ROUTES =====
+
+/**
+ * @route   GET /auth/spotify
+ * @desc    Initiate Spotify OAuth flow
+ * @access  Private (requires JWT authentication)
+ */
+router.get('/spotify', authenticateToken, async (req, res, next) => {
+  console.log('[Auth] Initiating Spotify OAuth...');
+  // Pass user info through request for passport strategy
+  next();
+}, passport.authenticate('spotify', { session: false }));
+
+/**
+ * @route   GET /auth/spotify/callback
+ * @desc    Spotify OAuth callback
+ * @access  Public (handled by Spotify)
+ */
+router.get('/spotify/callback', 
+  // Extract JWT from query or state
+  (req, res, next) => {
+    const token = req.query.state || req.query.token;
+    if (token) {
+      try {
+        const payload = jwt.verify(token, JWT_SECRET);
+        req.user = { id: payload.id, email: payload.email };
+      } catch (err) {
+        console.error('Token verification failed in Spotify callback:', err);
+      }
+    }
+    next();
+  },
+  passport.authenticate('spotify', { 
+    session: false,
+    failureRedirect: `${process.env.CLIENT_URL || 'http://localhost:8081'}/settings?spotify_error=auth_failed`
+  }),
+  (req, res) => {
+    try {
+      console.log('[Auth] Spotify connected successfully');
+      res.redirect(`${process.env.CLIENT_URL || 'http://localhost:8081'}/settings?spotify_connected=true`);
+    } catch (error) {
+      console.error('Spotify callback error:', error);
+      res.redirect(`${process.env.CLIENT_URL || 'http://localhost:8081'}/settings?spotify_error=callback_failed`);
+    }
+  }
+);
+
+/**
+ * @route   POST /auth/spotify/disconnect
+ * @desc    Disconnect Spotify account
+ * @access  Private
+ */
+router.post('/spotify/disconnect', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    await user.update({
+      spotifyAccessToken: null,
+      spotifyRefreshToken: null,
+      spotifyTokenExpiresAt: null,
+      spotifyUserId: null,
+      spotifyLastSavedTrackId: null
+    });
+
+    res.json({ 
+      success: true, 
+      message: 'Spotify disconnected successfully' 
+    });
+  } catch (error) {
+    console.error('Error disconnecting Spotify:', error);
+    res.status(500).json({ 
+      error: 'Failed to disconnect Spotify' 
+    });
+  }
+});
+
+/**
+ * @route   GET /auth/spotify/status
+ * @desc    Check Spotify connection status
+ * @access  Private
+ */
+router.get('/spotify/status', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id, {
+      attributes: ['spotifyAccessToken', 'spotifyRefreshToken', 'spotifyUserId']
+    });
+
+    const isConnected = !!(user && user.spotifyAccessToken && user.spotifyRefreshToken);
+
+    res.json({
+      connected: isConnected,
+      userId: user?.spotifyUserId || null
+    });
+  } catch (error) {
+    console.error('Error checking Spotify status:', error);
+    res.status(500).json({ error: 'Failed to check Spotify status' });
+  }
+});
+
 async function authenticateToken(req, res, next) {
   try {
     const authHeader = req.headers['authorization'];
