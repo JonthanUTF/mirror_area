@@ -19,11 +19,14 @@ const PrivateRoute = () => {
 }
 
 function App() {
-  localStorage.setItem("authToken", "");
-  localStorage.setItem("userId", "");
-  localStorage.setItem("userName", "");
-  localStorage.setItem("userEmail", "");
-  localStorage.setItem("oauth_return", "");
+  // Note: Do NOT clear localStorage here as it logs users out on every page load
+  // Only initialize values if they don't exist
+  if (!localStorage.getItem("authToken")) {
+    localStorage.setItem("authToken", "");
+  }
+  if (!localStorage.getItem("oauth_return")) {
+    localStorage.setItem("oauth_return", "");
+  }
 
   return (
     <Routes>
