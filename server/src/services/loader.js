@@ -5,12 +5,14 @@ const WeatherService = require('./implementations/WeatherService');
 const TimerService = require('./implementations/TimerService');
 const ConsoleService = require('./implementations/ConsoleService');
 const EmailService = require('./implementations/EmailService');
+const SpotifyService = require('./implementations/SpotifyService');
 
 function loadServices() {
     registry.register(WeatherService);
     registry.register(TimerService);
     registry.register(ConsoleService);
     registry.register(EmailService);
+    registry.register(SpotifyService);
 
     console.log('[LOADER] All services loaded into registry');
 }

@@ -52,6 +52,28 @@ const User = sequelize.define('User', {
     validate: {
       isIn: [['user', 'admin']]
     }
+  },
+  // Spotify OAuth tokens
+  spotifyAccessToken: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  spotifyRefreshToken: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  spotifyTokenExpiresAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  spotifyUserId: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  // Trigger state tracking for Spotify
+  spotifyLastSavedTrackId: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 }, {
   tableName: 'users',
