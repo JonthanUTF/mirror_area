@@ -209,8 +209,6 @@ export default function Home() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            gap: 2,
-            py: 1,
           }}
         >
           <Box sx= {{ display: "flex", alignItems: "center", gap: 3 }}>
