@@ -61,7 +61,11 @@ class MainActivity : ComponentActivity() {
                 ) {
                     AREAApp(
                         oauthToken = oauthTokenState.value,
-                        isOAuthCallback = isOAuthCallback.value
+                        isOAuthCallback = isOAuthCallback.value,
+                        onClearOAuth = {
+                            oauthTokenState.value = null
+                            isOAuthCallback.value = false
+                        }
                     )
                 }
             }
@@ -98,7 +102,11 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AREAApp(oauthToken: String? = null, isOAuthCallback: Boolean = false) {
+fun AREAApp(
+    oauthToken: String? = null, 
+    isOAuthCallback: Boolean = false,
+    onClearOAuth: () -> Unit = {}
+) {
     val navController = rememberNavController()
     val authViewModel: AuthViewModel = hiltViewModel()
     val currentUser by authViewModel.currentUser.collectAsState()
@@ -131,6 +139,7 @@ fun AREAApp(oauthToken: String? = null, isOAuthCallback: Boolean = false) {
     
     val onLogout: () -> Unit = {
         authViewModel.logout()
+        onClearOAuth()
         navController.navigate("login") {
             popUpTo(0) { inclusive = true }
         }

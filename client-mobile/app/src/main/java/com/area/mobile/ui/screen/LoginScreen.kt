@@ -158,14 +158,6 @@ fun LoginScreen(
                 onClick = handleGoogleLogin
             )
             
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            OAuthButton(
-                text = "Continue with GitHub",
-                icon = Icons.Default.AccountCircle,
-                onClick = { }
-            )
-            
             Spacer(modifier = Modifier.height(24.dp))
             
             Row(
