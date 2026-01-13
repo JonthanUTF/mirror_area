@@ -10,17 +10,15 @@ const authFactories = {
         getAuthUrl: () => {
             const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
             const options = {
-                // Redirect to Frontend to handle the code (because backend route calls require JWT)
                 redirect_uri: (process.env.CLIENT_URL || 'http://localhost:8081') + '/services/callback',
                 client_id: process.env.GOOGLE_CLIENT_ID,
-                access_type: 'offline', // Essential for refresh_token
+                access_type: 'offline',
                 response_type: 'code',
                 prompt: 'consent',
                 scope: [
                     'https://www.googleapis.com/auth/userinfo.profile',
                     'https://www.googleapis.com/auth/userinfo.email',
                     'https://www.googleapis.com/auth/gmail.send'
-                    // Add other scopes here as needed
                 ].join(' ')
             };
 
@@ -74,6 +72,81 @@ const authFactories = {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
             });
+            return response.data;
+        }
+    },
+    github: {
+        getAuthUrl: () => {
+            const rootUrl = 'https://github.com/login/oauth/authorize';
+            const options = {
+                client_id: process.env.GITHUB_CLIENT_ID,
+                redirect_uri: (process.env.CLIENT_URL || 'http://localhost:8081') + '/services/callback',
+                scope: [
+                    'repo',
+                    'read:org',
+                    'user'
+                ].join(' ')
+            };
+
+            const qs = new URLSearchParams(options);
+            return `${rootUrl}?${qs.toString()}`;
+        },
+        exchangeCode: async (code, redirectUri) => {
+            const tokenUrl = 'https://github.com/login/oauth/access_token';
+            const values = {
+                client_id: process.env.GITHUB_CLIENT_ID,
+                client_secret: process.env.GITHUB_CLIENT_SECRET,
+                code,
+                redirect_uri: redirectUri
+            };
+
+            const response = await axios.post(tokenUrl, values, {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            return response.data;
+        }
+    },
+    microsoft: {
+        getAuthUrl: () => {
+            const rootUrl = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize';
+            const options = {
+                client_id: process.env.MICROSOFT_CLIENT_ID,
+                response_type: 'code',
+                redirect_uri: (process.env.CLIENT_URL || 'http://localhost:8081') + '/services/callback',
+                prompt: 'consent',
+                scope: [
+                    'Files.Read',
+                    'Files.Read.All',
+                    'Files.ReadWrite',
+                    'Files.ReadWrite.All',
+                    'Mail.Read',
+                    'Mail.ReadWrite',
+                    'Mail.Send',
+                    'offline_access',
+                    'User.Read'
+                ].join(' ')
+            };
+
+            const qs = new URLSearchParams(options);
+            return `${rootUrl}?${qs.toString()}`;
+        },
+        exchangeCode: async (code, redirectUri) => {
+            const tokenUrl = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/token';
+            const values = {
+                client_id: process.env.MICROSOFT_CLIENT_ID,
+                client_secret: process.env.MICROSOFT_CLIENT_SECRET,
+                code,
+                grant_type: 'authorization_code',
+                redirect_uri: redirectUri
+            };
+            const response = await axios.post(tokenUrl, new URLSearchParams(values).toString(), {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
+            console.log('[Microsoft] Token response:', JSON.stringify(response.data, null, 2));
             return response.data;
         }
     }

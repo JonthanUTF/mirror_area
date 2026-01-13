@@ -8,6 +8,12 @@ const services = [
         active: true
     },
     {
+        name: 'github',
+        label: 'GitHub',
+        icon: 'https://cdn-icons-png.flaticon.com/512/25/25231.png',
+        active: true
+    },
+    {
         name: 'weather',
         label: 'Météo',
         icon: 'https://cdn-icons-png.flaticon.com/512/4052/4052984.png',
@@ -23,6 +29,13 @@ const services = [
         name: 'console',
         label: 'Debug Console',
         icon: 'https://cdn-icons-png.flaticon.com/512/120/120093.png',
+        active: true
+    }
+    ,
+    {
+        name: 'microsoft',
+        label: 'Microsoft (OneDrive / Outlook)',
+        icon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Microsoft_logo_%282012%29.svg/960px-Microsoft_logo_%282012%29.svg.png',
         active: true
     }
 ];
