@@ -31,9 +31,10 @@ class MicrosoftService extends ServiceBase {
             contentType: 'string'
         });
 
-        this.registerReaction('onedrive_create_share', 'Create a share link for a OneDrive item', {
+        this.registerReaction('onedrive_create_share', 'Create a share link for a OneDrive item and send it by email', {
             sharePath: 'string',
-            type: 'string'
+            type: 'string',
+            emailTo: 'string'
         });
 
         this.registerReaction('outlook_send_email', 'Send an email via Outlook 365', {
@@ -105,7 +106,7 @@ class MicrosoftService extends ServiceBase {
                     return await this._onedriveUploadFile(client, params.uploadPath, params.content, params.contentType);
 
                 case 'onedrive_create_share':
-                    return await this._onedriveCreateShare(client, params.sharePath, params.type);
+                    return await this._onedriveCreateShare(client, params.sharePath, params.type, params.emailTo);
 
                 case 'outlook_send_email':
                     const recipient = params.to || params.recipient;
@@ -326,7 +327,7 @@ class MicrosoftService extends ServiceBase {
         }
     }
 
-    async _onedriveCreateShare(client, sharePath, type = 'view') {
+    async _onedriveCreateShare(client, sharePath, type = 'view', emailTo) {
         try {
             if (!sharePath) throw new Error('Share path is required for creating share link');
 
@@ -355,7 +356,18 @@ class MicrosoftService extends ServiceBase {
 
             const link = shareRes.data?.link?.webUrl || shareRes.data?.link?.webHtml;
             console.log(`[MicrosoftService] Created share link for ${sharePath}: ${link}`);
-            return { success: true, link };
+
+            // Send email with the share link
+            if (emailTo) {
+                const fileName = cleanPath.split('/').pop();
+                const subject = `Share link for: ${fileName}`;
+                const body = `Here is your share link for "${fileName}":<br><br><a href="${link}">${link}</a><br><br>Access type: ${type === 'edit' ? 'Edit' : 'View only'}`;
+
+                await this._outlookSendEmail(client, emailTo, subject, body);
+                console.log(`[MicrosoftService] Share link sent to ${emailTo}`);
+            }
+
+            return { success: true, link, emailSent: !!emailTo };
         } catch (err) {
             console.error('[MicrosoftService] _onedriveCreateShare error:', err.response?.data || err.message);
             throw err;
