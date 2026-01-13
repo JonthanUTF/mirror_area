@@ -5,6 +5,7 @@ import Home from "./pages/Home";
 import Signup from "./pages/Signup";
 import Settings from "./pages/Settings";
 import CreateActionReaction from "./pages/createActionReaction";
+import MobileAPK from "./pages/MobileAPK";
 import AuthCallback from "./pages/AuthCallback";
 import ServicesCallback from "./pages/servicesCallback";
 import AdminPage from "./pages/AdminPage";
@@ -44,6 +45,7 @@ function App() {
       {/* Public routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+        <Route path='/mobile' element={<MobileAPK/>} />
 
       {/* Protected routes */}
       <Route element={<PrivateRoute/>}>
