@@ -14,32 +14,29 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 
-
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-
-const stats = [
-  {
-    label: "Total workflows",
-    trend: "5",
-    color: "#7c3aed",
-    icon: AccountTreeIcon,
-  },
-  {
-    label: "Active",
-    trend: "3",
-    color: "#16a34a",
-    icon: CheckCircleOutlineIcon,
-  },
-];
-
-
 
 export default function Home() {
   const navigate = useNavigate();
   const [areas, setAreas] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const stats = [
+    {
+      label: "Total workflows",
+      value: areas.length.toString(),
+      color: "#7c3aed",
+      icon: AccountTreeIcon,
+    },
+    {
+      label: "Active",
+      value: areas.filter(a => a.active).length.toString(),
+      color: "#16a34a",
+      icon: CheckCircleOutlineIcon,
+    },
+  ];
 
   const deleteArea = async (id) => {
     if (!window.confirm("Delete this workflow?")) return;
@@ -250,9 +247,9 @@ export default function Home() {
                       <Icon sx={{ color: "white", fontSize: { xs: 20, sm: 24 } }} />
                     </Box>
 
-                    {/* Trend */}
+                    {/* Value */}
                     <Typography variant="h5" sx={{ color: "#fefefeff" }}>
-                      {stat.trend}
+                      {loading ? <CircularProgress size={20} color="inherit" /> : stat.value}
                     </Typography>
 
                     {/* Label */}

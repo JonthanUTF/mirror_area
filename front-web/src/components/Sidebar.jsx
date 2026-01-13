@@ -33,10 +33,12 @@ export default function Sidebar() {
   };
 
   const handleLogout = (e) => {
+    localStorage.setItem("authToken", "");
     localStorage.setItem("token", "");
     localStorage.setItem("userId", "");
     localStorage.setItem("userName", "");
     localStorage.setItem("userEmail", "");
+    localStorage.setItem("oauth_return", "");
     handleNavigation('/login');
   };
 
