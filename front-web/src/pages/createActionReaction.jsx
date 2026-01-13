@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Box,
@@ -18,168 +18,279 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
+    Chip,
+    CircularProgress,
+    Alert,
 } from "@mui/material";
+import LinkIcon from '@mui/icons-material/Link';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
 
 export default function CreateActionReaction() {
     const navigate = useNavigate();
 
+    // Services fetched from backend
+    const [services, setServices] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Connection status for services
+    const [twitchConnected, setTwitchConnected] = useState(false);
+    const [googleConnected, setGoogleConnected] = useState(false);
+    const [microsoftConnected, setMicrosoftConnected] = useState(false);
+    const [githubConnected, setGitHubConnected] = useState(false);
+
+    // Form state
     const [name, setName] = useState("");
     const [actionService, setActionService] = useState("");
     const [actionType, setActionType] = useState("");
     const [reactionService, setReactionService] = useState("");
     const [reactionType, setReactionType] = useState("");
     const [active, setActive] = useState(true);
-    const [parameters, setParameters] = useState("");
-
-    const [intervalS, setintervalS] = useState("");
-    const [recipient, setRecipient] = useState("");
-    const [subject, setSubject] = useState("");
-    const [body, setBody] = useState("");
-
-    // GitHub parameters
-    const [githubOwner, setGithubOwner] = useState("");
-    const [githubRepo, setGithubRepo] = useState("");
-    const [githubBranch, setGithubBranch] = useState("main");
-    const [githubTitle, setGithubTitle] = useState("");
-    const [githubBody, setGithubBody] = useState("");
-    const [githubPath, setGithubPath] = useState("");
-    const [githubContent, setGithubContent] = useState("");
-    const [githubIssueNumber, setGithubIssueNumber] = useState("");
-    const [githubTagName, setGithubTagName] = useState("");
+    const [actionParams, setActionParams] = useState({});
+    const [reactionParams, setReactionParams] = useState({});
 
     const [error, setError] = useState("");
-
     const [dialogOpen, setDialogOpen] = useState(false);
     const [responseText, setResponseText] = useState("");
     const [responseOk, setResponseOk] = useState(null);
 
-    const actionTypeOptions = [
-        { value: "interval", label: "Interval Timer" },
-        { value: "check_temp", label: "Check Condition (rain, snow, clear)" },
-        { value: "issue_created", label: "GitHub: Issue Created" },
-        { value: "pr_opened", label: "GitHub: PR Opened" },
-        { value: "push_committed", label: "GitHub: Push/Commit" },
-        { value: "release_published", label: "GitHub: Release Published" },
-        { value: "repo_starred", label: "GitHub: Repo Starred" },
-    ];
+    // Fetch services from backend
+    useEffect(() => {
+        const fetchServices = async () => {
+            try {
+                const res = await fetch(`${API_BASE}/about.json`);
+                const data = await res.json();
+                setServices(data.server?.services || []);
+            } catch (err) {
+                console.error("Failed to fetch services:", err);
+                setError("Failed to load services");
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    const reactionTypeOptions = [
-        { value: "send_email", label: "Send Mail" },
-        { value: "log_message", label: "Console Log" },
-        { value: "create_issue", label: "GitHub: Create Issue" },
-        { value: "comment_issue", label: "GitHub: Comment Issue" },
-        { value: "create_file", label: "GitHub: Create File" },
-        { value: "create_release", label: "GitHub: Create Release" },
-    ];
+        fetchServices();
+    }, []);
 
+    // Check service connection status
+    useEffect(() => {
+        const checkConnections = async () => {
+            const token = localStorage.getItem("authToken");
+            if (!token) return;
 
+            // Check Twitch
+            try {
+                const res = await fetch(`${API_BASE}/auth/twitch/status`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setTwitchConnected(data.connected);
+                }
+            } catch (err) {
+                console.error("Failed to check Twitch status:", err);
+            }
+
+            // Check Google and Microsoft (via user services)
+            try {
+                const res = await fetch(`${API_BASE}/services`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    const googleService = data.find(s => s.service?.name === 'google');
+                    setGoogleConnected(!!googleService);
+
+                    const microsoftService = data.find(s => s.service?.name === 'microsoft');
+                    setMicrosoftConnected(!!microsoftService);
+
+                    const githubService = data.find(s => s.service?.name === 'github');
+                    setGitHubConnected(!!githubService);
+                }
+            } catch (err) {
+                console.error("Failed to check services status:", err);
+            }
+        };
+
+        checkConnections();
+
+        // Check for OAuth callback params
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("twitch_connected") === "true") {
+            setTwitchConnected(true);
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        if (params.get("microsoft_connected") === "true") {
+            setMicrosoftConnected(true);
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        if (params.get("google_connected") === "true") {
+            setGoogleConnected(true);
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }, []);
+
+    // Get actions for selected service
+    const getActionsForService = (serviceName) => {
+        const service = services.find(s => s.name === serviceName);
+        return service?.actions || [];
+    };
+
+    // Get reactions for selected service
+    const getReactionsForService = (serviceName) => {
+        const service = services.find(s => s.name === serviceName);
+        return service?.reactions || [];
+    };
+
+    // Get services that have actions
+    const servicesWithActions = services.filter(s => s.actions && s.actions.length > 0);
+
+    // Get services that have reactions
+    const servicesWithReactions = services.filter(s => s.reactions && s.reactions.length > 0);
+
+    // Get selected action details
+    const selectedAction = getActionsForService(actionService).find(a => a.name === actionType);
+
+    // Get selected reaction details
+    const selectedReaction = getReactionsForService(reactionService).find(r => r.name === reactionType);
+
+    // Check if service requires OAuth
+    const serviceRequiresOAuth = (serviceName) => {
+        return ['twitch', 'google', 'microsoft'].includes(serviceName);
+    };
+
+    // Check if service is connected
+    const isServiceConnected = (serviceName) => {
+        if (serviceName === 'twitch') return twitchConnected;
+        if (serviceName === 'google') return googleConnected;
+        if (serviceName === 'microsoft') return microsoftConnected;
+        return true; // Non-OAuth services are always "connected"
+    };
+
+    // Handle Twitch OAuth connection
+    const handleTwitchConnect = () => {
+        const token = localStorage.getItem("authToken");
+        if (!token) {
+            setError("Please login first");
+            return;
+        }
+        window.location.href = `${API_BASE}/auth/twitch?state=${token}`;
+    };
+
+    // Handle Google OAuth connection
+    const handleGoogleConnect = async () => {
+        try {
+            localStorage.setItem('oauth_return', window.location.pathname || '/');
+            localStorage.setItem('oauth_service', 'google');
+            const token = localStorage.getItem("authToken");
+            const res = await fetch(`${API_BASE}/services/google/connect`, {
+                method: "GET",
+                headers: {
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+
+            const data = await res.json();
+            const connectUrl = data.url || data.connectUrl;
+            if (connectUrl) {
+                window.location.href = connectUrl;
+            }
+        } catch (err) {
+            setError(err?.message || "Failed to connect Google");
+        }
+    };
+
+    // Handle Microsoft OAuth connection
+    const handleMicrosoftConnect = async () => {
+        try {
+            localStorage.setItem('oauth_return', window.location.pathname || '/');
+            localStorage.setItem('oauth_service', 'microsoft');
+            const token = localStorage.getItem("authToken");
+
+            if (!token) {
+                setError("Please login first");
+                return;
+            }
+
+            const res = await fetch(`${API_BASE}/services/microsoft/connect`, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!res.ok) {
+                const txt = await res.text();
+                throw new Error(txt || `HTTP ${res.status}`);
+            }
+
+            const data = await res.json();
+            const connectUrl = data.url || data.connectUrl;
+            if (!connectUrl) {
+                throw new Error("No connect URL returned from server");
+            }
+
+            // Redirect to Microsoft OAuth (same tab like other services)
+            window.location.href = connectUrl;
+        } catch (err) {
+            const msg = err?.message || "Failed to connect Microsoft";
+            setResponseOk(false);
+            setResponseText(msg);
+            setDialogOpen(true);
+            setError(msg);
+        }
+    };
+
+    // Handle form submission
     const handleSubmit = async (e) => {
         e?.preventDefault?.();
         setError("");
+
         if (!name.trim()) {
             setError("Name is required");
             return;
         }
 
-        let paramsPayload = parameters;
-        try {
-            paramsPayload = parameters ? JSON.parse(parameters) : {};
-        } catch {
-            paramsPayload = parameters;
+        if (!actionService || !actionType) {
+            setError("Please select an action");
+            return;
         }
 
-        const computedActionService =
-            actionType === "check_temp" ? "weather" :
-                actionType === "interval" ? "timer" :
-                    ["issue_created", "pr_opened", "push_committed", "release_published", "repo_starred"].includes(actionType) ? "github" :
-                        actionService;
-        const computedReactionService =
-            reactionType === "send_email" ? "google" :
-                reactionType === "log_message" ? "console" :
-                    ["create_issue", "comment_issue", "create_file", "create_release"].includes(reactionType) ? "github" :
-                        reactionService;
-        setActionService(computedActionService);
-        setReactionService(computedReactionService);
+        if (!reactionService || !reactionType) {
+            setError("Please select a reaction");
+            return;
 
-        let mergedParams = paramsPayload;
-        if (typeof mergedParams !== "object" || mergedParams === null) {
-            mergedParams = { raw: mergedParams };
         }
 
-        if (actionType === "interval") {
-            mergedParams = { ...mergedParams, interval: intervalS ? Number(intervalS) : null };
+        // Check OAuth requirements
+        if (serviceRequiresOAuth(actionService) && !isServiceConnected(actionService)) {
+            setError(`Please connect ${actionService} first`);
+            return;
         }
 
-        // GitHub action parameters
-        if (["issue_created", "pr_opened", "push_committed", "release_published", "repo_starred"].includes(actionType)) {
-            mergedParams = {
-                ...mergedParams,
-                owner: githubOwner,
-                repo: githubRepo,
-            };
-            if (actionType === "push_committed") {
-                mergedParams.branch = githubBranch;
-            }
+        if (serviceRequiresOAuth(reactionService) && !isServiceConnected(reactionService)) {
+            setError(`Please connect ${reactionService} first`);
+            return;
         }
 
-        if (reactionType === "send_email") {
-            mergedParams = {
-                ...mergedParams,
-                recipient,
-                subject,
-                body,
-            };
-        }
-
-        // GitHub reaction parameters
-        if (reactionType === "create_issue") {
-            mergedParams = {
-                ...mergedParams,
-                owner: githubOwner,
-                repo: githubRepo,
-                title: githubTitle,
-                body: githubBody,
-            };
-        }
-
-        if (reactionType === "comment_issue") {
-            mergedParams = {
-                ...mergedParams,
-                owner: githubOwner,
-                repo: githubRepo,
-                issue_number: Number(githubIssueNumber),
-                body: githubBody,
-            };
-        }
-
-        if (reactionType === "create_file") {
-            mergedParams = {
-                ...mergedParams,
-                owner: githubOwner,
-                repo: githubRepo,
-                path: githubPath,
-                content: githubContent,
-                message: githubTitle || `Update ${githubPath}`,
-                branch: githubBranch,
-            };
-        }
-
-        if (reactionType === "create_release") {
-            mergedParams = {
-                ...mergedParams,
-                owner: githubOwner,
-                repo: githubRepo,
-                tag_name: githubTagName,
-                name: githubTitle,
-                body: githubBody,
-            };
-        }
+        // Merge action and reaction params
+        const mergedParams = {
+            ...actionParams,
+            ...reactionParams,
+        };
 
         const payload = {
             name,
-            actionService: computedActionService,
+            actionService,
             actionType,
-            reactionService: computedReactionService,
+            reactionService,
             reactionType,
             parameters: mergedParams,
             active,
@@ -187,7 +298,7 @@ export default function CreateActionReaction() {
 
         try {
             const token = localStorage.getItem("authToken");
-            const res = await fetch("http://localhost:8080/areas", {
+            const res = await fetch(`${API_BASE}/areas`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -217,68 +328,50 @@ export default function CreateActionReaction() {
         }
     };
 
-    const handleGoogleServiceConnection = async () => {
-        try {
-            localStorage.setItem('oauth_return', window.location.pathname || '/');
-            localStorage.setItem('pending_service', 'google');
-            const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
-            const token = localStorage.getItem("authToken");
-            const res = await fetch(`${API_BASE}/services/google/connect`, {
-                method: "GET",
-                headers: {
-                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                    "Content-Type": "application/json",
-                },
-            });
+    // Render parameter inputs for action/reaction
+    const renderParamInputs = (options, params, setParams, prefix) => {
+        if (!options) return null;
 
-            if (!res.ok) {
-                const txt = await res.text();
-                throw new Error(txt || `HTTP ${res.status}`);
+        return Object.entries(options).map(([key, type]) => {
+            const label = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
+
+            // Handle select fields (format: "select:option1,option2,option3")
+            if (type.startsWith('select:')) {
+                const selectOptions = type.replace('select:', '').split(',');
+                return (
+                    <Grid item xs={12} sm={6} key={`${prefix}-${key}`}>
+                        <FormControl fullWidth>
+                            <InputLabel>{label}</InputLabel>
+                            <Select
+                                value={params[key] || selectOptions[0]}
+                                label={label}
+                                onChange={(e) => setParams({ ...params, [key]: e.target.value })}
+                            >
+                                {selectOptions.map((opt) => (
+                                    <MenuItem key={opt} value={opt}>
+                                        {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </Grid>
+                );
             }
 
-            const data = await res.json();
-
-            const codeFromServer = data.token;
-            if (codeFromServer) {
-                const callbackBody = {
-                    code: codeFromServer,
-                    redirectUri: data.redirectUri || (process.env.REACT_APP_CLIENT_URL || "http://localhost:8081") + "/services/callback",
-                };
-                const cbRes = await fetch(`${API_BASE}/services/google/callback`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                    },
-                    body: JSON.stringify(callbackBody),
-                });
-
-                const cbRaw = await cbRes.text();
-                let cbParsed;
-                try { cbParsed = JSON.parse(cbRaw); } catch { cbParsed = null; }
-                const cbMessage = cbParsed?.message || cbParsed?.error || cbRaw || `HTTP ${cbRes.status}`;
-
-                setResponseOk(cbRes.ok);
-                setResponseText(cbMessage);
-                setDialogOpen(true);
-
-                if (!cbRes.ok) {
-                    setError(cbMessage);
-                }
-
-                return;
-            }
-
-            const connectUrl = data.url || data.connectUrl || data;
-            if (!connectUrl) throw new Error("No connect URL returned from server");
-            window.open(connectUrl, "_blank", "noopener,noreferrer");
-        } catch (err) {
-            const msg = err?.message || "Failed to open connect URL";
-            setResponseOk(false);
-            setResponseText(msg);
-            setDialogOpen(true);
-            setError(msg);
-        }
+            // Default text/number field
+            return (
+                <Grid item xs={12} sm={6} key={`${prefix}-${key}`}>
+                    <TextField
+                        label={label}
+                        fullWidth
+                        type={type === 'number' ? 'number' : 'text'}
+                        value={params[key] || ''}
+                        onChange={(e) => setParams({ ...params, [key]: type === 'number' ? Number(e.target.value) : e.target.value })}
+                        placeholder={`Enter ${key}`}
+                    />
+                </Grid>
+            );
+        });
     };
 
     const handleGitHubServiceConnection = async () => {
@@ -295,40 +388,143 @@ export default function CreateActionReaction() {
                 },
             });
 
-            if (!res.ok) {
-                const txt = await res.text();
-                throw new Error(txt || `HTTP ${res.status}`);
-            }
-
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
             const connectUrl = data.url || data.connectUrl;
-            if (!connectUrl) throw new Error("No connect URL returned from server");
-            window.open(connectUrl, "_blank", "noopener,noreferrer");
+            if (connectUrl) {
+                window.open(connectUrl, "_blank", "noopener,noreferrer");
+            }
         } catch (err) {
-            const msg = err?.message || "Failed to connect GitHub";
-            setResponseOk(false);
-            setResponseText(msg);
-            setDialogOpen(true);
-            setError(msg);
+            setError(err?.message || "Failed to connect GitHub");
         }
     };
 
-    const intervalInvalid =
-        actionType === "interval" && (!intervalS || isNaN(Number(intervalS)) || Number(intervalS) <= 0);
+    // Render connection button for a service
+    const renderConnectionButton = (serviceName) => {
+        const connected = isServiceConnected(serviceName);
+
+
+        if (serviceName === 'twitch') {
+            return (
+                <Button
+                    variant={connected ? "outlined" : "contained"}
+                    onClick={handleTwitchConnect}
+                    disabled={connected}
+                    startIcon={connected ? <CheckCircleIcon /> : <LinkIcon />}
+                    sx={{
+                        backgroundColor: connected ? 'transparent' : '#9146FF',
+                        borderColor: connected ? '#4ade80' : undefined,
+                        color: connected ? '#4ade80' : 'white',
+                        '&:hover': {
+                            backgroundColor: connected ? 'transparent' : '#7c3aed',
+                        }
+                    }}
+                >
+                    {connected ? 'Twitch Connected' : 'Connect Twitch'}
+                </Button>
+            );
+        }
+
+        if (serviceName === 'google') {
+            return (
+                <Button
+                    variant={connected ? "outlined" : "contained"}
+                    onClick={handleGoogleConnect}
+                    disabled={connected}
+                    startIcon={connected ? <CheckCircleIcon /> : <LinkIcon />}
+                    sx={{
+                        backgroundColor: connected ? 'transparent' : '#4285F4',
+                        borderColor: connected ? '#4ade80' : undefined,
+                        color: connected ? '#4ade80' : 'white',
+                        '&:hover': {
+                            backgroundColor: connected ? 'transparent' : '#3367D6',
+                        }
+                    }}
+                >
+                    {connected ? 'Google Connected' : 'Connect Google'}
+                </Button>
+            );
+        }
+
+        if (serviceName === 'microsoft') {
+            return (
+                <Button
+                    variant={connected ? "outlined" : "contained"}
+                    onClick={handleMicrosoftConnect}
+                    disabled={connected}
+                    startIcon={connected ? <CheckCircleIcon /> : <LinkIcon />}
+                    sx={{
+                        backgroundColor: connected ? 'transparent' : '#00A4EF',
+                        borderColor: connected ? '#4ade80' : undefined,
+                        color: connected ? '#4ade80' : 'white',
+                        '&:hover': {
+                            backgroundColor: connected ? 'transparent' : '#0078D4',
+                        }
+                    }}
+                >
+                    {connected ? 'Microsoft Connected' : 'Connect Microsoft'}
+                </Button>
+            );
+        }
+
+        if (serviceName === 'github') {
+            return (
+                <Button
+                    variant={connected ? "outlined" : "contained"}
+                    onClick={handleGitHubServiceConnection}
+                    disabled={connected}
+                    startIcon={connected ? <CheckCircleIcon /> : <LinkIcon />}
+                    sx={{
+                        backgroundColor: connected ? 'transparent' : '#24292e',
+                        borderColor: connected ? '#4ade80' : undefined,
+                        color: connected ? '#4ade80' : 'white',
+                        '&:hover': {
+                            backgroundColor: connected ? 'transparent' : '#1b1f23',
+                        }
+                    }}
+                >
+                    {connected ? 'GitHub Connected' : 'Connect GitHub'}
+                </Button>
+            );
+        }
+
+
+        return null;
+    };
+
+    if (loading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
 
     return (
-        <Box sx={{ display: "flex", minHeight: "100vh", minWidth: "100vw" }}>
-            <Card sx={{ width: "100%", maxWidth: 1400, margin: "0 auto" }}>
+        <Box sx={{ display: "flex", minHeight: "100vh", minWidth: "100vw", p: 2 }}>
+            <Card sx={{ width: "100%", maxWidth: 1000, margin: "0 auto" }}>
                 <CardContent>
                     <Typography variant="h5" gutterBottom>
                         Create Action-Reaction Workflow
                     </Typography>
 
+                    {/* Connection Status */}
+                    <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                        <Typography variant="subtitle2" sx={{ width: '100%', mb: 1 }}>
+                            Service Connections:
+                        </Typography>
+                        {renderConnectionButton('twitch')}
+                        {renderConnectionButton('google')}
+                        {renderConnectionButton('microsoft')}
+                        {renderConnectionButton('github')}
+                    </Box>
+
                     <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
-                        <Grid container spacing={2}>
-                            <Grid item xs={12} sm={6}>
+                        <Grid container spacing={3}>
+                            {/* Workflow Name */}
+                            <Grid item xs={12}>
                                 <TextField
-                                    label="Name"
+                                    label="Workflow Name"
                                     fullWidth
                                     required
                                     value={name}
@@ -336,350 +532,149 @@ export default function CreateActionReaction() {
                                 />
                             </Grid>
 
-                            <Grid item xs={12} sm={8}>
-                                <FormControl fullWidth sx={{ minWidth: 150 }}>
-                                    <InputLabel id="action-type-label">Action Type</InputLabel>
+                            {/* ACTION SECTION */}
+                            <Grid item xs={12}>
+                                <Typography variant="h6" sx={{ mb: 2, color: '#7c3aed' }}>
+                                    🎯 Action (Trigger)
+                                </Typography>
+                            </Grid>
+
+                            {/* Action Service */}
+                            <Grid item xs={12} sm={6}>
+                                <FormControl fullWidth>
+                                    <InputLabel>Action Service</InputLabel>
                                     <Select
-                                        labelId="action-type-label"
+                                        value={actionService}
+                                        label="Action Service"
+                                        onChange={(e) => {
+                                            setActionService(e.target.value);
+                                            setActionType("");
+                                            setActionParams({});
+                                        }}
+                                    >
+                                        {servicesWithActions.map((s) => (
+                                            <MenuItem key={s.name} value={s.name}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    {s.name.charAt(0).toUpperCase() + s.name.slice(1)}
+                                                    {serviceRequiresOAuth(s.name) && (
+                                                        <Chip
+                                                            size="small"
+                                                            label={isServiceConnected(s.name) ? "Connected" : "OAuth"}
+                                                            color={isServiceConnected(s.name) ? "success" : "warning"}
+                                                        />
+                                                    )}
+                                                </Box>
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+
+                            {/* Action Type */}
+                            <Grid item xs={12} sm={6}>
+                                <FormControl fullWidth disabled={!actionService}>
+                                    <InputLabel>Action Type</InputLabel>
+                                    <Select
                                         value={actionType}
                                         label="Action Type"
-                                        onChange={(e) => setActionType(e.target.value)}
+                                        onChange={(e) => {
+                                            setActionType(e.target.value);
+                                            setActionParams({});
+                                        }}
                                     >
-                                        {actionTypeOptions.map((a) => (
-                                            <MenuItem key={a.value} value={a.value}>
-                                                {a.label}
+                                        {getActionsForService(actionService).map((a) => (
+                                            <MenuItem key={a.name} value={a.name}>
+                                                {a.description || a.name}
                                             </MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>
                             </Grid>
 
-                            {/* Conditional field for interval */}
-                            {actionType === "interval" && (
-                                <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        label="Trigger interval (s)"
-                                        required
-                                        value={intervalS}
-                                        onChange={(e) => setintervalS(e.target.value)}
-                                        error={!!intervalInvalid}
-                                        helperText={intervalInvalid ? "Enter a positive number in seconds" : ""}
-                                    />
-                                </Grid>
+                            {/* Action Parameters */}
+                            {selectedAction?.options && (
+                                <>
+                                    <Grid item xs={12}>
+                                        <Typography variant="subtitle2" color="textSecondary">
+                                            Action Parameters:
+                                        </Typography>
+                                    </Grid>
+                                    {renderParamInputs(selectedAction.options, actionParams, setActionParams, 'action')}
+                                </>
                             )}
 
+                            {/* REACTION SECTION */}
+                            <Grid item xs={12}>
+                                <Typography variant="h6" sx={{ mb: 2, mt: 2, color: '#16a34a' }}>
+                                    ⚡ Reaction
+                                </Typography>
+                            </Grid>
+
+                            {/* Reaction Service */}
                             <Grid item xs={12} sm={6}>
-                                <FormControl fullWidth sx={{ minWidth: 150 }}>
-                                    <InputLabel id="reaction-type-label">Reaction Type</InputLabel>
+                                <FormControl fullWidth>
+                                    <InputLabel>Reaction Service</InputLabel>
                                     <Select
-                                        labelId="reaction-type-label"
+                                        value={reactionService}
+                                        label="Reaction Service"
+                                        onChange={(e) => {
+                                            setReactionService(e.target.value);
+                                            setReactionType("");
+                                            setReactionParams({});
+                                        }}
+                                    >
+                                        {servicesWithReactions.map((s) => (
+                                            <MenuItem key={s.name} value={s.name}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    {s.name.charAt(0).toUpperCase() + s.name.slice(1)}
+                                                    {serviceRequiresOAuth(s.name) && (
+                                                        <Chip
+                                                            size="small"
+                                                            label={isServiceConnected(s.name) ? "Connected" : "OAuth"}
+                                                            color={isServiceConnected(s.name) ? "success" : "warning"}
+                                                        />
+                                                    )}
+                                                </Box>
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+
+                            {/* Reaction Type */}
+                            <Grid item xs={12} sm={6}>
+                                <FormControl fullWidth disabled={!reactionService}>
+                                    <InputLabel>Reaction Type</InputLabel>
+                                    <Select
                                         value={reactionType}
                                         label="Reaction Type"
-                                        onChange={(e) => setReactionType(e.target.value)}
+                                        onChange={(e) => {
+                                            setReactionType(e.target.value);
+                                            setReactionParams({});
+                                        }}
                                     >
-                                        {reactionTypeOptions.map((r) => (
-                                            <MenuItem key={r.value} value={r.value}>
-                                                {r.label}
+                                        {getReactionsForService(reactionService).map((r) => (
+                                            <MenuItem key={r.name} value={r.name}>
+                                                {r.description || r.name}
                                             </MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>
                             </Grid>
 
-                            {/* Connect Google button */}
-                            <Grid item xs={12} sm={6} sx={{ display: 'flex', alignItems: 'center' }}>
-                                <Button
-                                    variant="outlined"
-                                    onClick={handleGoogleServiceConnection}
-                                    fullWidth
-                                >
-                                    Connect Google
-                                </Button>
-                            </Grid>
-
-                            {/* Connect GitHub button */}
-                            <Grid item xs={12} sm={6} sx={{ display: 'flex', alignItems: 'center' }}>
-                                <Button
-                                    variant="outlined"
-                                    onClick={handleGitHubServiceConnection}
-                                    fullWidth
-                                >
-                                    Connect GitHub
-                                </Button>
-                            </Grid>
-
-                            {/* GitHub Action Parameters */}
-                            {["issue_created", "pr_opened", "push_committed", "release_published", "repo_starred"].includes(actionType) && (
+                            {/* Reaction Parameters */}
+                            {selectedReaction?.options && (
                                 <>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            label="GitHub Owner"
-                                            fullWidth
-                                            required
-                                            value={githubOwner}
-                                            onChange={(e) => setGithubOwner(e.target.value)}
-                                            placeholder="octocat"
-                                        />
+                                    <Grid item xs={12}>
+                                        <Typography variant="subtitle2" color="textSecondary">
+                                            Reaction Parameters:
+                                        </Typography>
                                     </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            label="Repository Name"
-                                            fullWidth
-                                            required
-                                            value={githubRepo}
-                                            onChange={(e) => setGithubRepo(e.target.value)}
-                                            placeholder="my-repo"
-                                        />
-                                    </Grid>
-                                    {actionType === "push_committed" && (
-                                        <Grid item xs={12} sm={6}>
-                                            <TextField
-                                                label="Branch"
-                                                fullWidth
-                                                value={githubBranch}
-                                                onChange={(e) => setGithubBranch(e.target.value)}
-                                                placeholder="main"
-                                            />
-                                        </Grid>
-                                    )}
+                                    {renderParamInputs(selectedReaction.options, reactionParams, setReactionParams, 'reaction')}
                                 </>
                             )}
 
-                            {/* GitHub Reaction Parameters */}
-                            {reactionType === "create_issue" && (
-                                <>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            label="GitHub Owner"
-                                            fullWidth
-                                            required
-                                            value={githubOwner}
-                                            onChange={(e) => setGithubOwner(e.target.value)}
-                                            placeholder="octocat"
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            label="Repository Name"
-                                            fullWidth
-                                            required
-                                            value={githubRepo}
-                                            onChange={(e) => setGithubRepo(e.target.value)}
-                                            placeholder="my-repo"
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12}>
-                                        <TextField
-                                            label="Issue Title"
-                                            fullWidth
-                                            required
-                                            value={githubTitle}
-                                            onChange={(e) => setGithubTitle(e.target.value)}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12}>
-                                        <TextField
-                                            label="Issue Body"
-                                            fullWidth
-                                            multiline
-                                            minRows={3}
-                                            value={githubBody}
-                                            onChange={(e) => setGithubBody(e.target.value)}
-                                        />
-                                    </Grid>
-                                </>
-                            )}
-
-                            {reactionType === "comment_issue" && (
-                                <>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            label="GitHub Owner"
-                                            fullWidth
-                                            required
-                                            value={githubOwner}
-                                            onChange={(e) => setGithubOwner(e.target.value)}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            label="Repository Name"
-                                            fullWidth
-                                            required
-                                            value={githubRepo}
-                                            onChange={(e) => setGithubRepo(e.target.value)}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            label="Issue/PR Number"
-                                            fullWidth
-                                            required
-                                            type="number"
-                                            value={githubIssueNumber}
-                                            onChange={(e) => setGithubIssueNumber(e.target.value)}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12}>
-                                        <TextField
-                                            label="Comment"
-                                            fullWidth
-                                            required
-                                            multiline
-                                            minRows={3}
-                                            value={githubBody}
-                                            onChange={(e) => setGithubBody(e.target.value)}
-                                        />
-                                    </Grid>
-                                </>
-                            )}
-
-                            {reactionType === "create_file" && (
-                                <>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            label="GitHub Owner"
-                                            fullWidth
-                                            required
-                                            value={githubOwner}
-                                            onChange={(e) => setGithubOwner(e.target.value)}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            label="Repository Name"
-                                            fullWidth
-                                            required
-                                            value={githubRepo}
-                                            onChange={(e) => setGithubRepo(e.target.value)}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            label="File Path"
-                                            fullWidth
-                                            required
-                                            value={githubPath}
-                                            onChange={(e) => setGithubPath(e.target.value)}
-                                            placeholder="path/to/file.txt"
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            label="Branch"
-                                            fullWidth
-                                            value={githubBranch}
-                                            onChange={(e) => setGithubBranch(e.target.value)}
-                                            placeholder="main"
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12}>
-                                        <TextField
-                                            label="Commit Message"
-                                            fullWidth
-                                            value={githubTitle}
-                                            onChange={(e) => setGithubTitle(e.target.value)}
-                                            placeholder="Update file"
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12}>
-                                        <TextField
-                                            label="File Content"
-                                            fullWidth
-                                            required
-                                            multiline
-                                            minRows={4}
-                                            value={githubContent}
-                                            onChange={(e) => setGithubContent(e.target.value)}
-                                        />
-                                    </Grid>
-                                </>
-                            )}
-
-                            {reactionType === "create_release" && (
-                                <>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            label="GitHub Owner"
-                                            fullWidth
-                                            required
-                                            value={githubOwner}
-                                            onChange={(e) => setGithubOwner(e.target.value)}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            label="Repository Name"
-                                            fullWidth
-                                            required
-                                            value={githubRepo}
-                                            onChange={(e) => setGithubRepo(e.target.value)}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            label="Tag Name"
-                                            fullWidth
-                                            required
-                                            value={githubTagName}
-                                            onChange={(e) => setGithubTagName(e.target.value)}
-                                            placeholder="v1.0.0"
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            label="Release Name"
-                                            fullWidth
-                                            value={githubTitle}
-                                            onChange={(e) => setGithubTitle(e.target.value)}
-                                            placeholder="Version 1.0.0"
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12}>
-                                        <TextField
-                                            label="Release Description"
-                                            fullWidth
-                                            multiline
-                                            minRows={3}
-                                            value={githubBody}
-                                            onChange={(e) => setGithubBody(e.target.value)}
-                                        />
-                                    </Grid>
-                                </>
-                            )}
-
-                            {/* conditional fields for reaction */}
-                            {reactionType === "send_email" && (
-                                <>
-                                    <Grid item xs={12}>
-                                        <TextField
-                                            label="Recipient"
-                                            fullWidth
-                                            value={recipient}
-                                            onChange={(e) => setRecipient(e.target.value)}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12}>
-                                        <TextField
-                                            label="Subject"
-                                            fullWidth
-                                            value={subject}
-                                            onChange={(e) => setSubject(e.target.value)}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12}>
-                                        <TextField
-                                            label="Body"
-                                            fullWidth
-                                            multiline
-                                            minRows={3}
-                                            value={body}
-                                            onChange={(e) => setBody(e.target.value)}
-                                        />
-                                    </Grid>
-                                </>
-                            )}
-
+                            {/* Active Toggle */}
                             <Grid item xs={12}>
                                 <FormControlLabel
                                     control={
@@ -693,19 +688,25 @@ export default function CreateActionReaction() {
                             </Grid>
                         </Grid>
 
+                        {/* Error Message */}
                         {error && (
-                            <Typography color="error" sx={{ mt: 2 }}>
+                            <Alert severity="error" sx={{ mt: 2 }}>
                                 {error}
-                            </Typography>
+                            </Alert>
                         )}
 
+                        {/* Submit Buttons */}
                         <Box sx={{ display: "flex", gap: 2, mt: 3 }}>
                             <Button
                                 type="submit"
                                 variant="contained"
-                                disabled={!actionType || !reactionType || !name.trim() || intervalInvalid}
+                                disabled={!actionService || !actionType || !reactionService || !reactionType || !name.trim()}
+                                sx={{
+                                    background: 'linear-gradient(90deg, #7c3aed 0%, #16a34a 100%)',
+                                }}
                             >
-                                Create
+                                Create Workflow
+
                             </Button>
 
                             <Button
@@ -719,9 +720,9 @@ export default function CreateActionReaction() {
                 </CardContent>
             </Card>
 
-            {/* Dialog showing server response */}
+            {/* Response Dialog */}
             <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
-                <DialogTitle>{responseOk ? "Success" : "Response"}</DialogTitle>
+                <DialogTitle>{responseOk ? "✅ Success" : "⚠️ Response"}</DialogTitle>
                 <DialogContent>
                     <Typography sx={{ whiteSpace: "pre-wrap" }}>{responseText}</Typography>
                 </DialogContent>
