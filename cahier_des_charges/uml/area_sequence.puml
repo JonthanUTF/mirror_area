@@ -1,0 +1,30 @@
+@startuml
+title AREA Creation and Execution Sequence
+actor User
+participant WebClient
+participant Server
+database Database
+participant "External Service" as ES
+
+User -> WebClient: opens "Create AREA"
+WebClient -> Server: POST /areas {action, reactions, config, credentials}
+Server -> Database: validate & store AREA
+Database --> Server: area_id
+Server --> WebClient: 201 Created {area_id}
+WebClient --> User: show AREA created
+
+== Later: Hook execution ==
+Server -> ES: poll /webhook or API for new events
+ES --> Server: event payload
+Server -> Database: find matching areas for event
+Database --> Server: areas list
+alt area.enabled
+    loop for each reaction
+        Server -> ES: call REAction API with mapped params
+        ES --> Server: 200 OK
+        Server -> Database: log execution
+    end
+else not enabled
+    Server -> Database: ignore
+end
+@enduml

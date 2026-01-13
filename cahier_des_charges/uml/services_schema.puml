@@ -1,0 +1,25 @@
+@startuml
+title Services Schema (Components)
+skinparam componentStyle rectangle
+
+[Web Client] -- [Application Server]
+[Mobile Client] -- [Application Server]
+[Application Server] -- [Database]
+[Application Server] .. [OAuth Provider]
+[Application Server] .. [External API Services]
+
+component "OAuth Provider\n(e.g. Google, X)" as OAuth
+component "External API Services\n(e.g. Dropbox, GitHub)" as EXTS
+component "Database\n(Postgres / MongoDB)" as DB
+component "Hook Scheduler" as SCHED
+component "Job Worker / Queue" as WORKER
+
+[Web Client] -> [Application Server] : REST
+[Mobile Client] -> [Application Server] : REST
+[Application Server] -> OAuth : OAuth2 Authorization
+[Application Server] -> EXTS : API Calls (Actions/REActions)
+[Application Server] -> DB : read/write
+[Application Server] -> SCHED : schedule jobs
+SCHED -> WORKER : dispatch
+WORKER -> EXTS : execute REAction
+@enduml
