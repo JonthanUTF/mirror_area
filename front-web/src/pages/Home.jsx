@@ -16,12 +16,38 @@ import Sidebar from "../components/Sidebar";
 
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import LinkIcon from '@mui/icons-material/Link';
+
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
 
 export default function Home() {
   const navigate = useNavigate();
   const [areas, setAreas] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [connectedServicesCount, setConnectedServicesCount] = useState(0);
+
+  // Fetch connected services count
+  useEffect(() => {
+    const fetchConnectedServices = async () => {
+      const token = localStorage.getItem("authToken");
+      if (!token) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/services`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setConnectedServicesCount(Array.isArray(data) ? data.length : 0);
+        }
+      } catch (err) {
+        console.error("Failed to fetch connected services:", err);
+      }
+    };
+
+    fetchConnectedServices();
+  }, []);
 
   const stats = [
     {
@@ -36,13 +62,19 @@ export default function Home() {
       color: "#16a34a",
       icon: CheckCircleOutlineIcon,
     },
+    {
+      label: "Connected Services",
+      value: connectedServicesCount.toString(),
+      color: "#3b82f6",
+      icon: LinkIcon,
+    },
   ];
 
   const deleteArea = async (id) => {
     if (!window.confirm("Delete this workflow?")) return;
     try {
       const token = localStorage.getItem("authToken");
-      const res = await fetch(`http://localhost:8080/areas/${id}`, {
+      const res = await fetch(`${API_BASE}/areas/${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -67,7 +99,7 @@ export default function Home() {
     setAreas((prev) => prev.map(a => a.id === id ? { ...a, active: newActive } : a));
     try {
       const token = localStorage.getItem("authToken");
-      const res = await fetch(`http://localhost:8080/areas/${id}`, {
+      const res = await fetch(`${API_BASE}/areas/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -94,7 +126,7 @@ export default function Home() {
       setError("");
       try {
         const token = localStorage.getItem("authToken");
-        const res = await fetch("http://localhost:8080/areas", {
+        const res = await fetch(`${API_BASE}/areas`, {
           headers: {
             "Content-Type": "application/json",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -177,8 +209,6 @@ export default function Home() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            gap: 2,
-            py: 1,
           }}
         >
           <Box sx= {{ display: "flex", alignItems: "center", gap: 3 }}>

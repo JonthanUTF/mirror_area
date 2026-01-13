@@ -83,7 +83,7 @@ export default function Sidebar() {
 
                 <ListItem 
                   button 
-                  onClick={() => handleNavigation('/services')} 
+                  onClick={() => handleNavigation('/mobile')} 
                   sx={{ 
                     color: '#ffffff',
                     '&:hover': {
@@ -91,7 +91,7 @@ export default function Sidebar() {
                     }
                   }}>
                 <ListItemIcon sx={{ color: '#ffffff' }}><TimelineIcon /></ListItemIcon>
-                <ListItemText primary="Services" />
+                <ListItemText primary="Mobile APK" />
                 </ListItem>
 
                 <ListItem 
