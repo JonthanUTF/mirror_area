@@ -74,13 +74,21 @@ class AuthViewModel @Inject constructor(
     
     fun refreshCurrentUser() {
         viewModelScope.launch {
+            _uiState.value = AuthUiState.Loading
             val result = authRepository.fetchCurrentUser()
             result.onSuccess { user ->
                 _currentUser.value = user
-            }.onFailure {
+                _uiState.value = AuthUiState.Success(user)
+            }.onFailure { e ->
                 // Si l'appel API échoue, essayer de charger depuis le cache local
                 val user = authRepository.getCurrentUser()
-                _currentUser.value = user
+                if (user != null) {
+                    _currentUser.value = user
+                    _uiState.value = AuthUiState.Success(user)
+                } else {
+                    _uiState.value = AuthUiState.Error("OAuth Error: ${e.message}")
+                    _currentUser.value = null
+                }
             }
         }
     }

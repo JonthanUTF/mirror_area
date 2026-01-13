@@ -12,5 +12,5 @@ interface AuthApiService {
     suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
     
     @GET("auth/me")
-    suspend fun getMe(): Response<UserDto>
+    suspend fun getMe(): Response<MeResponse>
 }

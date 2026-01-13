@@ -93,15 +93,15 @@ class AuthRepository @Inject constructor(
             if (response.isSuccessful && body != null) {
                 // Sauvegarder les infos utilisateur localement
                 tokenManager.saveUserInfo(
-                    id = body.id,
-                    email = body.email,
-                    name = body.name
+                    id = body.user.id,
+                    email = body.user.email,
+                    name = body.user.name
                 )
                 
                 val user = User(
-                    id = body.id,
-                    email = body.email,
-                    name = body.name ?: "User",
+                    id = body.user.id,
+                    email = body.user.email,
+                    name = body.user.name ?: "User",
                     createdAt = System.currentTimeMillis()
                 )
                 

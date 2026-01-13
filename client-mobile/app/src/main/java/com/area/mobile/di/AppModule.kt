@@ -26,7 +26,8 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AppModule {
     
-    private const val DEFAULT_IP = "10.15.192.62.nip.io" // nip.io = nom de domaine valide
+    // TOUJOURS utiliser localhost car adb reverse doit être actif
+    private const val BASE_URL = "http://localhost:8080/"
     
     @Provides
     @Singleton
@@ -68,14 +69,9 @@ object AppModule {
     
     @Provides
     @Singleton
-    fun provideRetrofit(okHttpClient: OkHttpClient, gson: Gson, tokenManager: TokenManager): Retrofit {
-        val serverIp = runBlocking {
-            tokenManager.getServerIp().first() ?: DEFAULT_IP
-        }
-        val baseUrl = "http://$serverIp:8080/"
-        
+    fun provideRetrofit(okHttpClient: OkHttpClient, gson: Gson): Retrofit {
         return Retrofit.Builder()
-            .baseUrl(baseUrl)
+            .baseUrl(BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()

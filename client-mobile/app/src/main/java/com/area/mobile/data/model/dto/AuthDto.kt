@@ -17,6 +17,10 @@ data class AuthResponse(
     val user: UserDto
 )
 
+data class MeResponse(
+    val user: UserDto
+)
+
 data class UserDto(
     val id: String,
     val email: String,
