@@ -12,7 +12,7 @@ import ServicesCallback from "./pages/servicesCallback";
 const PrivateRoute = () => {
   let auth = localStorage.getItem("authToken")
 
-  if (!auth) {
+  if (!auth || (auth && auth == "")) {
     return <Navigate to="/login" replace />;
   }
   return <Outlet />;
