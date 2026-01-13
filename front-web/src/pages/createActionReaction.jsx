@@ -100,7 +100,7 @@ export default function CreateActionReaction() {
                     const data = await res.json();
                     const googleService = data.find(s => s.service?.name === 'google');
                     setGoogleConnected(!!googleService);
-                    
+
                     const microsoftService = data.find(s => s.service?.name === 'microsoft');
                     setMicrosoftConnected(!!microsoftService);
                 }
@@ -208,7 +208,7 @@ export default function CreateActionReaction() {
             localStorage.setItem('oauth_return', window.location.pathname || '/');
             localStorage.setItem('oauth_service', 'microsoft');
             const token = localStorage.getItem("authToken");
-            
+
             if (!token) {
                 setError("Please login first");
                 return;
@@ -232,7 +232,7 @@ export default function CreateActionReaction() {
             if (!connectUrl) {
                 throw new Error("No connect URL returned from server");
             }
-            
+
             // Redirect to Microsoft OAuth (same tab like other services)
             window.location.href = connectUrl;
         } catch (err) {
@@ -262,6 +262,7 @@ export default function CreateActionReaction() {
         if (!reactionService || !reactionType) {
             setError("Please select a reaction");
             return;
+
         }
 
         // Check OAuth requirements
@@ -369,9 +370,35 @@ export default function CreateActionReaction() {
         });
     };
 
+    const handleGitHubServiceConnection = async () => {
+        try {
+            localStorage.setItem('oauth_return', window.location.pathname || '/');
+            localStorage.setItem('pending_service', 'github');
+            const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
+            const token = localStorage.getItem("authToken");
+            const res = await fetch(`${API_BASE}/services/github/connect`, {
+                method: "GET",
+                headers: {
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            const connectUrl = data.url || data.connectUrl;
+            if (connectUrl) {
+                window.open(connectUrl, "_blank", "noopener,noreferrer");
+            }
+        } catch (err) {
+            setError(err?.message || "Failed to connect GitHub");
+        }
+    };
+
     // Render connection button for a service
     const renderConnectionButton = (serviceName) => {
         const connected = isServiceConnected(serviceName);
+
 
         if (serviceName === 'twitch') {
             return (
@@ -436,6 +463,28 @@ export default function CreateActionReaction() {
             );
         }
 
+        if (serviceName === 'github') {
+            return (
+                <Button
+                    variant={connected ? "outlined" : "contained"}
+                    onClick={handleGitHubServiceConnection}
+                    disabled={connected}
+                    startIcon={connected ? <CheckCircleIcon /> : <LinkIcon />}
+                    sx={{
+                        backgroundColor: connected ? 'transparent' : '#24292e',
+                        borderColor: connected ? '#4ade80' : undefined,
+                        color: connected ? '#4ade80' : 'white',
+                        '&:hover': {
+                            backgroundColor: connected ? 'transparent' : '#1b1f23',
+                        }
+                    }}
+                >
+                    {connected ? 'GitHub Connected' : 'Connect GitHub'}
+                </Button>
+            );
+        }
+
+
         return null;
     };
 
@@ -463,6 +512,7 @@ export default function CreateActionReaction() {
                         {renderConnectionButton('twitch')}
                         {renderConnectionButton('google')}
                         {renderConnectionButton('microsoft')}
+                        {renderConnectionButton('github')}
                     </Box>
 
                     <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
@@ -652,6 +702,7 @@ export default function CreateActionReaction() {
                                 }}
                             >
                                 Create Workflow
+
                             </Button>
 
                             <Button
