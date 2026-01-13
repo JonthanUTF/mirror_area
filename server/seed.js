@@ -31,6 +31,18 @@ const services = [
         label: 'Microsoft (OneDrive / Outlook)',
         icon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Microsoft_logo_%282012%29.svg/960px-Microsoft_logo_%282012%29.svg.png',
         active: true
+    },
+    {
+        name: 'github',
+        label: 'GitHub',
+        icon: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png',
+        active: true
+    },
+    {
+        name: 'twitch',
+        label: 'Twitch',
+        icon: 'https://static.twitchcdn.net/assets/favicon-32-e29e246c157142c94346.png',
+        active: true
     }
 ];
 
