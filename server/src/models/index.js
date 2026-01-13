@@ -47,11 +47,38 @@ const User = sequelize.define('User', {
   },
   role: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
     defaultValue: 'user',
     validate: {
       isIn: [['user', 'admin']]
     }
+  },
+  // Twitch OAuth tokens
+  twitchAccessToken: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  twitchRefreshToken: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  twitchTokenExpiresAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  twitchId: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  twitchUsername: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  // Trigger state tracking for Twitch
+  twitchStreamLastStatus: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    defaultValue: {}
   }
 }, {
   tableName: 'users',
