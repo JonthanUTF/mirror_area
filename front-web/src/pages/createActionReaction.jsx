@@ -37,6 +37,7 @@ export default function CreateActionReaction() {
     // Connection status for services
     const [twitchConnected, setTwitchConnected] = useState(false);
     const [googleConnected, setGoogleConnected] = useState(false);
+    const [microsoftConnected, setMicrosoftConnected] = useState(false);
 
     // Form state
     const [name, setName] = useState("");
@@ -90,7 +91,7 @@ export default function CreateActionReaction() {
                 console.error("Failed to check Twitch status:", err);
             }
 
-            // Check Google (via user services)
+            // Check Google and Microsoft (via user services)
             try {
                 const res = await fetch(`${API_BASE}/services`, {
                     headers: { Authorization: `Bearer ${token}` },
@@ -99,9 +100,12 @@ export default function CreateActionReaction() {
                     const data = await res.json();
                     const googleService = data.find(s => s.service?.name === 'google');
                     setGoogleConnected(!!googleService);
+                    
+                    const microsoftService = data.find(s => s.service?.name === 'microsoft');
+                    setMicrosoftConnected(!!microsoftService);
                 }
             } catch (err) {
-                console.error("Failed to check Google status:", err);
+                console.error("Failed to check services status:", err);
             }
         };
 
@@ -111,6 +115,14 @@ export default function CreateActionReaction() {
         const params = new URLSearchParams(window.location.search);
         if (params.get("twitch_connected") === "true") {
             setTwitchConnected(true);
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        if (params.get("microsoft_connected") === "true") {
+            setMicrosoftConnected(true);
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        if (params.get("google_connected") === "true") {
+            setGoogleConnected(true);
             window.history.replaceState({}, document.title, window.location.pathname);
         }
     }, []);
@@ -141,13 +153,14 @@ export default function CreateActionReaction() {
 
     // Check if service requires OAuth
     const serviceRequiresOAuth = (serviceName) => {
-        return ['twitch', 'google'].includes(serviceName);
+        return ['twitch', 'google', 'microsoft'].includes(serviceName);
     };
 
     // Check if service is connected
     const isServiceConnected = (serviceName) => {
         if (serviceName === 'twitch') return twitchConnected;
         if (serviceName === 'google') return googleConnected;
+        if (serviceName === 'microsoft') return microsoftConnected;
         return true; // Non-OAuth services are always "connected"
     };
 
@@ -165,6 +178,7 @@ export default function CreateActionReaction() {
     const handleGoogleConnect = async () => {
         try {
             localStorage.setItem('oauth_return', window.location.pathname || '/');
+            localStorage.setItem('oauth_service', 'google');
             const token = localStorage.getItem("authToken");
             const res = await fetch(`${API_BASE}/services/google/connect`, {
                 method: "GET",
@@ -181,10 +195,52 @@ export default function CreateActionReaction() {
             const data = await res.json();
             const connectUrl = data.url || data.connectUrl;
             if (connectUrl) {
-                window.open(connectUrl, "_blank", "noopener,noreferrer");
+                window.location.href = connectUrl;
             }
         } catch (err) {
             setError(err?.message || "Failed to connect Google");
+        }
+    };
+
+    // Handle Microsoft OAuth connection
+    const handleMicrosoftConnect = async () => {
+        try {
+            localStorage.setItem('oauth_return', window.location.pathname || '/');
+            localStorage.setItem('oauth_service', 'microsoft');
+            const token = localStorage.getItem("authToken");
+            
+            if (!token) {
+                setError("Please login first");
+                return;
+            }
+
+            const res = await fetch(`${API_BASE}/services/microsoft/connect`, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!res.ok) {
+                const txt = await res.text();
+                throw new Error(txt || `HTTP ${res.status}`);
+            }
+
+            const data = await res.json();
+            const connectUrl = data.url || data.connectUrl;
+            if (!connectUrl) {
+                throw new Error("No connect URL returned from server");
+            }
+            
+            // Redirect to Microsoft OAuth (same tab like other services)
+            window.location.href = connectUrl;
+        } catch (err) {
+            const msg = err?.message || "Failed to connect Microsoft";
+            setResponseOk(false);
+            setResponseText(msg);
+            setDialogOpen(true);
+            setError(msg);
         }
     };
 
@@ -271,18 +327,46 @@ export default function CreateActionReaction() {
     const renderParamInputs = (options, params, setParams, prefix) => {
         if (!options) return null;
 
-        return Object.entries(options).map(([key, type]) => (
-            <Grid item xs={12} sm={6} key={`${prefix}-${key}`}>
-                <TextField
-                    label={key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}
-                    fullWidth
-                    type={type === 'number' ? 'number' : 'text'}
-                    value={params[key] || ''}
-                    onChange={(e) => setParams({ ...params, [key]: type === 'number' ? Number(e.target.value) : e.target.value })}
-                    placeholder={`Enter ${key} (${type})`}
-                />
-            </Grid>
-        ));
+        return Object.entries(options).map(([key, type]) => {
+            const label = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
+
+            // Handle select fields (format: "select:option1,option2,option3")
+            if (type.startsWith('select:')) {
+                const selectOptions = type.replace('select:', '').split(',');
+                return (
+                    <Grid item xs={12} sm={6} key={`${prefix}-${key}`}>
+                        <FormControl fullWidth>
+                            <InputLabel>{label}</InputLabel>
+                            <Select
+                                value={params[key] || selectOptions[0]}
+                                label={label}
+                                onChange={(e) => setParams({ ...params, [key]: e.target.value })}
+                            >
+                                {selectOptions.map((opt) => (
+                                    <MenuItem key={opt} value={opt}>
+                                        {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </Grid>
+                );
+            }
+
+            // Default text/number field
+            return (
+                <Grid item xs={12} sm={6} key={`${prefix}-${key}`}>
+                    <TextField
+                        label={label}
+                        fullWidth
+                        type={type === 'number' ? 'number' : 'text'}
+                        value={params[key] || ''}
+                        onChange={(e) => setParams({ ...params, [key]: type === 'number' ? Number(e.target.value) : e.target.value })}
+                        placeholder={`Enter ${key}`}
+                    />
+                </Grid>
+            );
+        });
     };
 
     // Render connection button for a service
@@ -318,11 +402,36 @@ export default function CreateActionReaction() {
                     disabled={connected}
                     startIcon={connected ? <CheckCircleIcon /> : <LinkIcon />}
                     sx={{
+                        backgroundColor: connected ? 'transparent' : '#4285F4',
                         borderColor: connected ? '#4ade80' : undefined,
-                        color: connected ? '#4ade80' : undefined,
+                        color: connected ? '#4ade80' : 'white',
+                        '&:hover': {
+                            backgroundColor: connected ? 'transparent' : '#3367D6',
+                        }
                     }}
                 >
                     {connected ? 'Google Connected' : 'Connect Google'}
+                </Button>
+            );
+        }
+
+        if (serviceName === 'microsoft') {
+            return (
+                <Button
+                    variant={connected ? "outlined" : "contained"}
+                    onClick={handleMicrosoftConnect}
+                    disabled={connected}
+                    startIcon={connected ? <CheckCircleIcon /> : <LinkIcon />}
+                    sx={{
+                        backgroundColor: connected ? 'transparent' : '#00A4EF',
+                        borderColor: connected ? '#4ade80' : undefined,
+                        color: connected ? '#4ade80' : 'white',
+                        '&:hover': {
+                            backgroundColor: connected ? 'transparent' : '#0078D4',
+                        }
+                    }}
+                >
+                    {connected ? 'Microsoft Connected' : 'Connect Microsoft'}
                 </Button>
             );
         }
@@ -353,6 +462,7 @@ export default function CreateActionReaction() {
                         </Typography>
                         {renderConnectionButton('twitch')}
                         {renderConnectionButton('google')}
+                        {renderConnectionButton('microsoft')}
                     </Box>
 
                     <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
