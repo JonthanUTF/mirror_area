@@ -1,5 +1,7 @@
 package com.area.mobile
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,8 +11,12 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -25,36 +31,72 @@ import com.area.mobile.ui.screen.*
 import com.area.mobile.ui.theme.AREATheme
 import com.area.mobile.ui.viewmodel.AuthViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val oauthTokenState = mutableStateOf<String?>(null)
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Handle OAuth callback from deep link
+        handleIntent(intent)
+        
         setContent {
             AREATheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AREAApp()
+                    AREAApp(oauthToken = oauthTokenState.value)
                 }
             }
+        }
+    }
+    
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntent(intent)
+    }
+    
+    private fun handleIntent(intent: Intent?) {
+        val data: Uri? = intent?.data
+        
+        // Check if this is an OAuth callback
+        if (data != null && data.scheme == "area" && data.host == "auth" && data.path == "/callback") {
+            val token = data.getQueryParameter("token")
+            oauthTokenState.value = token
         }
     }
 }
 
 @Composable
-fun AREAApp() {
+fun AREAApp(oauthToken: String? = null) {
     val navController = rememberNavController()
     val authViewModel: AuthViewModel = hiltViewModel()
     val currentUser by authViewModel.currentUser.collectAsState()
     
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route ?: "dashboard"
-    
+    // Déterminer la destination de démarrage
     val startDestination = if (currentUser != null) "dashboard" else "login"
     
-    val onLogout = {
+    // Observer le changement de l'utilisateur pour naviguer automatiquement vers dashboard après OAuth
+    LaunchedEffect(currentUser) {
+        if (currentUser != null) {
+            // Navigation vers dashboard uniquement si on n'y est pas déjà
+            val currentRoute = navController.currentBackStackEntry?.destination?.route
+            if (currentRoute == "login") {
+                navController.navigate("dashboard") {
+                    popUpTo(0) { inclusive = true }
+                }
+            }
+        }
+    }
+    
+    val onLogout: () -> Unit = {
         authViewModel.logout()
         navController.navigate("login") {
             popUpTo(0) { inclusive = true }
@@ -67,6 +109,7 @@ fun AREAApp() {
     ) {
         composable("login") {
             LoginScreen(
+                oauthToken = oauthToken,
                 onLoginSuccess = {
                     navController.navigate("dashboard") {
                         popUpTo("login") { inclusive = true }

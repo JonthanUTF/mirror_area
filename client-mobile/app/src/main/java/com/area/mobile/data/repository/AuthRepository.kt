@@ -85,6 +85,35 @@ class AuthRepository @Inject constructor(
         )
     }
     
+    suspend fun fetchCurrentUser(): Result<User> {
+        return try {
+            val response = authApiService.getMe()
+            val body = response.body()
+            
+            if (response.isSuccessful && body != null) {
+                // Sauvegarder les infos utilisateur localement
+                tokenManager.saveUserInfo(
+                    id = body.id,
+                    email = body.email,
+                    name = body.name
+                )
+                
+                val user = User(
+                    id = body.id,
+                    email = body.email,
+                    name = body.name ?: "User",
+                    createdAt = System.currentTimeMillis()
+                )
+                
+                Result.success(user)
+            } else {
+                Result.failure(Exception("Failed to fetch user: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Network error: ${e.message}"))
+        }
+    }
+    
     suspend fun logout() {
         tokenManager.clearAll()
     }

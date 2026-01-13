@@ -72,6 +72,19 @@ class AuthViewModel @Inject constructor(
         }
     }
     
+    fun refreshCurrentUser() {
+        viewModelScope.launch {
+            val result = authRepository.fetchCurrentUser()
+            result.onSuccess { user ->
+                _currentUser.value = user
+            }.onFailure {
+                // Si l'appel API échoue, essayer de charger depuis le cache local
+                val user = authRepository.getCurrentUser()
+                _currentUser.value = user
+            }
+        }
+    }
+    
     fun resetState() {
         _uiState.value = AuthUiState.Idle
     }

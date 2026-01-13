@@ -26,8 +26,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AppModule {
     
-    private const val BASE_URL = "http://10.15.192.62:8080/" // Device physique: IP du PC
-    // Pour émulateur Android: "http://10.0.2.2:8080/"
+    private const val DEFAULT_IP = "10.15.192.62.nip.io" // nip.io = nom de domaine valide
     
     @Provides
     @Singleton
@@ -69,9 +68,14 @@ object AppModule {
     
     @Provides
     @Singleton
-    fun provideRetrofit(okHttpClient: OkHttpClient, gson: Gson): Retrofit {
+    fun provideRetrofit(okHttpClient: OkHttpClient, gson: Gson, tokenManager: TokenManager): Retrofit {
+        val serverIp = runBlocking {
+            tokenManager.getServerIp().first() ?: DEFAULT_IP
+        }
+        val baseUrl = "http://$serverIp:8080/"
+        
         return Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(baseUrl)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
@@ -116,4 +120,3 @@ object AppModule {
         return ServiceRepository(servicesApiService)
     }
 }
-

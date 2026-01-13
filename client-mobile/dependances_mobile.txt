@@ -1,0 +1,2 @@
+ngrok pour faire un callback sécuriser (httpS)
+gradle si necessaire

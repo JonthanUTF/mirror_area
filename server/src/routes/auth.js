@@ -110,27 +110,47 @@ router.post('/login', async (req, res) => {
 
 router.get('/google', (req, res, next) => {
   console.log('[Auth] Initiating Google Login...');
-  next();
-},
+  const state = req.query.state || 'web';
+  console.log('[Auth] State:', state);
+  
   passport.authenticate('google', {
     scope: ['profile', 'email'],
-    session: false
-  })
-);
+    session: false,
+    state: state
+  })(req, res, next);
+});
 
 router.get('/google/callback',
-  passport.authenticate('google', {
-    session: false,
-    failureRedirect: '/login'
-  }),
+  (req, res, next) => {
+    const isMobile = req.query.state === 'mobile';
+    
+    passport.authenticate('google', {
+      session: false,
+      failureRedirect: isMobile ? '/mobile-callback.html?error=auth_failed' : `${process.env.CLIENT_URL || 'http://localhost:8081'}/login?error=auth_failed`
+    })(req, res, next);
+  },
   (req, res) => {
     try {
       const token = generateToken(req.user);
-
-      res.redirect(`${process.env.CLIENT_URL || 'http://localhost:8081'}/auth/callback?token=${token}`);
+      
+      // Check if request is from mobile app via state parameter
+      const isMobile = req.query.state === 'mobile';
+      
+      if (isMobile) {
+        // Redirect to intermediate page that will launch the deep link
+        res.redirect(`/mobile-callback.html?token=${token}`);
+      } else {
+        // Redirect to web app
+        res.redirect(`${process.env.CLIENT_URL || 'http://localhost:8081'}/auth/callback?token=${token}`);
+      }
     } catch (error) {
       console.error('Google callback error:', error);
-      res.redirect('/login?error=authentication_failed');
+      const isMobile = req.query.state === 'mobile';
+      if (isMobile) {
+        res.redirect('/mobile-callback.html?error=authentication_failed');
+      } else {
+        res.redirect(`${process.env.CLIENT_URL || 'http://localhost:8081'}/login?error=authentication_failed`);
+      }
     }
   }
 );

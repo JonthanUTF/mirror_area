@@ -1,5 +1,7 @@
 package com.area.mobile.ui.screen
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -20,29 +22,84 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.area.mobile.data.local.TokenManager
 import com.area.mobile.ui.theme.*
 import com.area.mobile.ui.viewmodel.AuthUiState
 import com.area.mobile.ui.viewmodel.AuthViewModel
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
+    oauthToken: String? = null,
     onLoginSuccess: () -> Unit,
     viewModel: AuthViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    val tokenManager = remember { TokenManager(context) }
+    val coroutineScope = rememberCoroutineScope()
+    
     var isLogin by remember { mutableStateOf(true) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
+    var serverIp by remember { mutableStateOf("10.15.192.62.nip.io") }
     var passwordVisible by remember { mutableStateOf(false) }
     
     val uiState by viewModel.uiState.collectAsState()
+    
+    // Load saved server IP
+    LaunchedEffect(Unit) {
+        val savedIp = tokenManager.getServerIp().first()
+        if (savedIp != null) {
+            serverIp = savedIp
+        }
+    }
+    
+    // Handle OAuth token from callback
+    LaunchedEffect(oauthToken) {
+        if (oauthToken != null) {
+            // Save server IP FIRST (localhost pour adb reverse)
+            tokenManager.saveServerIp("localhost")
+            // Save token
+            tokenManager.saveToken(oauthToken)
+            // Fetch user info with the new token
+            viewModel.refreshCurrentUser()
+        }
+    }
+    
+    // Observer le currentUser pour naviguer après OAuth
+    val currentUser by viewModel.currentUser.collectAsState()
+    LaunchedEffect(currentUser) {
+        if (currentUser != null && oauthToken != null) {
+            // L'utilisateur est connecté après OAuth, naviguer vers dashboard
+            onLoginSuccess()
+        }
+    }
     
     LaunchedEffect(uiState) {
         if (uiState is AuthUiState.Success) {
             onLoginSuccess()
             viewModel.resetState()
         }
+    }
+    
+    val handleGoogleLogin = {
+        // Utiliser localhost partout (adb reverse doit être actif)
+        val authUrl = "http://localhost:8080/auth/google?state=mobile"
+        
+        coroutineScope.launch {
+            tokenManager.saveServerIp("localhost")
+        }
+        
+        val customTabsIntent = CustomTabsIntent.Builder()
+            .setShowTitle(true)
+            .build()
+        
+        customTabsIntent.launchUrl(context, Uri.parse(authUrl))
     }
     
     Box(
@@ -98,7 +155,7 @@ fun LoginScreen(
             OAuthButton(
                 text = "Continue with Google",
                 icon = Icons.Default.AccountCircle,
-                onClick = { }
+                onClick = handleGoogleLogin
             )
             
             Spacer(modifier = Modifier.height(12.dp))

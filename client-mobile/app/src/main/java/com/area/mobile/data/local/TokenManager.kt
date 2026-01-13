@@ -17,6 +17,7 @@ class TokenManager(private val context: Context) {
         private val USER_ID_KEY = stringPreferencesKey("user_id")
         private val USER_EMAIL_KEY = stringPreferencesKey("user_email")
         private val USER_NAME_KEY = stringPreferencesKey("user_name")
+        private val SERVER_IP_KEY = stringPreferencesKey("server_ip")
     }
     
     suspend fun saveToken(token: String) {
@@ -28,6 +29,18 @@ class TokenManager(private val context: Context) {
     fun getToken(): Flow<String?> {
         return context.dataStore.data.map { preferences ->
             preferences[TOKEN_KEY]
+        }
+    }
+    
+    suspend fun saveServerIp(ip: String) {
+        context.dataStore.edit { preferences ->
+            preferences[SERVER_IP_KEY] = ip
+        }
+    }
+    
+    fun getServerIp(): Flow<String?> {
+        return context.dataStore.data.map { preferences ->
+            preferences[SERVER_IP_KEY]
         }
     }
     
