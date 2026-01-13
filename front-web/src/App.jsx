@@ -1,12 +1,14 @@
+import { useEffect } from "react";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Signup from "./pages/Signup";
 import Settings from "./pages/Settings";
 import CreateActionReaction from "./pages/createActionReaction";
-
+import MobileAPK from "./pages/MobileAPK";
 import AuthCallback from "./pages/AuthCallback";
 import ServicesCallback from "./pages/servicesCallback";
+import AdminPage from "./pages/AdminPage";
 
 
 const PrivateRoute = () => {
@@ -18,12 +20,32 @@ const PrivateRoute = () => {
   return <Outlet />;
 }
 
+const initializeLocalStorage = () => {
+  const defaults = {
+    authToken: "",
+    userId: "",
+    userName: "",
+    userEmail: "",
+    oauth_return: "",
+  };
+
+  Object.entries(defaults).forEach(([key, defaultValue]) => {
+    if (localStorage.getItem(key) === null) {
+      localStorage.setItem(key, defaultValue);
+    }
+  });
+};
+
 function App() {
+  useEffect(() => {
+    initializeLocalStorage();
+  }, []);
   return (
     <Routes>
       {/* Public routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+        <Route path='/mobile' element={<MobileAPK/>} />
 
       {/* Protected routes */}
       <Route element={<PrivateRoute/>}>
@@ -32,6 +54,7 @@ function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path='/settings' element={<Settings/>} />
         <Route path='/home' element={<Home/>} />
+        <Route path="/admin" element={<AdminPage />} />
       </Route>
       
       <Route path="/" element={<Navigate to="/login" replace />} />
