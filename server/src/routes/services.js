@@ -46,6 +46,20 @@ const authFactories = {
     }
 };
 
+// List all available services
+router.get('/available', authenticateToken, async (req, res) => {
+    try {
+        const services = await Service.findAll({
+            where: { active: true },
+            attributes: ['id', 'name', 'label', 'icon']
+        });
+        res.json({ services });
+    } catch (error) {
+        console.error('List available services error:', error);
+        res.status(500).json({ error: 'Failed to retrieve available services' });
+    }
+});
+
 // Initiate Connection
 router.get('/:serviceName/connect', authenticateToken, async (req, res) => {
     const { serviceName } = req.params;

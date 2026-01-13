@@ -31,6 +31,7 @@ fun ServicesScreen(
 ) {
     val services by viewModel.services.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
     
     if (isLoading) {
         Box(
@@ -38,6 +39,31 @@ fun ServicesScreen(
             contentAlignment = Alignment.Center
         ) {
             CircularProgressIndicator(color = PurplePrimary)
+        }
+    } else if (error != null) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = error ?: "Unknown error",
+                    color = RedError,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                Button(
+                    onClick = { viewModel.loadServices() },
+                    colors = ButtonDefaults.buttonColors(containerColor = PurplePrimary)
+                ) {
+                    Text("Retry")
+                }
+            }
         }
     } else {
         LazyColumn(
