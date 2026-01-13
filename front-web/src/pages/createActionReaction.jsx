@@ -38,6 +38,7 @@ export default function CreateActionReaction() {
     const [twitchConnected, setTwitchConnected] = useState(false);
     const [googleConnected, setGoogleConnected] = useState(false);
     const [microsoftConnected, setMicrosoftConnected] = useState(false);
+    const [githubConnected, setGitHubConnected] = useState(false);
 
     // Form state
     const [name, setName] = useState("");
@@ -103,6 +104,9 @@ export default function CreateActionReaction() {
 
                     const microsoftService = data.find(s => s.service?.name === 'microsoft');
                     setMicrosoftConnected(!!microsoftService);
+
+                    const githubService = data.find(s => s.service?.name === 'github');
+                    setGitHubConnected(!!githubService);
                 }
             } catch (err) {
                 console.error("Failed to check services status:", err);
