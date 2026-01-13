@@ -4,9 +4,9 @@ import Home from "./pages/Home";
 import Signup from "./pages/Signup";
 import Settings from "./pages/Settings";
 import CreateActionReaction from "./pages/createActionReaction";
-
 import AuthCallback from "./pages/AuthCallback";
 import ServicesCallback from "./pages/servicesCallback";
+import AdminPage from "./pages/AdminPage";
 
 
 const PrivateRoute = () => {
@@ -19,11 +19,21 @@ const PrivateRoute = () => {
 }
 
 function App() {
+  // Note: Do NOT clear localStorage here as it logs users out on every page load
+  // Only initialize values if they don't exist
+  if (!localStorage.getItem("authToken")) {
+    localStorage.setItem("authToken", "");
+  }
+  if (!localStorage.getItem("oauth_return")) {
+    localStorage.setItem("oauth_return", "");
+  }
+
   return (
     <Routes>
       {/* Public routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/admin" element={<AdminPage />} />
 
       {/* Protected routes */}
       <Route element={<PrivateRoute/>}>

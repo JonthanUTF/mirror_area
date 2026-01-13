@@ -16,6 +16,8 @@ import MenuIcon from "@mui/icons-material/Menu";
 import SettingsIcon from "@mui/icons-material/Settings";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import HomeIcon from "@mui/icons-material/Home";
+import LogoutIcon from '@mui/icons-material/Logout';
+import GroupIcon from '@mui/icons-material/Group';
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
@@ -28,6 +30,14 @@ export default function Sidebar() {
   const handleNavigation = (path) => {
     navigate(path);
     setOpen(false);
+  };
+
+  const handleLogout = (e) => {
+    localStorage.setItem("token", "");
+    localStorage.setItem("userId", "");
+    localStorage.setItem("userName", "");
+    localStorage.setItem("userEmail", "");
+    handleNavigation('/login');
   };
 
   return (
@@ -50,9 +60,12 @@ export default function Sidebar() {
               width: 250,
               backgroundColor: '#160b23ff',
               height: '100%',
-              color: '#ffffff'
+              color: '#ffffff',
+              display: 'flex',
+              flexDirection: 'column',
+              paddingBottom: 2
               }} role="presentation">
-            <List>
+            <List sx={{ flex: '1 1 auto' }}>
                 <ListItem 
                   button 
                   onClick={() => handleNavigation('/home')} 
@@ -91,7 +104,35 @@ export default function Sidebar() {
                 <ListItemIcon sx={{ color: '#ffffff' }}><SettingsIcon /></ListItemIcon>
                 <ListItemText primary="Settings" />
                 </ListItem>
+
+                <ListItem 
+                  button 
+                  onClick={() => handleNavigation('/admin')} 
+                  sx={{ 
+                    color: '#ffffff',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    }
+                  }}>
+                <ListItemIcon sx={{ color: '#ffffff' }}><GroupIcon /></ListItemIcon>
+                <ListItemText primary="User Management" />
+                </ListItem>
             </List>
+
+            <Box sx={{ px: 1, py: 1 }}>
+                <ListItem 
+                  button 
+                  onClick={() => handleLogout()} 
+                  sx={{ 
+                    color: '#ffffff',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    }
+                  }}>
+                  <ListItemIcon sx={{ color: '#ffffff' }}><LogoutIcon /></ListItemIcon>
+                  <ListItemText primary="Log out" />
+                </ListItem>
+            </Box>
             </Box>
         </Drawer>
     </>
