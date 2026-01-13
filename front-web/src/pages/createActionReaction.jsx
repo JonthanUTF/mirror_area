@@ -51,9 +51,9 @@ export default function CreateActionReaction() {
     const [microsoftPath, setMicrosoftPath] = useState("");
     const [msUploadPath, setMsUploadPath] = useState("");
     const [msUploadContent, setMsUploadContent] = useState("");
-    const [msUploadContentType, setMsUploadContentType] = useState("text/plain");
     const [msSharePath, setMsSharePath] = useState("");
     const [msShareType, setMsShareType] = useState("view");
+    const [msShareEmailTo, setMsShareEmailTo] = useState("");
     const [outlookSender, setOutlookSender] = useState("");
     const [outlookKeyword, setOutlookKeyword] = useState("");
 
@@ -226,7 +226,7 @@ export default function CreateActionReaction() {
                 ...mergedParams,
                 uploadPath: msUploadPath,
                 content: msUploadContent,
-                contentType: msUploadContentType || 'text/plain'
+                contentType: 'text/plain'
             };
         }
 
@@ -234,7 +234,8 @@ export default function CreateActionReaction() {
             mergedParams = {
                 ...mergedParams,
                 sharePath: msSharePath,
-                type: msShareType || 'view'
+                type: msShareType || 'view',
+                emailTo: msShareEmailTo
             };
         }
 
@@ -807,18 +808,9 @@ export default function CreateActionReaction() {
                                             onChange={(e) => setMsUploadPath(e.target.value)}
                                         />
                                     </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            label="Content-Type"
-                                            fullWidth
-                                            value={msUploadContentType}
-                                            onChange={(e) => setMsUploadContentType(e.target.value)}
-                                            placeholder="text/plain"
-                                        />
-                                    </Grid>
                                     <Grid item xs={12}>
                                         <TextField
-                                            label="File content"
+                                            label="File content (Text)"
                                             fullWidth
                                             multiline
                                             minRows={4}
@@ -853,6 +845,15 @@ export default function CreateActionReaction() {
                                                 <MenuItem value="edit">edit</MenuItem>
                                             </Select>
                                         </FormControl>
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            label="Send link to email"
+                                            fullWidth
+                                            value={msShareEmailTo}
+                                            onChange={(e) => setMsShareEmailTo(e.target.value)}
+                                            placeholder="recipient@example.com"
+                                        />
                                     </Grid>
                                 </>
                             )}
