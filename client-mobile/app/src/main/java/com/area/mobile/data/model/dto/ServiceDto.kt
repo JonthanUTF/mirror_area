@@ -49,16 +49,18 @@ data class ServerInfo(
 
 data class ServiceInfo(
     val name: String,
-    val actions: List<ActionInfo>,
-    val reactions: List<ReactionInfo>
+    val actions: List<ActionInfo>?,
+    val reactions: List<ReactionInfo>?
 )
 
 data class ActionInfo(
     val name: String,
-    val description: String
+    val description: String,
+    val options: Map<String, Any>?
 )
 
 data class ReactionInfo(
     val name: String,
-    val description: String
+    val description: String,
+    val options: Map<String, Any>?
 )

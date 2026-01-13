@@ -102,7 +102,7 @@ class AreaRepository @Inject constructor(
         actionType: String,
         reactionService: String,
         reactionType: String,
-        parameters: Map<String, Any>? = null
+        parameters: Map<String, Any>
     ): Result<Area> {
         return try {
             val request = CreateAreaRequest(

@@ -13,28 +13,75 @@ class ServiceRepository @Inject constructor(
 ) {
     suspend fun getAllServices(): Result<List<Service>> {
         return try {
-            val response = servicesApiService.getAvailableServices()
+            // Fetch basic service info
+            val availableResponse = servicesApiService.getAvailableServices()
+            // Fetch detailed definitions (about.json)
+            val aboutResponse = servicesApiService.getAboutJson()
             
-            if (response.isSuccessful && response.body() != null) {
-                val services = response.body()!!.services.map { serviceDb ->
+            if (availableResponse.isSuccessful && availableResponse.body() != null && 
+                aboutResponse.isSuccessful && aboutResponse.body() != null) {
+                
+                val availableServices = availableResponse.body()!!.services
+                val aboutServices = aboutResponse.body()!!.server.services
+                
+                val services = availableServices.map { serviceDb ->
+                    // Find matching service definition in about.json
+                    val definition = aboutServices.find { it.name.equals(serviceDb.name, ignoreCase = true) }
+                    
+                    val actions = definition?.actions?.map { action ->
+                        ServiceAction(
+                            id = action.name,
+                            name = action.name.replace("_", " ").replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
+                            description = action.description,
+                            parameters = action.options?.map { (key, value) ->
+                                com.area.mobile.data.model.ActionParameter(
+                                    name = key,
+                                    type = value.toString(),
+                                    description = "",
+                                    required = true
+                                )
+                            } ?: emptyList()
+                        )
+                    } ?: emptyList()
+                    
+                    val reactions = definition?.reactions?.map { reaction ->
+                        ServiceReaction(
+                            id = reaction.name,
+                            name = reaction.name.replace("_", " ").replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
+                            description = reaction.description,
+                            parameters = reaction.options?.map { (key, value) ->
+                                com.area.mobile.data.model.ReactionParameter(
+                                    name = key,
+                                    type = value.toString(),
+                                    description = "",
+                                    required = true
+                                )
+                            } ?: emptyList()
+                        )
+                    } ?: emptyList()
+                    
                     Service(
                         id = serviceDb.id,
-                        name = serviceDb.label,
+                        name = serviceDb.name, // Use the system name (e.g. "google", "timer") as identifier
                         description = "Connect your ${serviceDb.label} account",
                         iconName = serviceDb.icon ?: getServiceIcon(serviceDb.name),
                         color = getServiceColor(serviceDb.name),
-                        isConnected = false, // Will be updated with user services
-                        actions = emptyList(), // Actions from about.json if needed
-                        reactions = emptyList() // Reactions from about.json if needed
+                        isConnected = false,
+                        actions = actions,
+                        reactions = reactions
                     )
                 }
                 Result.success(services)
             } else {
-                Result.failure(Exception("Failed to fetch services: ${response.message()}"))
+                Result.failure(Exception("Failed to fetch services"))
             }
         } catch (e: Exception) {
             Result.failure(Exception("Network error: ${e.message}"))
         }
+    }
+    
+    private fun String.capitalize(): String {
+        return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
     }
     
     suspend fun getUserServices(): Result<List<String>> {

@@ -28,11 +28,13 @@ data class ServiceReaction(
 data class ActionParameter(
     val name: String,
     val type: String,
-    val required: Boolean
+    val description: String = "",
+    val required: Boolean = true
 )
 
 data class ReactionParameter(
     val name: String,
     val type: String,
-    val required: Boolean
+    val description: String = "",
+    val required: Boolean = true
 )
