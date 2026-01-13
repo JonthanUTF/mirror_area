@@ -17,6 +17,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import HomeIcon from "@mui/icons-material/Home";
 import LogoutIcon from '@mui/icons-material/Logout';
+import GroupIcon from '@mui/icons-material/Group';
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
@@ -102,6 +103,19 @@ export default function Sidebar() {
                   }}>
                 <ListItemIcon sx={{ color: '#ffffff' }}><SettingsIcon /></ListItemIcon>
                 <ListItemText primary="Settings" />
+                </ListItem>
+
+                <ListItem 
+                  button 
+                  onClick={() => handleNavigation('/admin')} 
+                  sx={{ 
+                    color: '#ffffff',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    }
+                  }}>
+                <ListItemIcon sx={{ color: '#ffffff' }}><GroupIcon /></ListItemIcon>
+                <ListItemText primary="User Management" />
                 </ListItem>
             </List>
 
