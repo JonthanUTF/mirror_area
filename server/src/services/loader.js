@@ -5,7 +5,7 @@ const WeatherService = require('./implementations/WeatherService');
 const TimerService = require('./implementations/TimerService');
 const ConsoleService = require('./implementations/ConsoleService');
 const EmailService = require('./implementations/EmailService');
-const GitHubService = require('./implementations/GitHubService');
+const TwitchService = require('./implementations/TwitchService');
 const MicrosoftService = require('./implementations/MicrosoftService');
 
 function loadServices() {
@@ -13,7 +13,7 @@ function loadServices() {
     registry.register(TimerService);
     registry.register(ConsoleService);
     registry.register(EmailService);
-    registry.register(GitHubService);
+    registry.register(TwitchService);
     registry.register(MicrosoftService);
 
     console.log('[LOADER] All services loaded into registry');

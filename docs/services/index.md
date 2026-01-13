@@ -11,7 +11,6 @@ Chaque service dispose de :
 ## Services disponibles
 
 - [Gmail](gmail.md)
-- [GitHub](github.md)
 - [Dropbox](dropbox.md)
 - [OneDrive](onedrive.md)
 - [Twitter (X)](twitter.md)
