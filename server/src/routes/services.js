@@ -233,10 +233,66 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-// Delete connection
+// Disconnect a service (POST version for frontend compatibility)
+router.post('/:serviceName/disconnect', authenticateToken, async (req, res) => {
+    const { serviceName } = req.params;
+
+    try {
+        // Find the service by name
+        const service = await Service.findOne({ where: { name: serviceName } });
+        if (!service) {
+            return res.status(404).json({ error: 'Service not found' });
+        }
+
+        // Delete the user's connection to this service
+        const deleted = await UserService.destroy({
+            where: {
+                userId: req.user.id,
+                serviceId: service.id
+            }
+        });
+
+        if (deleted === 0) {
+            return res.status(404).json({ error: 'Service connection not found' });
+        }
+
+        console.log(`[Services] User ${req.user.id} disconnected from ${serviceName}`);
+        res.json({ message: `${serviceName} disconnected successfully`, disconnected: true });
+    } catch (error) {
+        console.error('Disconnect service error:', error);
+        res.status(500).json({ error: 'Failed to disconnect service' });
+    }
+});
+
+// Delete connection (DELETE version)
 router.delete('/:serviceName', authenticateToken, async (req, res) => {
-    // ... Implementation for later
-    res.status(501).json({ error: 'Not implemented yet' });
+    const { serviceName } = req.params;
+
+    try {
+        // Find the service by name
+        const service = await Service.findOne({ where: { name: serviceName } });
+        if (!service) {
+            return res.status(404).json({ error: 'Service not found' });
+        }
+
+        // Delete the user's connection to this service
+        const deleted = await UserService.destroy({
+            where: {
+                userId: req.user.id,
+                serviceId: service.id
+            }
+        });
+
+        if (deleted === 0) {
+            return res.status(404).json({ error: 'Service connection not found' });
+        }
+
+        console.log(`[Services] User ${req.user.id} disconnected from ${serviceName}`);
+        res.json({ message: `${serviceName} disconnected successfully`, disconnected: true });
+    } catch (error) {
+        console.error('Disconnect service error:', error);
+        res.status(500).json({ error: 'Failed to disconnect service' });
+    }
 });
 
 module.exports = router;

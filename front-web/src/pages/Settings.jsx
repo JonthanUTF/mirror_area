@@ -170,6 +170,81 @@ export default function Settings() {
         }
     };
 
+    const handleGoogleDisconnect = async () => {
+        try {
+            const token = localStorage.getItem("authToken");
+            const res = await fetch("http://localhost:8080/services/google/disconnect", {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+            if (res.ok) {
+                setGoogleConnected(false);
+                setSuccessMessage("Google disconnected successfully");
+                setSuccessOpen(true);
+            } else {
+                setSuccessMessage("Failed to disconnect Google");
+                setSuccessOpen(true);
+            }
+        } catch (err) {
+            console.error("Failed to disconnect Google:", err);
+            setSuccessMessage("Failed to disconnect Google");
+            setSuccessOpen(true);
+        }
+    };
+
+    const handleMicrosoftDisconnect = async () => {
+        try {
+            const token = localStorage.getItem("authToken");
+            const res = await fetch("http://localhost:8080/services/microsoft/disconnect", {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+            if (res.ok) {
+                setMicrosoftConnected(false);
+                setSuccessMessage("Microsoft disconnected successfully");
+                setSuccessOpen(true);
+            } else {
+                setSuccessMessage("Failed to disconnect Microsoft");
+                setSuccessOpen(true);
+            }
+        } catch (err) {
+            console.error("Failed to disconnect Microsoft:", err);
+            setSuccessMessage("Failed to disconnect Microsoft");
+            setSuccessOpen(true);
+        }
+    };
+
+    const handleGitHubDisconnect = async () => {
+        try {
+            const token = localStorage.getItem("authToken");
+            const res = await fetch("http://localhost:8080/services/github/disconnect", {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+            if (res.ok) {
+                setGitHubConnected(false);
+                setSuccessMessage("GitHub disconnected successfully");
+                setSuccessOpen(true);
+            } else {
+                setSuccessMessage("Failed to disconnect GitHub");
+                setSuccessOpen(true);
+            }
+        } catch (err) {
+            console.error("Failed to disconnect GitHub:", err);
+            setSuccessMessage("Failed to disconnect GitHub");
+            setSuccessOpen(true);
+        }
+    };
+
     const updateChangesAPI = async (name, email, password) => {
         if (!name) {
             setNameError("Full name is required");
@@ -490,7 +565,24 @@ export default function Settings() {
                                         )}
                                     </Box>
                                 </Box>
-                                {!googleConnected && (
+                                {googleConnected ? (
+                                    <Button
+                                        variant="outlined"
+                                        color="error"
+                                        onClick={handleGoogleDisconnect}
+                                        startIcon={<LinkOffIcon />}
+                                        sx={{
+                                            borderColor: 'rgba(239, 68, 68, 0.5)',
+                                            color: '#ef4444',
+                                            '&:hover': {
+                                                borderColor: '#ef4444',
+                                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                            }
+                                        }}
+                                    >
+                                        Disconnect
+                                    </Button>
+                                ) : (
                                     <Button variant="contained" onClick={handleGoogleConnect} startIcon={<LinkIcon />} sx={{ backgroundColor: '#EA4335', '&:hover': { backgroundColor: '#c62828' } }}>
                                         Connect Google
                                     </Button>
@@ -521,7 +613,24 @@ export default function Settings() {
                                         )}
                                     </Box>
                                 </Box>
-                                {!microsoftConnected && (
+                                {microsoftConnected ? (
+                                    <Button
+                                        variant="outlined"
+                                        color="error"
+                                        onClick={handleMicrosoftDisconnect}
+                                        startIcon={<LinkOffIcon />}
+                                        sx={{
+                                            borderColor: 'rgba(239, 68, 68, 0.5)',
+                                            color: '#ef4444',
+                                            '&:hover': {
+                                                borderColor: '#ef4444',
+                                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                            }
+                                        }}
+                                    >
+                                        Disconnect
+                                    </Button>
+                                ) : (
                                     <Button variant="contained" onClick={handleMicrosoftConnect} startIcon={<LinkIcon />} sx={{ backgroundColor: '#00A4EF', '&:hover': { backgroundColor: '#0078D4' } }}>
                                         Connect Microsoft
                                     </Button>
@@ -552,7 +661,24 @@ export default function Settings() {
                                         )}
                                     </Box>
                                 </Box>
-                                {!githubConnected && (
+                                {githubConnected ? (
+                                    <Button
+                                        variant="outlined"
+                                        color="error"
+                                        onClick={handleGitHubDisconnect}
+                                        startIcon={<LinkOffIcon />}
+                                        sx={{
+                                            borderColor: 'rgba(239, 68, 68, 0.5)',
+                                            color: '#ef4444',
+                                            '&:hover': {
+                                                borderColor: '#ef4444',
+                                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                            }
+                                        }}
+                                    >
+                                        Disconnect
+                                    </Button>
+                                ) : (
                                     <Button variant="contained" onClick={handleGitHubConnect} startIcon={<LinkIcon />} sx={{ backgroundColor: '#24292e', '&:hover': { backgroundColor: '#1b1f23' } }}>
                                         Connect GitHub
                                     </Button>
