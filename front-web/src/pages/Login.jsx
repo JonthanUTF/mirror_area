@@ -40,8 +40,16 @@ export default function Login() {
       }
       const data = await res.json();
       const token = data.token;
+      const user = data.user;
       if (token) {
         localStorage.setItem("authToken", token);
+      }
+      localStorage.setItem("userName", "okokokok");
+
+      if (user) {
+        localStorage.setItem("userId", user.id);
+        localStorage.setItem("userName", user.name);
+        localStorage.setItem("userEmail", user.email);
       }
       navigate("/home");
     } catch (err) {
@@ -55,7 +63,7 @@ export default function Login() {
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", minWidth: "100vw" }}>
-      {/* Left: login */}
+      {/* Left */}
       <Box
         sx={{
           width: "50%",
@@ -119,7 +127,7 @@ export default function Login() {
 
       </Box>
 
-      {/* Right: hero / illustration */}
+      {/* Right */}
       <Box
         sx={{
           width: "50%",

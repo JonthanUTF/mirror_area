@@ -2,8 +2,8 @@ const { Service, sequelize } = require('./src/models');
 
 const services = [
     {
-        name: 'email',
-        label: 'Gmail',
+        name: 'google',
+        label: 'Google (Gmail)',
         icon: 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg',
         active: true
     },
@@ -23,6 +23,25 @@ const services = [
         name: 'console',
         label: 'Debug Console',
         icon: 'https://cdn-icons-png.flaticon.com/512/120/120093.png',
+        active: true
+    }
+    ,
+    {
+        name: 'microsoft',
+        label: 'Microsoft (OneDrive / Outlook)',
+        icon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Microsoft_logo_%282012%29.svg/960px-Microsoft_logo_%282012%29.svg.png',
+        active: true
+    },
+    {
+        name: 'github',
+        label: 'GitHub',
+        icon: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png',
+        active: true
+    },
+    {
+        name: 'twitch',
+        label: 'Twitch',
+        icon: 'https://static.twitchcdn.net/assets/favicon-32-e29e246c157142c94346.png',
         active: true
     }
 ];

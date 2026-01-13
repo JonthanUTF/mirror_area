@@ -10,16 +10,15 @@ const authFactories = {
         getAuthUrl: () => {
             const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
             const options = {
-                redirect_uri: process.env.GOOGLE_CALLBACK_URL?.replace('/auth/google/callback', '/services/google/callback') || 'http://localhost:8080/services/google/callback',
+                redirect_uri: (process.env.CLIENT_URL || 'http://localhost:8081') + '/services/callback',
                 client_id: process.env.GOOGLE_CLIENT_ID,
-                access_type: 'offline', // Essential for refresh_token
+                access_type: 'offline',
                 response_type: 'code',
                 prompt: 'consent',
                 scope: [
                     'https://www.googleapis.com/auth/userinfo.profile',
                     'https://www.googleapis.com/auth/userinfo.email',
                     'https://www.googleapis.com/auth/gmail.send'
-                    // Add other scopes here as needed
                 ].join(' ')
             };
 
@@ -41,6 +40,105 @@ const authFactories = {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
             });
+            return response.data;
+        }
+    },
+    github: {
+        getAuthUrl: () => {
+            const rootUrl = 'https://github.com/login/oauth/authorize';
+            const options = {
+                client_id: process.env.GITHUB_CLIENT_ID,
+                redirect_uri: (process.env.CLIENT_URL || 'http://localhost:8081') + '/services/callback',
+                scope: 'user:email repo admin:repo_hook write:discussion'
+            };
+            const qs = new URLSearchParams(options);
+            return `${rootUrl}?${qs.toString()}`;
+        },
+        exchangeCode: async (code, redirectUri) => {
+            const tokenUrl = 'https://github.com/login/oauth/access_token';
+            const values = {
+                client_id: process.env.GITHUB_CLIENT_ID,
+                client_secret: process.env.GITHUB_CLIENT_SECRET,
+                code,
+                redirect_uri: redirectUri
+            };
+            const response = await axios.post(tokenUrl, new URLSearchParams(values).toString(), {
+                headers: { Accept: 'application/json' }
+            });
+            return response.data;
+        }
+    },
+    twitch: {
+        getAuthUrl: (state) => {
+            const rootUrl = 'https://id.twitch.tv/oauth2/authorize';
+            const options = {
+                client_id: process.env.TWITCH_CLIENT_ID,
+                redirect_uri: process.env.TWITCH_CALLBACK_URL || 'http://localhost:8080/auth/twitch/callback',
+                response_type: 'code',
+                scope: 'user:read:follows user:manage:blocked_users',
+                state: state || ''
+            };
+
+            const qs = new URLSearchParams(options);
+            return `${rootUrl}?${qs.toString()}`;
+        },
+        exchangeCode: async (code, redirectUri) => {
+            const tokenUrl = 'https://id.twitch.tv/oauth2/token';
+            const values = {
+                code,
+                client_id: process.env.TWITCH_CLIENT_ID,
+                client_secret: process.env.TWITCH_CLIENT_SECRET,
+                redirect_uri: redirectUri || process.env.TWITCH_CALLBACK_URL || 'http://localhost:8080/auth/twitch/callback',
+                grant_type: 'authorization_code',
+            };
+
+            const response = await axios.post(tokenUrl, new URLSearchParams(values).toString(), {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+            });
+            return response.data;
+        }
+    },
+    microsoft: {
+        getAuthUrl: () => {
+            const rootUrl = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize';
+            const options = {
+                client_id: process.env.MICROSOFT_CLIENT_ID,
+                response_type: 'code',
+                redirect_uri: (process.env.CLIENT_URL || 'http://localhost:8081') + '/services/callback',
+                prompt: 'consent',
+                scope: [
+                    'Files.Read',
+                    'Files.Read.All',
+                    'Files.ReadWrite',
+                    'Files.ReadWrite.All',
+                    'Mail.Read',
+                    'Mail.ReadWrite',
+                    'Mail.Send',
+                    'offline_access',
+                    'User.Read'
+                ].join(' ')
+            };
+
+            const qs = new URLSearchParams(options);
+            return `${rootUrl}?${qs.toString()}`;
+        },
+        exchangeCode: async (code, redirectUri) => {
+            const tokenUrl = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/token';
+            const values = {
+                client_id: process.env.MICROSOFT_CLIENT_ID,
+                client_secret: process.env.MICROSOFT_CLIENT_SECRET,
+                code,
+                grant_type: 'authorization_code',
+                redirect_uri: redirectUri
+            };
+            const response = await axios.post(tokenUrl, new URLSearchParams(values).toString(), {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
+            console.log('[Microsoft] Token response:', JSON.stringify(response.data, null, 2));
             return response.data;
         }
     }
@@ -93,7 +191,7 @@ router.post('/:serviceName/callback', authenticateToken, async (req, res) => {
         // 1. Exchange Code for Tokens
         // Determine redirect URI (should match what was used in connect)
         // For simplicity, we assume generic or passed from frontend
-        const finalRedirectUri = redirectUri || (process.env.GOOGLE_CALLBACK_URL?.replace('/auth/google/callback', '/services/google/callback') || 'http://localhost:8080/services/google/callback');
+        const finalRedirectUri = redirectUri || ((process.env.CLIENT_URL || 'http://localhost:8081') + '/services/callback');
 
         const tokenData = await factory.exchangeCode(code, finalRedirectUri);
 
@@ -104,12 +202,17 @@ router.post('/:serviceName/callback', authenticateToken, async (req, res) => {
         }
 
         // 3. Save to UserService (Upsert)
+        // Note: GitHub tokens don't expire (no expires_in), so we set a far-future date
+        const expiresAt = tokenData.expires_in
+            ? new Date(Date.now() + tokenData.expires_in * 1000)
+            : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 year for GitHub
+
         const [userService, created] = await UserService.upsert({
             userId: req.user.id,
             serviceId: service.id,
             accessToken: tokenData.access_token,
-            refreshToken: tokenData.refresh_token, // Only present if access_type=offline
-            expiresAt: new Date(Date.now() + tokenData.expires_in * 1000)
+            refreshToken: tokenData.refresh_token || null,
+            expiresAt: expiresAt
         }, {
             returning: true
         });
@@ -144,10 +247,66 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-// Delete connection
+// Disconnect a service (POST version for frontend compatibility)
+router.post('/:serviceName/disconnect', authenticateToken, async (req, res) => {
+    const { serviceName } = req.params;
+
+    try {
+        // Find the service by name
+        const service = await Service.findOne({ where: { name: serviceName } });
+        if (!service) {
+            return res.status(404).json({ error: 'Service not found' });
+        }
+
+        // Delete the user's connection to this service
+        const deleted = await UserService.destroy({
+            where: {
+                userId: req.user.id,
+                serviceId: service.id
+            }
+        });
+
+        if (deleted === 0) {
+            return res.status(404).json({ error: 'Service connection not found' });
+        }
+
+        console.log(`[Services] User ${req.user.id} disconnected from ${serviceName}`);
+        res.json({ message: `${serviceName} disconnected successfully`, disconnected: true });
+    } catch (error) {
+        console.error('Disconnect service error:', error);
+        res.status(500).json({ error: 'Failed to disconnect service' });
+    }
+});
+
+// Delete connection (DELETE version)
 router.delete('/:serviceName', authenticateToken, async (req, res) => {
-    // ... Implementation for later
-    res.status(501).json({ error: 'Not implemented yet' });
+    const { serviceName } = req.params;
+
+    try {
+        // Find the service by name
+        const service = await Service.findOne({ where: { name: serviceName } });
+        if (!service) {
+            return res.status(404).json({ error: 'Service not found' });
+        }
+
+        // Delete the user's connection to this service
+        const deleted = await UserService.destroy({
+            where: {
+                userId: req.user.id,
+                serviceId: service.id
+            }
+        });
+
+        if (deleted === 0) {
+            return res.status(404).json({ error: 'Service connection not found' });
+        }
+
+        console.log(`[Services] User ${req.user.id} disconnected from ${serviceName}`);
+        res.json({ message: `${serviceName} disconnected successfully`, disconnected: true });
+    } catch (error) {
+        console.error('Disconnect service error:', error);
+        res.status(500).json({ error: 'Failed to disconnect service' });
+    }
 });
 
 module.exports = router;
