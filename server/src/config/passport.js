@@ -14,7 +14,7 @@ passport.deserializeUser(async (id, done) => {
   } catch (error) {
     done(error, null);
   }
-});
+c});
 
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   console.log('Registering Google OAuth strategy...');
