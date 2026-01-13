@@ -63,6 +63,33 @@ export default function Home() {
     }
   };
 
+  const toggleAreaActive = async (id, currentActive) => {
+    setError("");
+    const newActive = !currentActive;
+    // Change active workflow state
+    setAreas((prev) => prev.map(a => a.id === id ? { ...a, active: newActive } : a));
+    try {
+      const token = localStorage.getItem("authToken");
+      const res = await fetch(`http://localhost:8080/areas/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ active: newActive }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || data?.message || `HTTP ${res.status}`);
+      }
+    } catch (err) {
+      console.error("Failed to toggle area:", err);
+      setError(err?.message || "Failed to update workflow");
+      // rollback UI on erreur
+      setAreas((prev) => prev.map(a => a.id === id ? { ...a, active: currentActive } : a));
+    }
+  };
+
   useEffect(() => {
     let mounted = true;
     const fetchAreas = async () => {
@@ -95,22 +122,25 @@ export default function Home() {
   }, []);
 
   const renderAreaCard = (item) => (
-    <Grid size={{ xs: 12, sm: 6 }} key={item}>
+    <Grid item xs={12} sm={6} key={item.id}>
       <Card sx={{ width: "100%", display: "flex", backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 6 }}>
-        <CardContent>
-          <Box sx={{ display: "flex", width: "100%" }}>
+        <CardContent sx={{ width: "100%" }}>
+          <Box sx={{ display: "flex", width: "100%", justifyContent: "space-between" }}>
             <Box sx={{ flex: 1 }}>
               <Typography variant="h6" sx={{ color: "#fefefeff" }}>{item.name}</Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ color: "#fefefeff" }}>
-                {item.active ? "Active" : "Inactive"}
-              </Typography>
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Switch checked={!!item.active} disabled color="warning" />
+              <Switch
+                checked={!!item.active}
+                onChange={() => toggleAreaActive(item.id, !!item.active)}
+              />
               <IconButton
                 aria-label="delete"
                 color="error"
-                onClick={() => deleteArea(item.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteArea(item.id);
+                }}
                 size="large"
               >
                 <DeleteIcon />
