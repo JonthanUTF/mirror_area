@@ -22,15 +22,15 @@ fi
 echo "📦 Building and starting services..."
 echo ""
 
-# Use docker compose v2 (with space) instead of docker-compose
-docker compose up --build -d
+# Build and start services
+docker-compose up --build -d
 
 echo ""
 echo "⏳ Waiting for services to be healthy..."
 sleep 10
 
 # Check if services are running
-if docker compose ps | grep -q "area_server"; then
+if docker-compose ps | grep -q "area_server"; then
     echo ""
     echo "✅ Backend services are running!"
     echo ""
@@ -44,12 +44,12 @@ if docker compose ps | grep -q "area_server"; then
     echo "   curl http://localhost:8080/about.json"
     echo ""
     echo "📊 View logs:"
-    echo "   docker compose logs -f server"
+    echo "   docker-compose logs -f server"
     echo ""
     echo "🛑 Stop services:"
-    echo "   docker compose down"
+    echo "   docker-compose down"
     echo ""
 else
     echo "❌ Failed to start services. Check logs with:"
-    echo "   docker compose logs"
+    echo "   docker-compose logs"
 fi
