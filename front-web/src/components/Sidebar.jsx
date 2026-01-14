@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AppBar,
@@ -19,9 +19,37 @@ import HomeIcon from "@mui/icons-material/Home";
 import LogoutIcon from '@mui/icons-material/Logout';
 import GroupIcon from '@mui/icons-material/Group';
 
+const API_BASE = process.env.SERVER_URL || "http://localhost:8080";
+
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        if (!token) return;
+
+        const res = await fetch(`${API_BASE}/auth/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setIsAdmin(data.user?.role === 'admin');
+        }
+      } catch (err) {
+        console.error("Failed to check admin status:", err);
+      }
+    };
+
+    checkAdminStatus();
+  }, []);
 
   const toggleDrawer = (state) => () => {
     setOpen(state);
@@ -107,18 +135,20 @@ export default function Sidebar() {
                 <ListItemText primary="Settings" />
                 </ListItem>
 
-                <ListItem 
-                  button 
-                  onClick={() => handleNavigation('/admin')} 
-                  sx={{ 
-                    color: '#ffffff',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    }
-                  }}>
-                <ListItemIcon sx={{ color: '#ffffff' }}><GroupIcon /></ListItemIcon>
-                <ListItemText primary="User Management" />
-                </ListItem>
+                {isAdmin && (
+                  <ListItem
+                    button
+                    onClick={() => handleNavigation('/admin')}
+                    sx={{
+                      color: '#ffffff',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      }
+                    }}>
+                  <ListItemIcon sx={{ color: '#ffffff' }}><GroupIcon /></ListItemIcon>
+                  <ListItemText primary="User Management" />
+                  </ListItem>
+                )}
             </List>
 
             <Box sx={{ px: 1, py: 1 }}>
