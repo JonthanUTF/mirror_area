@@ -29,6 +29,8 @@ data class CreateAreaRequest(
     val reactionService: String,
     val reactionType: String,
     val parameters: Map<String, Any>? = null,
+    val actionParams: Map<String, Any>? = null,
+    val reactionParams: Map<String, Any>? = null,
     val active: Boolean = true
 )
 
@@ -39,5 +41,7 @@ data class UpdateAreaRequest(
     val reactionService: String?,
     val reactionType: String?,
     val parameters: Map<String, Any>?,
+    val actionParams: Map<String, Any>?,
+    val reactionParams: Map<String, Any>?,
     val active: Boolean?
 )

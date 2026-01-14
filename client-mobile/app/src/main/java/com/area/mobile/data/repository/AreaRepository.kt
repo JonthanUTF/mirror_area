@@ -69,7 +69,7 @@ class AreaRepository @Inject constructor(
             val response = areasApiService.getAreas()
             
             if (response.isSuccessful && response.body() != null) {
-                val areas = response.body()!!.areas.map { dto ->
+                val areas = response.body()!!.map { dto ->
                     mapDtoToArea(dto)
                 }
                 Result.success(areas)
@@ -86,7 +86,7 @@ class AreaRepository @Inject constructor(
             val response = areasApiService.getArea(id)
             
             if (response.isSuccessful && response.body() != null) {
-                val area = mapDtoToArea(response.body()!!.area)
+                val area = mapDtoToArea(response.body()!!)
                 Result.success(area)
             } else {
                 Result.failure(Exception("Failed to fetch area: ${response.message()}"))
@@ -119,7 +119,7 @@ class AreaRepository @Inject constructor(
             val response = areasApiService.createArea(request)
             
             if (response.isSuccessful && response.body() != null) {
-                val area = mapDtoToArea(response.body()!!.area)
+                val area = mapDtoToArea(response.body()!!)
                 Result.success(area)
             } else {
                 Result.failure(Exception("Failed to create area: ${response.message()}"))
@@ -134,7 +134,7 @@ class AreaRepository @Inject constructor(
             val response = areasApiService.toggleArea(id)
             
             if (response.isSuccessful && response.body() != null) {
-                val area = mapDtoToArea(response.body()!!.area)
+                val area = mapDtoToArea(response.body()!!)
                 Result.success(area)
             } else {
                 Result.failure(Exception("Failed to toggle area: ${response.message()}"))
