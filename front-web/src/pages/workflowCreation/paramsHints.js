@@ -1,4 +1,4 @@
-export const API_BASE = process.env.CLIENT_URL || "http://localhost:8080";
+export const API_BASE = import.meta.env.CLIENT_URL || "http://localhost:8080";
 
 export const PARAM_HINTS = {
     // Dropbox - Folder watching

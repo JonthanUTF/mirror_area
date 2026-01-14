@@ -19,7 +19,7 @@ import HomeIcon from "@mui/icons-material/Home";
 import LogoutIcon from '@mui/icons-material/Logout';
 import GroupIcon from '@mui/icons-material/Group';
 
-const API_BASE = process.env.SERVER_URL || "http://localhost:8080";
+const API_BASE = import.meta.env.SERVER_URL || "http://localhost:8080";
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);

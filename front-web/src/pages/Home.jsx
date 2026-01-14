@@ -18,7 +18,7 @@ import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import LinkIcon from '@mui/icons-material/Link';
 
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
+const API_BASE = import.meta.env.CLIENT_URL || "http://localhost:8080";
 
 export default function Home() {
   const navigate = useNavigate();
