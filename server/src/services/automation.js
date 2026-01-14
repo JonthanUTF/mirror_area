@@ -1,9 +1,6 @@
 const { Area } = require('../models');
 const registry = require('./registry');
 
-const AUTOMATION_INTERVAL = 10000;
-let automationTimer = null;
-
 async function checkArea(area) {
   try {
     const actionService = registry.getService(area.actionService);
@@ -13,14 +10,20 @@ async function checkArea(area) {
       return;
     }
 
+    const actionParams = area.parameters?.action || area.parameters || {};
+    
+    console.log(`[AREA ${area.id}] Checking trigger ${area.actionType} with params:`, JSON.stringify(actionParams));
+
     // Check Trigger
     const actionTriggered = await actionService.checkTrigger(
       area.actionType,
       area,
-      area.parameters
+      actionParams
     );
 
     if (actionTriggered) {
+      console.log(`[AREA ${area.id}] Trigger fired!`);
+      
       const reactionService = registry.getService(area.reactionService);
 
       if (!reactionService) {
@@ -28,63 +31,47 @@ async function checkArea(area) {
         return;
       }
 
+      const reactionParams = area.parameters?.reaction || area.parameters || {};
+
+      const triggerData = typeof actionTriggered === 'object' && actionTriggered.data ? actionTriggered.data : {};
+      const finalReactionParams = { ...reactionParams, triggerData };
+
+      console.log(`[AREA ${area.id}] Executing reaction ${area.reactionType} with params:`, JSON.stringify(finalReactionParams));
+
       // Execute Reaction
       await reactionService.executeReaction(
         area.reactionType,
         area,
-        area.parameters
+        finalReactionParams
       );
 
       // Update lastTriggered
       await area.update({ lastTriggered: new Date() });
+      console.log(`[AREA ${area.id}] Triggered and executed successfully`);
     }
   } catch (error) {
     console.error(`[AREA ${area.id}] Error checking area:`, error.message);
   }
 }
 
-async function runAutomationCycle() {
+async function runAutomationLoop() {
   try {
-    const activeAreas = await Area.findAll({
-      where: { active: true }
-    });
+    const areas = await Area.findAll({ where: { active: true } });
 
-    if (activeAreas.length === 0) {
-      return;
-    }
-
-    console.log(`[AUTOMATION] Checking ${activeAreas.length} active area(s)...`);
-
-    for (const area of activeAreas) {
+    for (const area of areas) {
       await checkArea(area);
     }
   } catch (error) {
-    console.error('[AUTOMATION] Cycle error:', error.message);
+    console.error('[Automation] Error running automation:', error.message);
   }
 }
 
-function startAutomationLoop() {
-  if (automationTimer) {
-    console.log('[AUTOMATION] Loop already running');
-    return;
-  }
-
-  console.log(`[AUTOMATION] Starting automation loop (interval: ${AUTOMATION_INTERVAL}ms)`);
-
-  runAutomationCycle();
-
-  automationTimer = setInterval(runAutomationCycle, AUTOMATION_INTERVAL);
+function startAutomationLoop(intervalMs = 30000) {
+  console.log(`[Automation] Starting automation loop (${intervalMs}ms interval)`);
+  
+  runAutomationLoop();
+  
+  setInterval(runAutomationLoop, intervalMs);
 }
 
-function stopAutomationLoop() {
-  if (automationTimer) {
-    clearInterval(automationTimer);
-    automationTimer = null;
-    console.log('[AUTOMATION] Loop stopped');
-  }
-}
-
-module.exports = {
-  startAutomationLoop,
-  stopAutomationLoop
-};
+module.exports = { startAutomationLoop, runAutomationLoop, checkArea };

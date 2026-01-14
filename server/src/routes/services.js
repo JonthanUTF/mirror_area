@@ -141,6 +141,40 @@ const authFactories = {
             console.log('[Microsoft] Token response:', JSON.stringify(response.data, null, 2));
             return response.data;
         }
+    },
+    dropbox: {
+        getAuthUrl: () => {
+            const rootUrl = 'https://www.dropbox.com/oauth2/authorize';
+            const options = {
+                client_id: process.env.DROPBOX_CLIENT_ID,
+                redirect_uri: (process.env.CLIENT_URL || 'http://localhost:8081') + '/services/callback',
+                response_type: 'code',
+                token_access_type: 'offline',
+                scope: 'files.metadata.read files.metadata.write files.content.read files.content.write'
+            };
+
+            const qs = new URLSearchParams(options);
+            return `${rootUrl}?${qs.toString()}`;
+        },
+        exchangeCode: async (code, redirectUri) => {
+            const response = await axios.post('https://api.dropboxapi.com/oauth2/token', null, {
+                params: {
+                    code,
+                    grant_type: 'authorization_code',
+                    client_id: process.env.DROPBOX_CLIENT_ID,
+                    client_secret: process.env.DROPBOX_CLIENT_SECRET,
+                    redirect_uri: redirectUri
+                }
+            });
+
+            console.log('[DropBox] Token response:', JSON.stringify(response.data, null, 2));
+            return {
+                accessToken: response.data.access_token,
+                refreshToken: response.data.refresh_token,
+                expiresIn: response.data.expires_in,
+                accountId: response.data.account_id
+            };
+        }
     }
 };
 
@@ -187,21 +221,35 @@ router.post('/:serviceName/callback', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Service not found in registry' });
         }
 
-        // 3. Save to UserService (Upsert)
+        // 3. Handle both camelCase (from our factories) and snake_case (raw API responses)
+        const accessToken = tokenData.accessToken || tokenData.access_token;
+        const refreshToken = tokenData.refreshToken || tokenData.refresh_token;
+        const expiresIn = tokenData.expiresIn || tokenData.expires_in;
+
+        console.log(`[Services] Token for ${serviceName}: hasAccess=${!!accessToken}, hasRefresh=${!!refreshToken}`);
+
+        if (!accessToken) {
+            console.error(`[Services] No access token received for ${serviceName}`);
+            return res.status(400).json({ error: 'No access token received from provider' });
+        }
+
+        // 4. Save to UserService (Upsert)
         // Note: GitHub tokens don't expire (no expires_in), so we set a far-future date
-        const expiresAt = tokenData.expires_in
-            ? new Date(Date.now() + tokenData.expires_in * 1000)
+        const expiresAt = expiresIn
+            ? new Date(Date.now() + expiresIn * 1000)
             : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 year for GitHub
 
         const [userService, created] = await UserService.upsert({
             userId: req.user.id,
             serviceId: service.id,
-            accessToken: tokenData.access_token,
-            refreshToken: tokenData.refresh_token || null,
+            accessToken: accessToken,
+            refreshToken: refreshToken || null,
             expiresAt: expiresAt
         }, {
             returning: true
         });
+
+        console.log(`[Services] ${serviceName} connected for user ${req.user.id}, token length: ${accessToken?.length}`);
 
         res.json({
             message: 'Service connected successfully',

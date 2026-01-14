@@ -43,6 +43,12 @@ const services = [
         label: 'Twitch',
         icon: 'https://static.twitchcdn.net/assets/favicon-32-e29e246c157142c94346.png',
         active: true
+    },
+    {
+        name: 'dropbox',
+        label: 'Dropbox',
+        icon: 'https://www.dropbox.com/static/images/logo.svg',
+        active: true
     }
 ];
 
