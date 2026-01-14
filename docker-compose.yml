@@ -6,12 +6,16 @@ services:
     container_name: area_postgres
     ports:
       - "5433:5432"
+    environment:
+      POSTGRES_DB: area_db
+      POSTGRES_USER: area
+      POSTGRES_PASSWORD: area
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - area_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U area"]
+      test: ["CMD-SHELL", "pg_isready -U area -d area_db"]
       interval: 10s
       timeout: 5s
       retries: 5
