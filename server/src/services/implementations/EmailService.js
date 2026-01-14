@@ -6,11 +6,27 @@ class EmailService extends ServiceBase {
     constructor() {
         super('email', 'Gmail', 'http://localhost:8080/assets/gmail-icon.png');
 
+        // Actions (Triggers)
         this.registerAction('new_email', 'Triggers when a new email is received', {
-            from: 'string', // Filter by sender
-            subject: 'string' // Filter by subject
+            from: 'string', // Filter by sender (optional)
+            subject: 'string' // Filter by subject (optional)
         });
 
+        this.registerAction('email_received', 'Triggers when any email is received', {});
+
+        this.registerAction('email_from_sender', 'Triggers when an email is received from a specific sender', {
+            sender: 'string' // Required: sender email address
+        });
+
+        this.registerAction('email_with_keyword', 'Triggers when an email with a keyword in subject is received', {
+            keyword: 'string' // Required: keyword to search in subject
+        });
+
+        this.registerAction('email_with_attachment', 'Triggers when an email with attachment is received', {
+            from: 'string' // Optional: filter by sender
+        });
+
+        // Reactions
         this.registerReaction('send_email', 'Sends an email via Gmail', {
             recipient: 'string',
             subject: 'string',
@@ -61,48 +77,68 @@ class EmailService extends ServiceBase {
     }
 
     async checkTrigger(action, area, params) {
-        if (action === 'new_email') {
-            try {
-                const auth = await this.getAuthClient(area.userId);
-                const gmail = google.gmail({ version: 'v1', auth });
+        try {
+            const auth = await this.getAuthClient(area.userId);
+            const gmail = google.gmail({ version: 'v1', auth });
 
-                // Build query
-                let q = '';
-                if (params.from) q += `from:${params.from} `;
-                if (params.subject) q += `subject:${params.subject} `;
+            // Build query based on action type
+            let q = '';
 
-                // Only check emails received AFTER the last trigger
-                if (area.lastTriggered) {
-                    const seconds = Math.floor(new Date(area.lastTriggered).getTime() / 1000);
-                    q += `after:${seconds}`;
-                } else {
-                    // First run: don't trigger on old emails, just init
-                    // Or maybe trigger on very recent ones? Let's say last 1 min for safety if null
-                    // For now, let's treat "never triggered" as "check recent"
-                    // But usually we don't want to trigger on backlog. 
-                    // Let's return false if it's the very first run to "mark" the start time?
-                    // Actually, automation.js updates active=true areas.
-                    // Let's just look at unread or recent.
-                }
+            switch (action) {
+                case 'new_email':
+                    // Original behavior: filter by from and/or subject
+                    if (params.from) q += `from:${params.from} `;
+                    if (params.subject) q += `subject:${params.subject} `;
+                    break;
 
-                const res = await gmail.users.messages.list({
-                    userId: 'me',
-                    q: q.trim()
-                });
+                case 'email_received':
+                    // Any email received - no filters
+                    break;
 
-                if (res.data.messages && res.data.messages.length > 0) {
-                    console.log(`[GmailService] Found ${res.data.messages.length} new messages matching criteria`);
-                    return true; // Triggered!
-                }
+                case 'email_from_sender':
+                    // Email from specific sender
+                    if (params.sender) q += `from:${params.sender} `;
+                    break;
 
-                return false;
+                case 'email_with_keyword':
+                    // Email with keyword in subject
+                    if (params.keyword) q += `subject:${params.keyword} `;
+                    break;
 
-            } catch (error) {
-                console.error('[GmailService] Check Action Error:', error.message);
-                return false;
+                case 'email_with_attachment':
+                    // Email with attachment
+                    q += 'has:attachment ';
+                    if (params.from) q += `from:${params.from} `;
+                    break;
+
+                default:
+                    console.log(`[GmailService] Unknown action: ${action}`);
+                    return false;
             }
+
+            // Only check emails received AFTER the last trigger
+            if (area.lastTriggered) {
+                const seconds = Math.floor(new Date(area.lastTriggered).getTime() / 1000);
+                q += `after:${seconds}`;
+            }
+
+            const res = await gmail.users.messages.list({
+                userId: 'me',
+                q: q.trim(),
+                maxResults: 10
+            });
+
+            if (res.data.messages && res.data.messages.length > 0) {
+                console.log(`[GmailService] Found ${res.data.messages.length} new messages matching criteria for action: ${action}`);
+                return true; // Triggered!
+            }
+
+            return false;
+
+        } catch (error) {
+            console.error('[GmailService] Check Action Error:', error.message);
+            return false;
         }
-        return false;
     }
 
     async executeReaction(reaction, area, params) {
