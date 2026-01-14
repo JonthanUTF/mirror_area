@@ -150,7 +150,7 @@ fun BottomNavigationBar(
             )
         )
         NavigationBarItem(
-            icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
+            icon = { Icon(Icons.Default.Settings, contentDescription = "Profile") },
             label = { Text("Settings") },
             selected = currentRoute == "settings",
             onClick = { onNavigate("settings") },
@@ -163,7 +163,7 @@ fun BottomNavigationBar(
             )
         )
         NavigationBarItem(
-            icon = { Icon(Icons.Default.Settings, contentDescription = "Admin") },
+            icon = { Icon(Icons.Default.Person, contentDescription = "Admin") },
             label = { Text("Admin") },
             selected = currentRoute == "admin",
             onClick = { onNavigate("admin") },

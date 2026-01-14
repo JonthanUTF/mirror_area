@@ -28,4 +28,4 @@ val TimerColor = Color(0xFF9C27B0)
 
 val GreenSuccess = Color(0xFF10B981)
 val RedError = Color(0xFFEF4444)
-val OrangeWarning = Color(0xFFF59E0B)
+val OrangeWarning = Color(0xFFFF9800)

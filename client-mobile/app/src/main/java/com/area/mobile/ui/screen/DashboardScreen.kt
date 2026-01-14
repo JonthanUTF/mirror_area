@@ -37,18 +37,23 @@ fun DashboardScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val stats = viewModel.getStats()
     
+    // State for delete confirmation dialog
+    var areaToDelete by remember { mutableStateOf<Area?>(null) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    
     // Recharger les areas quand on arrive sur l'écran
     LaunchedEffect(Unit) {
         viewModel.loadAreas()
     }
     
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
                 item {
                     Column {
                         Text(
@@ -141,12 +146,33 @@ fun DashboardScreen(
                         AreaCard(
                             area = area,
                             onToggle = { viewModel.toggleArea(area.id) },
-                            onClick = { onNavigateToBuilder(area.id) }
+                            onClick = { onNavigateToBuilder(area.id) },
+                            onDelete = {
+                                areaToDelete = area
+                                showDeleteDialog = true
+                            }
                         )
                     }
                 }
             }
+        
+        // Delete confirmation dialog
+        if (showDeleteDialog && areaToDelete != null) {
+            DeleteAreaDialog(
+                area = areaToDelete!!,
+                onDismiss = {
+                    showDeleteDialog = false
+                    areaToDelete = null
+                },
+                onConfirm = {
+                    viewModel.deleteArea(areaToDelete!!.id)
+                    showDeleteDialog = false
+                    areaToDelete = null
+                }
+            )
         }
+    }
+}
 
 @Composable
 fun StatCard(
@@ -213,12 +239,11 @@ fun StatCard(
 fun AreaCard(
     area: Area,
     onToggle: () -> Unit,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onDelete: () -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = Color.White.copy(alpha = 0.05f)
         ),
@@ -234,7 +259,11 @@ fun AreaCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onClick() }
+                ) {
                     Text(
                         text = area.name,
                         fontSize = 15.sp,
@@ -251,16 +280,36 @@ fun AreaCard(
                     )
                 }
                 
-                Switch(
-                    checked = area.isActive,
-                    onCheckedChange = { onToggle() },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.White,
-                        checkedTrackColor = GreenSuccess,
-                        uncheckedThumbColor = Color.White,
-                        uncheckedTrackColor = Slate700
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Switch(
+                        checked = area.isActive,
+                        onCheckedChange = { newValue ->
+                            android.util.Log.d("AreaCard", "Switch clicked for ${area.name}: $newValue")
+                            onToggle()
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = GreenSuccess,
+                            uncheckedThumbColor = Color.White,
+                            uncheckedTrackColor = Slate700
+                        )
                     )
-                )
+                    
+                    IconButton(
+                        onClick = onDelete,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = RedError,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
             }
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -494,4 +543,62 @@ fun BottomNavigationBar(
             )
         )
     }
+}
+
+@Composable
+private fun DeleteAreaDialog(
+    area: Area,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Slate900,
+        title = {
+            Text(
+                text = "Delete AREA",
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "Are you sure you want to delete this automation?",
+                    color = Color.White
+                )
+                Text(
+                    text = area.name,
+                    color = Slate400,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "This action cannot be undone.",
+                    color = RedError,
+                    fontSize = 12.sp
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(containerColor = RedError),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Delete")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = Slate400)
+            }
+        }
+    )
 }

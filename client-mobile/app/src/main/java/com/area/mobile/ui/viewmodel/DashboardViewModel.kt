@@ -161,13 +161,31 @@ class DashboardViewModel @Inject constructor(
     fun toggleArea(areaId: String) {
         viewModelScope.launch {
             try {
+                android.util.Log.d("DashboardViewModel", "🔄 Toggling area: $areaId")
+                
+                // Optimistic UI update - update local state immediately
+                val currentAreas = _areas.value.toMutableList()
+                val areaIndex = currentAreas.indexOfFirst { it.id == areaId }
+                if (areaIndex != -1) {
+                    val area = currentAreas[areaIndex]
+                    currentAreas[areaIndex] = area.copy(isActive = !area.isActive)
+                    _areas.value = currentAreas
+                    android.util.Log.d("DashboardViewModel", "✓ Optimistic update: ${area.name} -> ${!area.isActive}")
+                }
+                
                 val result = areaRepository.toggleArea(areaId)
-                result.onSuccess {
-                    loadAreas()
+                result.onSuccess { updatedArea ->
+                    android.util.Log.d("DashboardViewModel", "✓ Server confirmed toggle: ${updatedArea.name} -> ${updatedArea.isActive}")
+                    loadAreas() // Refresh to get server state
                 }.onFailure { error ->
+                    android.util.Log.e("DashboardViewModel", "❌ Failed to toggle area: ${error.message}")
+                    // Revert optimistic update on failure
+                    loadAreas()
                     _error.value = error.message ?: "Failed to toggle area"
                 }
             } catch (e: Exception) {
+                android.util.Log.e("DashboardViewModel", "❌ Exception toggling area: ${e.message}", e)
+                loadAreas() // Revert on exception
                 _error.value = e.message ?: "An error occurred"
             }
         }
