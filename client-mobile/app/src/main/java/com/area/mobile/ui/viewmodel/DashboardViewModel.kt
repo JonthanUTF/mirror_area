@@ -34,6 +34,9 @@ class DashboardViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
     
+    private val _message = MutableStateFlow<String?>(null)
+    val message: StateFlow<String?> = _message.asStateFlow()
+    
     init {
         loadAreas()
         loadServices()
@@ -74,31 +77,78 @@ class DashboardViewModel @Inject constructor(
         }
     }
     
+    private val _oauthState = MutableStateFlow<OAuthState?>(null)
+    val oauthState: StateFlow<OAuthState?> = _oauthState.asStateFlow()
+    
     fun loadUserServices() {
         viewModelScope.launch {
             try {
                 val result = serviceRepository.getUserServices()
                 result.onSuccess { ids ->
                     _connectedServices.value = ids
+                }.onFailure { e ->
+                    // Only show error if we're not just starting up, or maybe log it
+                    android.util.Log.e("DashboardViewModel", "Failed to load services: ${e.message}")
                 }
             } catch (e: Exception) {
-                // Silent fail
+                android.util.Log.e("DashboardViewModel", "Failed to load services: ${e.message}")
             }
         }
     }
     
-    fun connectService(serviceName: String, context: android.content.Context) {
+    fun connectService(serviceName: String) {
         viewModelScope.launch {
             try {
                 val result = serviceRepository.connectService(serviceName)
                 result.onSuccess { url ->
-                    val customTabsIntent = androidx.browser.customtabs.CustomTabsIntent.Builder().build()
-                    customTabsIntent.launchUrl(context, android.net.Uri.parse(url))
+                    // Set OAuth state so UI can show WebView
+                    _oauthState.value = OAuthState(
+                        serviceName = serviceName,
+                        authUrl = url
+                    )
+                }.onFailure { error ->
+                    _error.value = "Failed to get auth URL: ${error.message}"
                 }
             } catch (e: Exception) {
                 _error.value = "Failed to initiate connection: ${e.message}"
             }
         }
+    }
+    
+    fun finalizeOAuthConnection(code: String) {
+        val currentOAuthState = _oauthState.value ?: return
+        
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                // Use the web frontend redirect URI since that's what's registered with OAuth providers
+                val redirectUri = "http://localhost:8081/services/callback"
+                
+                val result = serviceRepository.finalizeServiceConnection(
+                    serviceName = currentOAuthState.serviceName,
+                    code = code,
+                    redirectUri = redirectUri
+                )
+                result.onSuccess {
+                    _oauthState.value = null
+                    _message.value = "Successfully connected to ${currentOAuthState.serviceName}"
+                    loadUserServices() // Refresh connected services
+                    _error.value = null
+                }.onFailure { error ->
+                    _error.value = "Failed to connect: ${error.message}"
+                    _oauthState.value = null
+                }
+            } catch (e: Exception) {
+                _error.value = "Connection failed: ${e.message}"
+                _oauthState.value = null
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+    
+    fun cancelOAuth() {
+        _oauthState.value = null
     }
     
     fun toggleArea(areaId: String) {
@@ -183,6 +233,13 @@ class DashboardViewModel @Inject constructor(
             successRate = successRate
         )
     }
+    fun clearError() {
+        _error.value = null
+    }
+
+    fun clearMessage() {
+        _message.value = null
+    }
 }
 
 data class DashboardStats(
@@ -190,4 +247,9 @@ data class DashboardStats(
     val activeAreas: Int,
     val totalExecutions: Int,
     val successRate: Double
+)
+
+data class OAuthState(
+    val serviceName: String,
+    val authUrl: String
 )

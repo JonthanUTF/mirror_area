@@ -11,24 +11,24 @@ import javax.inject.Singleton
 class ServiceRepository @Inject constructor(
     private val servicesApiService: ServicesApiService
 ) {
+    // List of services that require OAuth connection
+    private val oauthServices = listOf("google", "github", "twitch", "microsoft", "discord", "dropbox", "twitter")
+    
+    fun requiresOAuth(serviceName: String): Boolean {
+        return oauthServices.contains(serviceName.lowercase())
+    }
+    
     suspend fun getAllServices(): Result<List<Service>> {
         return try {
-            // Fetch basic service info
-            val availableResponse = servicesApiService.getAvailableServices()
-            // Fetch detailed definitions (about.json)
+            // Fetch services directly from about.json (like web frontend)
             val aboutResponse = servicesApiService.getAboutJson()
             
-            if (availableResponse.isSuccessful && availableResponse.body() != null && 
-                aboutResponse.isSuccessful && aboutResponse.body() != null) {
-                
-                val availableServices = availableResponse.body()!!.services
+            if (aboutResponse.isSuccessful && aboutResponse.body() != null) {
                 val aboutServices = aboutResponse.body()!!.server.services
                 
-                val services = availableServices.map { serviceDb ->
-                    // Find matching service definition in about.json
-                    val definition = aboutServices.find { it.name.equals(serviceDb.name, ignoreCase = true) }
-                    
-                    val actions = definition?.actions?.map { action ->
+                // Map directly from about.json services (like web frontend does)
+                val services = aboutServices.map { serviceInfo ->
+                    val actions = serviceInfo.actions?.map { action ->
                         ServiceAction(
                             id = action.name,
                             name = action.name.replace("_", " ").replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
@@ -44,7 +44,7 @@ class ServiceRepository @Inject constructor(
                         )
                     } ?: emptyList()
                     
-                    val reactions = definition?.reactions?.map { reaction ->
+                    val reactions = serviceInfo.reactions?.map { reaction ->
                         ServiceReaction(
                             id = reaction.name,
                             name = reaction.name.replace("_", " ").replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
@@ -61,11 +61,11 @@ class ServiceRepository @Inject constructor(
                     } ?: emptyList()
                     
                     Service(
-                        id = serviceDb.id,
-                        name = serviceDb.name, // Use the system name (e.g. "google", "timer") as identifier
-                        description = "Connect your ${serviceDb.label} account",
-                        iconName = serviceDb.icon ?: getServiceIcon(serviceDb.name),
-                        color = getServiceColor(serviceDb.name),
+                        id = serviceInfo.name, // Use name as ID
+                        name = serviceInfo.name,
+                        description = "Connect your ${serviceInfo.name.replaceFirstChar { it.titlecase() }} account",
+                        iconName = getServiceIcon(serviceInfo.name),
+                        color = getServiceColor(serviceInfo.name),
                         isConnected = false,
                         actions = actions,
                         reactions = reactions
@@ -73,15 +73,11 @@ class ServiceRepository @Inject constructor(
                 }
                 Result.success(services)
             } else {
-                Result.failure(Exception("Failed to fetch services"))
+                Result.failure(Exception("Failed to fetch services from about.json"))
             }
         } catch (e: Exception) {
             Result.failure(Exception("Network error: ${e.message}"))
         }
-    }
-    
-    private fun String.capitalize(): String {
-        return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
     }
     
     suspend fun getUserServices(): Result<List<String>> {
@@ -116,6 +112,24 @@ class ServiceRepository @Inject constructor(
         }
     }
     
+    suspend fun finalizeServiceConnection(serviceName: String, code: String, redirectUri: String): Result<Unit> {
+        return try {
+            val body = mapOf(
+                "code" to code,
+                "redirectUri" to redirectUri
+            )
+            val response = servicesApiService.serviceCallback(serviceName, body)
+            
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Failed to finalize connection: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Network error: ${e.message}"))
+        }
+    }
+    
     suspend fun disconnectService(serviceId: String): Result<Unit> {
         return try {
             val response = servicesApiService.disconnectService(serviceId)
@@ -133,13 +147,15 @@ class ServiceRepository @Inject constructor(
     private fun getServiceIcon(serviceName: String): String {
         return when (serviceName.lowercase()) {
             "github" -> "🐙"
-            "gmail" -> "📧"
-            "google" -> "🔍"
+            "gmail", "google" -> "📧"
             "discord" -> "💬"
             "twitter" -> "🐦"
             "dropbox" -> "📦"
             "weather" -> "🌤️"
             "timer" -> "⏰"
+            "twitch" -> "📺"
+            "microsoft" -> "🪟"
+            "console" -> "💻"
             else -> "🔌"
         }
     }
@@ -147,13 +163,15 @@ class ServiceRepository @Inject constructor(
     private fun getServiceColor(serviceName: String): String {
         return when (serviceName.lowercase()) {
             "github" -> "#181717"
-            "gmail" -> "#EA4335"
-            "google" -> "#4285F4"
+            "gmail", "google" -> "#EA4335"
             "discord" -> "#5865F2"
             "twitter" -> "#1DA1F2"
             "dropbox" -> "#0061FF"
             "weather" -> "#4A90E2"
             "timer" -> "#FF6B6B"
+            "twitch" -> "#9146FF"
+            "microsoft" -> "#00A4EF"
+            "console" -> "#22C55E"
             else -> "#6B7280"
         }
     }

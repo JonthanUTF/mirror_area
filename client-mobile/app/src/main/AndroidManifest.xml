@@ -37,6 +37,17 @@
                     android:host="auth"
                     android:pathPrefix="/callback" />
             </intent-filter>
+            
+            <!-- Deep link for Service OAuth callback -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="area"
+                    android:host="services"
+                    android:pathPrefix="/callback" />
+            </intent-filter>
         </activity>
     </application>
 

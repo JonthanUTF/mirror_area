@@ -15,13 +15,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -32,6 +31,7 @@ import com.area.mobile.data.model.ReactionParameter
 import com.area.mobile.data.model.Service
 import com.area.mobile.ui.theme.*
 import com.area.mobile.ui.viewmodel.DashboardViewModel
+import com.area.mobile.ui.viewmodel.OAuthState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,24 +41,81 @@ fun AREABuilderScreen(
     onSave: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
-    var areaName by remember { mutableStateOf("") }
+    var areaName by rememberSaveable { mutableStateOf("") }
     
-    // Action State
-    var selectedActionService by remember { mutableStateOf<Service?>(null) }
-    var selectedActionType by remember { mutableStateOf<String?>(null) }
+    val services by viewModel.services.collectAsState()
+    
+    // Action State - Store IDs to persist across config changes
+    var selectedActionServiceId by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedActionType by rememberSaveable { mutableStateOf<String?>(null) }
+    // Note: Map is not directly saveable without custom saver, using remember for now 
+    // or we could serialize to JSON string if needed, but simple remember might suffice
+    // if we fix the recomposition issue. Using rememberSaveable for IDs is key.
     var actionParams by remember { mutableStateOf(mutableMapOf<String, String>()) }
     
     // Reaction State
-    var selectedReactionService by remember { mutableStateOf<Service?>(null) }
-    var selectedReactionType by remember { mutableStateOf<String?>(null) }
+    var selectedReactionServiceId by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedReactionType by rememberSaveable { mutableStateOf<String?>(null) }
     var reactionParams by remember { mutableStateOf(mutableMapOf<String, String>()) }
     
-    val services by viewModel.services.collectAsState()
+    // Derive objects from IDs
+    val selectedActionService = services.find { it.name == selectedActionServiceId }
+    val selectedReactionService = services.find { it.name == selectedReactionServiceId }
+    
     val connectedServices by viewModel.connectedServices.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+    val message by viewModel.message.collectAsState()
+    val oauthState by viewModel.oauthState.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    
+    // Load fresh data when entering screen
+    LaunchedEffect(Unit) {
+        viewModel.loadServices()
+        viewModel.loadUserServices()
+    }
 
-    val context = LocalContext.current
+    // Error handling
+    LaunchedEffect(error) {
+        if (error != null) {
+            android.widget.Toast.makeText(context, error, android.widget.Toast.LENGTH_LONG).show()
+            viewModel.clearError()
+        }
+    }
+
+    // Success messages
+    LaunchedEffect(message) {
+        if (message != null) {
+            android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+            viewModel.clearMessage()
+        }
+    }
+    
+    // Show OAuth WebView if needed
+    if (oauthState != null) {
+        ServiceOAuthScreen(
+            serviceName = oauthState!!.serviceName,
+            authUrl = oauthState!!.authUrl,
+            onCodeReceived = { code ->
+                viewModel.finalizeOAuthConnection(code)
+            },
+            onCancel = {
+                viewModel.cancelOAuth()
+            }
+        )
+        return
+    }
+    
+    // Services that require OAuth connection (like web frontend)
+    val oauthServices = listOf("google", "github", "twitch", "microsoft", "discord", "dropbox", "twitter")
+    
+    fun serviceRequiresOAuth(serviceName: String): Boolean {
+        return oauthServices.contains(serviceName.lowercase())
+    }
+    
+    fun isServiceConnected(serviceName: String): Boolean {
+        return connectedServices.any { it.equals(serviceName, ignoreCase = true) }
+    }
 
     // Helper to clear params when selection changes
     LaunchedEffect(selectedActionType) {
@@ -72,11 +129,22 @@ fun AREABuilderScreen(
     val actionServices = services.filter { it.actions.isNotEmpty() }
     val reactionServices = services.filter { it.reactions.isNotEmpty() }
     
+    // Check OAuth requirements before allowing save
+    val actionServiceConnected = selectedActionService?.let { 
+        !serviceRequiresOAuth(it.name) || isServiceConnected(it.name) 
+    } ?: true
+    
+    val reactionServiceConnected = selectedReactionService?.let { 
+        !serviceRequiresOAuth(it.name) || isServiceConnected(it.name)
+    } ?: true
+    
     val canSave = areaName.isNotBlank() && 
                  selectedActionService != null && 
                  selectedActionType != null &&
                  selectedReactionService != null &&
-                 selectedReactionType != null
+                 selectedReactionType != null &&
+                 actionServiceConnected &&
+                 reactionServiceConnected
     
     Scaffold(
         topBar = {
@@ -168,26 +236,47 @@ fun AREABuilderScreen(
                     ServiceSelector(
                         services = actionServices,
                         selectedService = selectedActionService,
-                        onSelect = { selectedActionService = it; selectedActionType = null }
+                        onSelect = { selectedActionServiceId = it.name; selectedActionType = null }
                     )
                     
                     if (selectedActionService != null) {
-                        val isConnected = connectedServices.contains(selectedActionService!!.name) || 
-                                          connectedServices.contains(selectedActionService!!.id) ||
-                                          !listOf("google", "github", "discord", "dropbox", "twitter", "twitch").contains(selectedActionService!!.name.lowercase())
+                        val needsOAuth = serviceRequiresOAuth(selectedActionService!!.name)
+                        val isConnected = isServiceConnected(selectedActionService!!.name)
                         
-                        // Show connect button if needed
-                        if (!isConnected) {
-                             Button(
+                        // Show connect button if service requires OAuth and not connected
+                        if (needsOAuth && !isConnected) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(
                                 onClick = { 
-                                    viewModel.connectService(selectedActionService!!.name, context)
+                                    viewModel.connectService(selectedActionService!!.name)
                                 },
                                 modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(containerColor = PurplePrimary)
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = getOAuthButtonColor(selectedActionService!!.name)
+                                )
                             ) {
                                 Icon(Icons.Default.Link, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Connect ${selectedActionService!!.name}")
+                                Text("Connect ${selectedActionService!!.name.replaceFirstChar { it.titlecase() }}")
+                            }
+                        } else if (needsOAuth && isConnected) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.CheckCircle,
+                                    contentDescription = "Connected",
+                                    tint = GreenSuccess,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    "${selectedActionService!!.name.replaceFirstChar { it.titlecase() }} Connected",
+                                    color = GreenSuccess,
+                                    fontSize = 14.sp
+                                )
                             }
                         }
                         
@@ -248,25 +337,47 @@ fun AREABuilderScreen(
                     ServiceSelector(
                         services = reactionServices,
                         selectedService = selectedReactionService,
-                        onSelect = { selectedReactionService = it; selectedReactionType = null }
+                        onSelect = { selectedReactionServiceId = it.name; selectedReactionType = null }
                     )
                     
                     if (selectedReactionService != null) {
-                         val isConnected = connectedServices.contains(selectedReactionService!!.name) || 
-                                          connectedServices.contains(selectedReactionService!!.id) ||
-                                          !listOf("google", "github", "discord", "dropbox", "twitter", "twitch").contains(selectedReactionService!!.name.lowercase())
+                        val needsOAuth = serviceRequiresOAuth(selectedReactionService!!.name)
+                        val isConnected = isServiceConnected(selectedReactionService!!.name)
                         
-                        if (!isConnected) {
-                             Button(
+                        // Show connect button if service requires OAuth and not connected
+                        if (needsOAuth && !isConnected) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(
                                 onClick = { 
-                                    viewModel.connectService(selectedReactionService!!.name, context)
+                                    viewModel.connectService(selectedReactionService!!.name)
                                 },
                                 modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(containerColor = PurplePrimary)
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = getOAuthButtonColor(selectedReactionService!!.name)
+                                )
                             ) {
                                 Icon(Icons.Default.Link, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Connect ${selectedReactionService!!.name}")
+                                Text("Connect ${selectedReactionService!!.name.replaceFirstChar { it.titlecase() }}")
+                            }
+                        } else if (needsOAuth && isConnected) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.CheckCircle,
+                                    contentDescription = "Connected",
+                                    tint = GreenSuccess,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    "${selectedReactionService!!.name.replaceFirstChar { it.titlecase() }} Connected",
+                                    color = GreenSuccess,
+                                    fontSize = 14.sp
+                                )
                             }
                         }
                         
@@ -530,5 +641,20 @@ fun ParameterInput(
                 singleLine = true
             )
         }
+    }
+}
+
+// Helper function for OAuth button colors (matching web frontend)
+@Composable
+fun getOAuthButtonColor(serviceName: String): Color {
+    return when (serviceName.lowercase()) {
+        "twitch" -> Color(0xFF9146FF)
+        "google" -> Color(0xFF4285F4)
+        "microsoft" -> Color(0xFF00A4EF)
+        "github" -> Color(0xFF24292E)
+        "discord" -> Color(0xFF5865F2)
+        "dropbox" -> Color(0xFF0061FF)
+        "twitter" -> Color(0xFF1DA1F2)
+        else -> PurplePrimary
     }
 }

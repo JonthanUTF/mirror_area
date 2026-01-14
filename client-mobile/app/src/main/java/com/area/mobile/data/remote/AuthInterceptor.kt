@@ -1,5 +1,6 @@
 package com.area.mobile.data.remote
 
+import android.util.Log
 import okhttp3.Interceptor
 import okhttp3.Response
 
@@ -7,6 +8,9 @@ class AuthInterceptor(private val tokenProvider: () -> String?) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val original = chain.request()
         val token = tokenProvider()
+        
+        Log.d("AuthInterceptor", "Request URL: ${original.url}")
+        Log.d("AuthInterceptor", "Token present: ${token != null}, length: ${token?.length ?: 0}")
         
         val request = if (token != null) {
             original.newBuilder()
