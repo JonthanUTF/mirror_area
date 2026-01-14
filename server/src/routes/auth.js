@@ -139,7 +139,7 @@ router.get('/google/callback',
 router.get('/me', authenticateToken, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
-      attributes: ['id', 'email', 'name', 'googleId', 'createdAt']
+      attributes: ['id', 'email', 'name', 'role', 'googleId', 'createdAt']
     });
 
     if (!user) {

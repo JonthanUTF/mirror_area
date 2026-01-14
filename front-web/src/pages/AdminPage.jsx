@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { Add, Edit, Delete } from "@mui/icons-material";
+import LockIcon from "@mui/icons-material/Lock";
 import Sidebar from "../components/Sidebar";
 
 export default function AdminPage() {
@@ -22,6 +23,7 @@ export default function AdminPage() {
   const [open, setOpen] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState(null);
   const [error, setError] = React.useState("");
+  const [isUnauthorized, setIsUnauthorized] = React.useState(false);
 
   const parseError = async (res) => {
     try {
@@ -45,7 +47,15 @@ export default function AdminPage() {
       });
 
       if (!res.ok) {
-        setError(await parseError(res));
+        const errorMsg = await parseError(res);
+
+        // Check if it's an admin privilege error
+        if (res.status === 403 || errorMsg.toLowerCase().includes("admin")) {
+          setIsUnauthorized(true);
+          return;
+        }
+
+        setError(errorMsg);
         return;
       }
 
@@ -172,6 +182,59 @@ export default function AdminPage() {
       ),
     },
   ];
+
+  // Show unauthorized page if user is not admin
+  if (isUnauthorized) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "rgba(11, 18, 34, 1)",
+          color: "#fff",
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", mt: 2 }}>
+          <Sidebar />
+        </Box>
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 2,
+          }}
+        >
+          <LockIcon sx={{ fontSize: 80, color: "rgba(255, 255, 255, 0.3)" }} />
+          <Typography variant="h3" sx={{ color: "rgba(255, 255, 255, 0.7)" }}>
+            Admin Only
+          </Typography>
+          <Typography variant="body1" sx={{ color: "rgba(255, 255, 255, 0.5)" }}>
+            You don't have permission to access this page.
+          </Typography>
+          <Button
+            variant="outlined"
+            onClick={() => window.history.back()}
+            sx={{
+              mt: 2,
+              color: "#a855f7",
+              borderColor: "#a855f7",
+              "&:hover": {
+                borderColor: "#9333ea",
+                backgroundColor: "rgba(168, 85, 247, 0.1)",
+              },
+            }}
+          >
+            Go Back
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box
