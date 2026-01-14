@@ -56,7 +56,7 @@ if (process.env.TWITCH_CLIENT_ID && process.env.TWITCH_CLIENT_SECRET) {
       {
         clientID: process.env.TWITCH_CLIENT_ID,
         clientSecret: process.env.TWITCH_CLIENT_SECRET,
-        callbackURL: process.env.TWITCH_CALLBACK_URL || 'http://localhost:8080/auth/twitch/callback',
+        callbackURL: process.env.TWITCH_CALLBACK_URL || (process.env.CLIENT_URL || 'http://localhost:8081') + '/services/callback',
         scope: ['user:read:follows', 'user:manage:blocked_users'],
         passReqToCallback: true
       },

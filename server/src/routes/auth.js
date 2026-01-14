@@ -184,31 +184,36 @@ router.get('/twitch', (req, res, next) => {
   console.log('[Auth] Initiating Twitch OAuth...');
   
   // Get JWT from Authorization header OR from state query param
-  let token = null;
+  let rawToken = null;
   const authHeader = req.headers['authorization'];
   if (authHeader && authHeader.startsWith('Bearer ')) {
-    token = authHeader.split(' ')[1];
+    rawToken = authHeader.split(' ')[1];
   } else if (req.query.state) {
-    token = req.query.state;
+    rawToken = req.query.state;
   }
   
-  if (!token) {
+  if (!rawToken) {
     return res.status(401).json({ error: 'Authentication required. Please login first.' });
   }
+  
+  // Check for mobile prefix and extract actual JWT
+  const isMobile = rawToken.startsWith('mobile:');
+  const token = isMobile ? rawToken.substring(7) : rawToken;
   
   try {
     const payload = jwt.verify(token, JWT_SECRET);
     req.user = { id: payload.id, email: payload.email };
-    // Store token in session for callback
+    // Store the ORIGINAL token (with mobile: prefix if present) for callback
     req.session = req.session || {};
-    req.session.jwtToken = token;
+    req.session.jwtToken = rawToken; // Keep mobile: prefix for callback detection
   } catch (err) {
+    console.error('[Auth] Token verification error:', err.message);
     return res.status(403).json({ error: 'Invalid or expired token' });
   }
   
   next();
 }, (req, res, next) => {
-  // Pass the JWT as state to Twitch OAuth
+  // Pass the original token (with mobile: prefix if present) as state to Twitch OAuth
   const token = req.session?.jwtToken || req.query.state;
   passport.authenticate('twitch', { 
     session: false,
@@ -224,7 +229,11 @@ router.get('/twitch', (req, res, next) => {
 router.get('/twitch/callback', 
   // Extract JWT from query or state
   (req, res, next) => {
-    const token = req.query.state || req.query.token;
+    const rawState = req.query.state || req.query.token || '';
+    // Check if state starts with "mobile:" prefix
+    req.isMobileRequest = rawState.startsWith('mobile:');
+    const token = req.isMobileRequest ? rawState.substring(7) : rawState; // Remove "mobile:" prefix
+    
     if (token) {
       try {
         const payload = jwt.verify(token, JWT_SECRET);
@@ -241,8 +250,42 @@ router.get('/twitch/callback',
   }),
   (req, res) => {
     try {
-      console.log('[Auth] Twitch connected successfully');
-      res.redirect(`${process.env.CLIENT_URL || 'http://localhost:8081'}/settings?twitch_connected=true`);
+      console.log('[Auth] Twitch connected successfully, isMobile:', req.isMobileRequest);
+      
+      // Check if request is from mobile (via "mobile:" prefix in state)
+      if (req.isMobileRequest) {
+        // Redirect to mobile app via deep link with a page that triggers the deep link
+        console.log('[Auth] Mobile detected via state prefix, redirecting via deep link page');
+        res.send(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Success!</title>
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: linear-gradient(135deg, #9146FF 0%, #6441a5 100%); color: white; text-align: center; padding: 20px; }
+              h1 { margin-bottom: 10px; }
+              p { opacity: 0.9; margin-bottom: 20px; }
+              .btn { padding: 15px 30px; background: white; color: #9146FF; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; text-decoration: none; }
+            </style>
+          </head>
+          <body>
+            <h1>✓ Twitch Connected!</h1>
+            <p>Returning to AREA app...</p>
+            <a class="btn" id="openApp" href="area://services/callback?twitch_connected=true">Open AREA App</a>
+            <script>
+              setTimeout(function() {
+                window.location.href = 'area://services/callback?twitch_connected=true';
+              }, 500);
+            </script>
+          </body>
+          </html>
+        `);
+      } else {
+        // Web frontend redirect
+        res.redirect(`${process.env.CLIENT_URL || 'http://localhost:8081'}/settings?twitch_connected=true`);
+      }
     } catch (error) {
       console.error('Twitch callback error:', error);
       res.redirect(`${process.env.CLIENT_URL || 'http://localhost:8081'}/settings?twitch_error=callback_failed`);
