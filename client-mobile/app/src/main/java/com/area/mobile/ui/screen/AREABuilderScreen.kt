@@ -1,5 +1,8 @@
 package com.area.mobile.ui.screen
 
+import android.content.Intent
+import android.net.Uri
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,6 +36,7 @@ import com.area.mobile.data.model.Service
 import com.area.mobile.ui.theme.*
 import com.area.mobile.ui.viewmodel.DashboardViewModel
 import com.area.mobile.ui.viewmodel.OAuthState
+import com.area.mobile.util.ServiceOAuthManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,6 +77,32 @@ fun AREABuilderScreen(
     val oauthState by viewModel.oauthState.collectAsState()
     val context = androidx.compose.ui.platform.LocalContext.current
     
+    // Listen for OAuth code from deep link (Chrome Custom Tabs flow)
+    val pendingOAuthCode by ServiceOAuthManager.pendingCode.collectAsState()
+    val twitchConnected by ServiceOAuthManager.twitchConnected.collectAsState()
+    
+    // When a code arrives from deep link and we have an active OAuth state, finalize the connection
+    LaunchedEffect(pendingOAuthCode, oauthState) {
+        if (pendingOAuthCode != null && oauthState != null) {
+            android.util.Log.d("AREABuilder", "Received OAuth code from deep link, finalizing...")
+            val code = ServiceOAuthManager.consumeCode()
+            if (code != null) {
+                viewModel.finalizeOAuthConnection(code)
+            }
+        }
+    }
+    
+    // When Twitch is connected via Passport (deep link callback with twitch_connected=true)
+    LaunchedEffect(twitchConnected) {
+        if (twitchConnected && oauthState?.serviceName?.lowercase() == "twitch") {
+            android.util.Log.d("AREABuilder", "Twitch connected via Passport, refreshing services...")
+            ServiceOAuthManager.consumeTwitchConnected()
+            viewModel.cancelOAuth()
+            viewModel.loadUserServices()
+            android.widget.Toast.makeText(context, "Successfully connected to Twitch!", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+    
     // Load fresh data when entering screen
     LaunchedEffect(Unit) {
         viewModel.loadServices()
@@ -96,18 +126,58 @@ fun AREABuilderScreen(
     }
     
     // Show OAuth WebView if needed
+    // Note: Twitch blocks WebViews, so we use Chrome Custom Tabs for it
     if (oauthState != null) {
-        ServiceOAuthScreen(
-            serviceName = oauthState!!.serviceName,
-            authUrl = oauthState!!.authUrl,
-            onCodeReceived = { code ->
-                viewModel.finalizeOAuthConnection(code)
-            },
-            onCancel = {
-                viewModel.cancelOAuth()
+        val serviceName = oauthState!!.serviceName.lowercase()
+        
+        // Services that block WebViews and need Chrome Custom Tabs
+        val customTabsServices = listOf("twitch")
+        
+        if (customTabsServices.contains(serviceName)) {
+            // Use Chrome Custom Tabs for services that block WebViews
+            LaunchedEffect(oauthState) {
+                val customTabsIntent = CustomTabsIntent.Builder()
+                    .setShowTitle(true)
+                    .build()
+                customTabsIntent.launchUrl(context, Uri.parse(oauthState!!.authUrl))
             }
-        )
-        return
+            
+            // Show a waiting dialog - the deep link will auto-finalize
+            AlertDialog(
+                onDismissRequest = { viewModel.cancelOAuth() },
+                title = { Text("Connecting to ${oauthState!!.serviceName}") },
+                text = { 
+                    Column {
+                        Text("Complete the login in your browser.")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("You will be automatically redirected back to the app.", 
+                             color = Color.White.copy(alpha = 0.7f))
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.cancelOAuth() }) {
+                        Text("Cancel")
+                    }
+                },
+                containerColor = Slate800,
+                titleContentColor = Color.White,
+                textContentColor = Color.White.copy(alpha = 0.9f)
+            )
+            return
+        } else {
+            // Use embedded WebView for other services
+            ServiceOAuthScreen(
+                serviceName = oauthState!!.serviceName,
+                authUrl = oauthState!!.authUrl,
+                onCodeReceived = { code ->
+                    viewModel.finalizeOAuthConnection(code)
+                },
+                onCancel = {
+                    viewModel.cancelOAuth()
+                }
+            )
+            return
+        }
     }
     
     // Services that require OAuth connection (like web frontend)

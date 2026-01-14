@@ -2,6 +2,7 @@ package com.area.mobile.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.area.mobile.data.local.TokenManager
 import com.area.mobile.data.model.Area
 import com.area.mobile.data.model.Service
 import com.area.mobile.data.repository.AreaRepository
@@ -10,13 +11,15 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val areaRepository: AreaRepository,
-    private val serviceRepository: ServiceRepository
+    private val serviceRepository: ServiceRepository,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
     
     private val _areas = MutableStateFlow<List<Area>>(emptyList())
@@ -101,6 +104,24 @@ class DashboardViewModel @Inject constructor(
     fun connectService(serviceName: String) {
         viewModelScope.launch {
             try {
+                // For Twitch, use the same route as web frontend (/auth/twitch)
+                if (serviceName.lowercase() == "twitch") {
+                    val token = tokenManager.getToken().first()
+                    if (token != null) {
+                        // Use the same URL pattern as web: /auth/twitch?state=TOKEN
+                        // Add "mobile:" prefix to state so backend knows to redirect to app
+                        val authUrl = "http://localhost:8080/auth/twitch?state=mobile:$token"
+                        _oauthState.value = OAuthState(
+                            serviceName = serviceName,
+                            authUrl = authUrl
+                        )
+                    } else {
+                        _error.value = "Please login first"
+                    }
+                    return@launch
+                }
+                
+                // For other services, use the /services/{name}/connect endpoint
                 val result = serviceRepository.connectService(serviceName)
                 result.onSuccess { url ->
                     // Set OAuth state so UI can show WebView
@@ -123,13 +144,8 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                // Determine redirect URI based on service
-                // Twitch needs backend URL, others need frontend URL
-                val redirectUri = if (currentOAuthState.serviceName.equals("twitch", ignoreCase = true)) {
-                    "http://localhost:8080/auth/twitch/callback"
-                } else {
-                    "http://localhost:8081/services/callback"
-                }
+                // All services now use the same redirect URI pattern
+                val redirectUri = "http://localhost:8081/services/callback"
                 
                 val result = serviceRepository.finalizeServiceConnection(
                     serviceName = currentOAuthState.serviceName,

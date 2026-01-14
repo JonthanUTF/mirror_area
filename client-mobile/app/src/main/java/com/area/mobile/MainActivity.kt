@@ -35,6 +35,7 @@ import com.area.mobile.ui.navigation.MainScaffold
 import com.area.mobile.ui.screen.*
 import com.area.mobile.ui.theme.AREATheme
 import com.area.mobile.ui.viewmodel.AuthViewModel
+import com.area.mobile.util.ServiceOAuthManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,6 +47,7 @@ import kotlinx.coroutines.runBlocking
 class MainActivity : ComponentActivity() {
     private val oauthTokenState = mutableStateOf<String?>(null)
     private val isOAuthCallback = mutableStateOf(false)
+    private val serviceOAuthCode = mutableStateOf<String?>(null)
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,9 +64,11 @@ class MainActivity : ComponentActivity() {
                     AREAApp(
                         oauthToken = oauthTokenState.value,
                         isOAuthCallback = isOAuthCallback.value,
+                        serviceOAuthCode = serviceOAuthCode.value,
                         onClearOAuth = {
                             oauthTokenState.value = null
                             isOAuthCallback.value = false
+                            serviceOAuthCode.value = null
                         }
                     )
                 }
@@ -81,7 +85,7 @@ class MainActivity : ComponentActivity() {
     private fun handleIntent(intent: Intent?) {
         val data: Uri? = intent?.data
         
-        // Check if this is an OAuth callback
+        // Check if this is an OAuth callback for login (token)
         if (data != null && data.scheme == "area" && data.host == "auth" && data.path == "/callback") {
             val token = data.getQueryParameter("token")
             Log.d("MainActivity", "OAuth callback received with token: ${token?.take(20)}...")
@@ -98,6 +102,26 @@ class MainActivity : ComponentActivity() {
                 isOAuthCallback.value = true
             }
         }
+        
+        // Check if this is an OAuth callback for service connection (code or connected status)
+        if (data != null && data.scheme == "area" && data.host == "services" && data.path == "/callback") {
+            val code = data.getQueryParameter("code")
+            val twitchConnected = data.getQueryParameter("twitch_connected")
+            
+            Log.d("MainActivity", "Service OAuth callback: code=${code?.take(20)}, twitch_connected=$twitchConnected")
+            
+            if (code != null) {
+                // Store the code in the singleton manager
+                ServiceOAuthManager.setCode(code)
+                serviceOAuthCode.value = code
+            }
+            
+            if (twitchConnected == "true") {
+                // Twitch was connected via Passport, signal success
+                Log.d("MainActivity", "Twitch connected successfully via Passport!")
+                ServiceOAuthManager.setTwitchConnected(true)
+            }
+        }
     }
 }
 
@@ -105,6 +129,7 @@ class MainActivity : ComponentActivity() {
 fun AREAApp(
     oauthToken: String? = null, 
     isOAuthCallback: Boolean = false,
+    serviceOAuthCode: String? = null,
     onClearOAuth: () -> Unit = {}
 ) {
     val navController = rememberNavController()
