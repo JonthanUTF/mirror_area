@@ -15,19 +15,6 @@ export const PARAM_HINTS = {
         placeholder: 'Text content to write',
         helperText: 'Content to upload'
     },
-    // Weather
-    latitude: {
-        placeholder: 'e.g., 48.8566',
-        helperText: 'Latitude coordinate'
-    },
-    longitude: {
-        placeholder: 'e.g., 2.3522',
-        helperText: 'Longitude coordinate'
-    },
-    tempThreshold: {
-        placeholder: 'e.g., 20',
-        helperText: 'Temperature threshold in °C'
-    },
     // Timer
     interval: {
         placeholder: 'e.g., 60',

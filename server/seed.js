@@ -8,12 +8,6 @@ const services = [
         active: true
     },
     {
-        name: 'weather',
-        label: 'Météo',
-        icon: 'https://cdn-icons-png.flaticon.com/512/4052/4052984.png',
-        active: true
-    },
-    {
         name: 'timer',
         label: 'Timer',
         icon: 'https://cdn-icons-png.flaticon.com/512/992/992700.png',
@@ -42,6 +36,12 @@ const services = [
         name: 'twitch',
         label: 'Twitch',
         icon: 'https://static.twitchcdn.net/assets/favicon-32-e29e246c157142c94346.png',
+        active: true
+    },
+    {
+        name: 'dropbox',
+        label: 'Dropbox',
+        icon: 'https://www.dropbox.com/static/images/logo.svg',
         active: true
     }
 ];

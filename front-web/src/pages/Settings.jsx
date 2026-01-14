@@ -27,6 +27,7 @@ export default function Settings() {
     const [googleConnected, setGoogleConnected] = useState(false);
     const [microsoftConnected, setMicrosoftConnected] = useState(false);
     const [githubConnected, setGitHubConnected] = useState(false);
+    const [dropboxConnected, setDropboxConnected] = useState(false);
 
     const userName = typeof window !== "undefined" ? localStorage.getItem("userName") : "";
     const userEmail = typeof window !== "undefined" ? localStorage.getItem("userEmail") : "";
@@ -50,7 +51,7 @@ export default function Settings() {
                     setTwitchUsername(data.twitchUsername || "");
                 }
 
-                // Check Google, Microsoft, GitHub via user services
+                // Check Google, Microsoft, GitHub, Dropbox via user services
                 const resServices = await fetch("http://localhost:8080/services", {
                     headers: { Authorization: `Bearer ${token}` },
                 });
@@ -59,6 +60,7 @@ export default function Settings() {
                     setGoogleConnected(!!data.find(s => s.service?.name === 'google'));
                     setMicrosoftConnected(!!data.find(s => s.service?.name === 'microsoft'));
                     setGitHubConnected(!!data.find(s => s.service?.name === 'github'));
+                    setDropboxConnected(!!data.find(s => s.service?.name === 'dropbox'));
                 }
             } catch (err) {
                 console.error("Failed to check services status:", err);
@@ -154,9 +156,28 @@ export default function Settings() {
     const handleGitHubConnect = async () => {
         try {
             localStorage.setItem('oauth_return', window.location.pathname);
-            localStorage.setItem('pending_service', 'github');
+            localStorage.setItem('oauth_service', 'github');
             const token = localStorage.getItem("authToken");
             const res = await fetch("http://localhost:8080/services/github/connect", {
+                method: "GET",
+                headers: {
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    "Content-Type": "application/json",
+                },
+            });
+            const data = await res.json();
+            if (data.url || data.connectUrl) window.location.href = data.url || data.connectUrl;
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const handleDropboxConnect = async () => {
+        try {
+            localStorage.setItem('oauth_return', window.location.pathname);
+            localStorage.setItem('oauth_service', 'dropbox');
+            const token = localStorage.getItem("authToken");
+            const res = await fetch("http://localhost:8080/services/dropbox/connect", {
                 method: "GET",
                 headers: {
                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -245,6 +266,31 @@ export default function Settings() {
         }
     };
 
+    const handleDropboxDisconnect = async () => {
+        try {
+            const token = localStorage.getItem("authToken");
+            const res = await fetch("http://localhost:8080/services/dropbox/disconnect", {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+            if (res.ok) {
+                setDropboxConnected(false);
+                setSuccessMessage("Dropbox disconnected successfully");
+                setSuccessOpen(true);
+            } else {
+                setSuccessMessage("Failed to disconnect Dropbox");
+                setSuccessOpen(true);
+            }
+        } catch (err) {
+            console.error("Failed to disconnect Dropbox:", err);
+            setSuccessMessage("Failed to disconnect Dropbox");
+            setSuccessOpen(true);
+        }
+    };
+
     const updateChangesAPI = async (name, email, password) => {
         if (!name) {
             setNameError("Full name is required");
@@ -313,13 +359,14 @@ export default function Settings() {
                     height: "100vh",
                     backgroundColor: "rgba(11, 18, 34, 1)",
                     color: "#fff",
+                    overflowY: "auto",
                 }}
             >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 3, mt: 2 }}>
                     <Sidebar />
                     <Typography variant="h4" component="h1">Settings</Typography>
                 </Box>
-                <Box sx={{ display: "flex", mt: 2 }}>
+                <Box sx={{ display: "flex", mt: 2, pb: 4 }}>
                     <Card
                         sx={{
                             height: "100%",
@@ -681,6 +728,54 @@ export default function Settings() {
                                 ) : (
                                     <Button variant="contained" onClick={handleGitHubConnect} startIcon={<LinkIcon />} sx={{ backgroundColor: '#24292e', '&:hover': { backgroundColor: '#1b1f23' } }}>
                                         Connect GitHub
+                                    </Button>
+                                )}
+                            </Box>
+
+                            {/* Dropbox Connection */}
+                            <Box sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                p: 2,
+                                borderRadius: 2,
+                                backgroundColor: 'rgba(0, 97, 255, 0.1)',
+                                border: '1px solid rgba(0, 97, 255, 0.3)',
+                                mb: 2
+                            }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                    <Box sx={{ width: 40, height: 40, borderRadius: 1, backgroundColor: '#0061FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Typography sx={{ fontWeight: 'bold', color: 'white' }}>D</Typography>
+                                    </Box>
+                                    <Box>
+                                        <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 500 }}>Dropbox</Typography>
+                                        {dropboxConnected ? (
+                                            <Chip label="Connected" size="small" icon={<LinkIcon sx={{ color: '#4ade80 !important' }} />} sx={{ backgroundColor: 'rgba(74, 222, 128, 0.2)', color: '#4ade80', '& .MuiChip-icon': { color: '#4ade80' } }} />
+                                        ) : (
+                                            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)' }}>Not connected</Typography>
+                                        )}
+                                    </Box>
+                                </Box>
+                                {dropboxConnected ? (
+                                    <Button
+                                        variant="outlined"
+                                        color="error"
+                                        onClick={handleDropboxDisconnect}
+                                        startIcon={<LinkOffIcon />}
+                                        sx={{
+                                            borderColor: 'rgba(239, 68, 68, 0.5)',
+                                            color: '#ef4444',
+                                            '&:hover': {
+                                                borderColor: '#ef4444',
+                                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                            }
+                                        }}
+                                    >
+                                        Disconnect
+                                    </Button>
+                                ) : (
+                                    <Button variant="contained" onClick={handleDropboxConnect} startIcon={<LinkIcon />} sx={{ backgroundColor: '#0061FF', '&:hover': { backgroundColor: '#004FC5' } }}>
+                                        Connect Dropbox
                                     </Button>
                                 )}
                             </Box>

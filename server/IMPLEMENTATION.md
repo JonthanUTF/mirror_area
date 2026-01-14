@@ -54,7 +54,6 @@ Root:
 - Dynamic client IP detection
 - Unix timestamp for current_time
 - Service metadata with actions/reactions:
-  - **weather**: check_temp, check_conditions
   - **console**: log_message
   - **timer**: interval, schedule
   - **email**: send_email
@@ -70,8 +69,6 @@ Root:
 ### 5. **Automation Engine** (`src/services/automation.js`)
 - Runs every 10 seconds
 - **Action Handlers**:
-  - **weather/check_temp**: Calls Open-Meteo API, compares temperature
-  - **weather/check_conditions**: Checks for rain/snow/clear
   - **timer/interval**: Time-based triggering
   - **timer/schedule**: Scheduled execution
 - **Reaction Handlers**:

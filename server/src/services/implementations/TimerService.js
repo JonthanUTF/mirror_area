@@ -7,10 +7,6 @@ class TimerService extends ServiceBase {
         this.registerAction('interval', 'Triggers at specified time intervals', {
             interval: 'number' // milliseconds
         });
-
-        this.registerAction('schedule', 'Triggers at a specific date and time', {
-            targetTime: 'date'
-        });
     }
 
     async checkTrigger(action, area, params) {
@@ -22,15 +18,6 @@ class TimerService extends ServiceBase {
 
             if (now - lastTriggered >= interval) {
                 console.log(`[TimerService] Interval ${interval}ms elapsed`);
-                return true;
-            }
-        }
-        else if (action === 'schedule') {
-            const targetTime = params.targetTime ? new Date(params.targetTime).getTime() : 0;
-            const lastTriggered = area.lastTriggered ? new Date(area.lastTriggered).getTime() : 0;
-
-            if (now >= targetTime && targetTime > lastTriggered) {
-                console.log(`[TimerService] Scheduled time reached`);
                 return true;
             }
         }

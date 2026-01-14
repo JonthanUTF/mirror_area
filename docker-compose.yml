@@ -11,7 +11,7 @@ services:
     networks:
       - area_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U area"]
+      test: ["CMD-SHELL", "pg_isready -U area -d area_db"]
       interval: 10s
       timeout: 5s
       retries: 5
