@@ -20,7 +20,7 @@ export const ReactionSection = ({
         <>
             <Grid item xs={12}>
                 <Typography variant="h6" sx={{ mb: 2, mt: 2, color: '#16a34a' }}>
-                    ⚡ Reaction
+                    Reaction
                 </Typography>
             </Grid>
 

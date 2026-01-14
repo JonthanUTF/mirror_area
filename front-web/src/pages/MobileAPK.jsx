@@ -8,7 +8,7 @@ import SecurityIcon from '@mui/icons-material/Security';
 
 import Sidebar from "../components/Sidebar";
 
-const API_BASE = process.env.CLIENT_URL || "http://localhost:8081";
+const API_BASE = import.meta.env.CLIENT_URL || "http://localhost:8081";
 
 export default function MobileAPK() {
     const handleDownload = () => {

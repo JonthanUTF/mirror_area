@@ -20,12 +20,12 @@ export const ActionSection = ({
         <>
             <Grid item xs={12}>
                 <Typography variant="h6" sx={{ mb: 2, color: '#7c3aed' }}>
-                    🎯 Action (Trigger)
+                    Action 
                 </Typography>
             </Grid>
 
             {/* Action Service */}
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={12}>
                 <FormControl fullWidth>
                     <InputLabel>Action Service</InputLabel>
                     <Select
@@ -56,7 +56,7 @@ export const ActionSection = ({
             </Grid>
 
             {/* Action Type */}
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={12}>
                 <FormControl fullWidth disabled={!actionService}>
                     <InputLabel>Action Type</InputLabel>
                     <Select

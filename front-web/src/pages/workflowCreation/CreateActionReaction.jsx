@@ -26,6 +26,7 @@ import { ConnectionButtonsGroup } from "./components/ConnectionButtons";
 import { ActionSection } from "./components/ActionSection";
 import { ReactionSection } from "./components/ReactionSection";
 import { serviceRequiresOAuth } from "./serviceHelpers";
+import Sidebar from "../../components/Sidebar";
 
 export default function CreateActionReaction() {
     const navigate = useNavigate();
@@ -143,38 +144,64 @@ export default function CreateActionReaction() {
     }
 
     return (
-        <Box sx={{ display: "flex", minHeight: "100vh", minWidth: "100vw", p: 2 }}>
-            <Card sx={{ width: "100%", maxWidth: 1000, margin: "0 auto" }}>
-                <CardContent>
-                    <Typography variant="h5" gutterBottom>
-                        Create Action-Reaction Workflow
-                    </Typography>
-
-                    {/* Connection Status */}
-                    <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                        <Typography variant="subtitle2" sx={{ width: '100%', mb: 1 }}>
-                            Service Connections:
+        <Box sx={{
+            display: "flex",
+            minHeight: "100vh",
+            minWidth: "100vw",
+            backgroundColor: "rgba(11, 18, 34, 1)",
+            color: "#fff",
+            // enforce white font color for MUI components inside this page
+            '& .MuiTypography-root': { color: '#fff' },
+            '& .MuiButton-root': { color: '#fff' },
+            '& .MuiInputBase-root': { color: '#fff' },
+            '& .MuiInputLabel-root': { color: '#fff' },
+            '& .MuiFormControlLabel-label': { color: '#fff' },
+            '& .MuiDialogTitle-root': { color: '#fff' },
+            '& .MuiDialogContent-root': { color: '#fff' },
+            '& .MuiDialogActions-root': { color: '#fff' },
+        }}>
+            <Box sx={{ width: "100%", mt: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+                        <Sidebar />
+                        <Typography variant="h4" gutterBottom>
+                            Create Action-Reaction Workflow
                         </Typography>
+                    </Box>
+                </Box>
+
+                {/* Connection buttons box */}
+                <Box sx={{ mt: 2, mb: 3, backgroundColor: 'rgba(255,255,255,0.03)', p: 2, borderRadius: 2 }}>
+                    <Typography variant="h6" sx={{ mb: 1 }}>
+                        Service Connections:
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', alignItems: 'center', '& button': { mr: 2, mb: 1 } }}>
                         <ConnectionButtonsGroup
                             handlers={oauthHandlers}
                             isServiceConnected={isServiceConnected}
                         />
                     </Box>
+                </Box>
 
-                    <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
-                        <Grid container spacing={3}>
-                            {/* Workflow Name */}
-                            <Grid item xs={12}>
-                                <TextField
-                                    label="Workflow Name"
-                                    fullWidth
-                                    required
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                />
-                            </Grid>
+                {/* Creation box (form) */}
+                <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, backgroundColor: 'rgba(255,255,255,0.02)', p: 2, borderRadius: 2 }}>
+                    <Typography variant="h6" sx={{ mb: 1 }}>
+                        Workflow Creation:
+                    </Typography>
+                    <Grid container spacing={3}>
+                        {/* Workflow Name */}
+                        <Grid item xs={5}>
+                            <TextField
+                                label="Workflow Name"
+                                fullWidth
+                                required
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                            />
+                        </Grid>
 
-                            {/* ACTION SECTION */}
+                        {/* ACTION SECTION */}
+                        <Grid container item xs={12} spacing={2} alignItems="center">
                             <ActionSection
                                 services={services}
                                 actionService={actionService}
@@ -185,8 +212,10 @@ export default function CreateActionReaction() {
                                 setActionParams={setActionParams}
                                 isServiceConnected={isServiceConnected}
                             />
+                        </Grid>
 
-                            {/* REACTION SECTION */}
+                        {/* REACTION SECTION */}
+                        <Grid container item xs={12} spacing={2} alignItems="center">
                             <ReactionSection
                                 services={services}
                                 reactionService={reactionService}
@@ -197,64 +226,51 @@ export default function CreateActionReaction() {
                                 setReactionParams={setReactionParams}
                                 isServiceConnected={isServiceConnected}
                             />
-
-                            {/* Active Toggle */}
-                            <Grid item xs={12}>
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={active}
-                                            onChange={(e) => setActive(e.target.checked)}
-                                        />
-                                    }
-                                    label="Active"
-                                />
-                            </Grid>
                         </Grid>
 
-                        {/* Error Message */}
-                        {error && (
-                            <Alert severity="error" sx={{ mt: 2 }}>
-                                {error}
-                            </Alert>
-                        )}
+                        {/* Active Toggle */}
+                        <Grid item xs={12}>
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={active}
+                                        onChange={(e) => setActive(e.target.checked)}
+                                    />
+                                }
+                                label="Active"
+                            />
+                        </Grid>
+                    </Grid>
 
-                        {/* Submit Buttons */}
-                        <Box sx={{ display: "flex", gap: 2, mt: 3 }}>
-                            <Button
-                                type="submit"
-                                variant="contained"
-                                disabled={!actionService || !actionType || !reactionService || !reactionType || !name.trim()}
-                                sx={{
-                                    background: 'linear-gradient(90deg, #7c3aed 0%, #16a34a 100%)',
-                                }}
-                            >
-                                Create Workflow
-                            </Button>
+                    {/* Error Message */}
+                    {error && (
+                        <Alert severity="error" sx={{ mt: 2 }}>
+                            {error}
+                        </Alert>
+                    )}
 
-                            <Button
-                                variant="outlined"
-                                onClick={() => navigate("/home")}
-                            >
-                                Cancel
-                            </Button>
-                        </Box>
+                    {/* Submit Buttons */}
+                    <Box sx={{ display: "flex", gap: 2, mt: 3 }}>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            disabled={!actionService || !actionType || !reactionService || !reactionType || !name.trim()}
+                            sx={{
+                                backgroundColor: "#a855f7",
+                            }}
+                        >
+                            Create Workflow
+                        </Button>
+
+                        <Button
+                            variant="outlined"
+                            onClick={() => navigate("/home")}
+                        >
+                            Cancel
+                        </Button>
                     </Box>
-                </CardContent>
-            </Card>
-
-            {/* Response Dialog */}
-            <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
-                <DialogTitle>{responseOk ? "✅ Success" : "⚠️ Response"}</DialogTitle>
-                <DialogContent>
-                    <Typography sx={{ whiteSpace: "pre-wrap" }}>{responseText}</Typography>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => { setDialogOpen(false); if (responseOk) navigate("/home"); }}>
-                        OK
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                </Box>
+            </Box>
         </Box>
     );
 }

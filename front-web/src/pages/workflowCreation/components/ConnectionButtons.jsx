@@ -31,11 +31,11 @@ export const ConnectionButton = ({ serviceName, connected, onConnect }) => {
             disabled={connected}
             startIcon={connected ? <CheckCircleIcon /> : <LinkIcon />}
             sx={{
-                backgroundColor: connected ? 'transparent' : styles.bg,
+                backgroundColor: connected ? '#c6eebaff' : styles.bg,
                 borderColor: connected ? '#4ade80' : undefined,
                 color: connected ? '#4ade80' : 'white',
                 '&:hover': {
-                    backgroundColor: connected ? 'transparent' : styles.hover,
+                    backgroundColor: connected ? '#c6eebaff' : styles.hover,
                 }
             }}
         >
