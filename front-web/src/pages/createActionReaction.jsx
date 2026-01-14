@@ -27,6 +27,77 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
 
+// Helper text descriptions for parameters
+const PARAM_HINTS = {
+    // Dropbox - Folder watching
+    folderPath: {
+        placeholder: 'Leave empty for root, or /Documents',
+        helperText: 'Folder to watch'
+    },
+    // Dropbox - File specific
+    filePath: {
+        placeholder: '/path/to/file.txt',
+        helperText: 'Full file path including filename (must start with /)'
+    },
+    content: {
+        placeholder: 'Text content to write',
+        helperText: 'Content to upload'
+    },
+    // Weather
+    latitude: {
+        placeholder: 'e.g., 48.8566',
+        helperText: 'Latitude coordinate'
+    },
+    longitude: {
+        placeholder: 'e.g., 2.3522',
+        helperText: 'Longitude coordinate'
+    },
+    tempThreshold: {
+        placeholder: 'e.g., 20',
+        helperText: 'Temperature threshold in °C'
+    },
+    // Timer
+    interval: {
+        placeholder: 'e.g., 60',
+        helperText: 'Interval in seconds'
+    },
+    // Email
+    to: {
+        placeholder: 'e.g., user@example.com',
+        helperText: 'Recipient email address'
+    },
+    subject: {
+        placeholder: 'e.g., Notification',
+        helperText: 'Email subject line'
+    },
+    body: {
+        placeholder: 'Email content...',
+        helperText: 'Email body content'
+    },
+    // GitHub
+    owner: {
+        placeholder: 'e.g., microsoft',
+        helperText: 'Repository owner/organization'
+    },
+    repo: {
+        placeholder: 'e.g., vscode',
+        helperText: 'Repository name'
+    },
+    title: {
+        placeholder: 'Issue title',
+        helperText: 'Title for the issue'
+    },
+    // Generic
+    message: {
+        placeholder: 'Enter message',
+        helperText: 'Message content'
+    },
+    path: {
+        placeholder: 'e.g., /folder/file.txt',
+        helperText: 'File or folder path'
+    }
+};
+
 export default function CreateActionReaction() {
     const navigate = useNavigate();
 
@@ -39,6 +110,7 @@ export default function CreateActionReaction() {
     const [googleConnected, setGoogleConnected] = useState(false);
     const [microsoftConnected, setMicrosoftConnected] = useState(false);
     const [githubConnected, setGitHubConnected] = useState(false);
+    const [dropboxConnected, setDropboxConnected] = useState(false);
 
     // Form state
     const [name, setName] = useState("");
@@ -107,6 +179,9 @@ export default function CreateActionReaction() {
 
                     const githubService = data.find(s => s.service?.name === 'github');
                     setGitHubConnected(!!githubService);
+
+                    const dropboxService = data.find(s => s.service?.name === 'dropbox');
+                    setDropboxConnected(!!dropboxService);
                 }
             } catch (err) {
                 console.error("Failed to check services status:", err);
@@ -157,7 +232,7 @@ export default function CreateActionReaction() {
 
     // Check if service requires OAuth
     const serviceRequiresOAuth = (serviceName) => {
-        return ['twitch', 'google', 'microsoft', 'github'].includes(serviceName);
+        return ['twitch', 'google', 'microsoft', 'github', 'dropbox'].includes(serviceName);
     };
 
     // Check if service is connected
@@ -166,6 +241,7 @@ export default function CreateActionReaction() {
         if (serviceName === 'google') return googleConnected;
         if (serviceName === 'microsoft') return microsoftConnected;
         if (serviceName === 'github') return githubConnected;
+        if (serviceName === 'dropbox') return dropboxConnected;
         return true; // Non-OAuth services are always "connected"
     };
 
@@ -279,6 +355,36 @@ export default function CreateActionReaction() {
         }
     };
 
+    const handleDropboxConnect = async () => {
+        try {
+            localStorage.setItem('oauth_return', window.location.pathname || '/');
+            localStorage.setItem('oauth_service', 'dropbox');
+            const token = localStorage.getItem("authToken");
+
+            if (!token) {
+                setError("Please login first");
+                return;
+            }
+
+            const res = await fetch(`${API_BASE}/services/dropbox/connect`, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            const connectUrl = data.url || data.connectUrl;
+            if (connectUrl) {
+                window.location.href = connectUrl;
+            }
+        } catch (err) {
+            setError(err?.message || "Failed to connect Dropbox");
+        }
+    };
+
     // Handle form submission
     const handleSubmit = async (e) => {
         e?.preventDefault?.();
@@ -297,7 +403,6 @@ export default function CreateActionReaction() {
         if (!reactionService || !reactionType) {
             setError("Please select a reaction");
             return;
-
         }
 
         // Check OAuth requirements
@@ -311,21 +416,18 @@ export default function CreateActionReaction() {
             return;
         }
 
-        // Merge action and reaction params
-        const mergedParams = {
-            ...actionParams,
-            ...reactionParams,
-        };
-
         const payload = {
             name,
             actionService,
             actionType,
             reactionService,
             reactionType,
-            parameters: mergedParams,
+            actionParams,
+            reactionParams,
             active,
         };
+
+        console.log('[CreateArea] Payload:', JSON.stringify(payload, null, 2));
 
         try {
             const token = localStorage.getItem("authToken");
@@ -359,12 +461,13 @@ export default function CreateActionReaction() {
         }
     };
 
-    // Render parameter inputs for action/reaction
+    // Render parameter inputs for action/reaction with better hints
     const renderParamInputs = (options, params, setParams, prefix) => {
         if (!options) return null;
 
         return Object.entries(options).map(([key, type]) => {
             const label = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
+            const hints = PARAM_HINTS[key] || {};
 
             // Handle select fields (format: "select:option1,option2,option3")
             if (type.startsWith('select:')) {
@@ -389,7 +492,7 @@ export default function CreateActionReaction() {
                 );
             }
 
-            // Default text/number field
+            // Default text/number field with hints
             return (
                 <Grid item xs={12} sm={6} key={`${prefix}-${key}`}>
                     <TextField
@@ -398,7 +501,11 @@ export default function CreateActionReaction() {
                         type={type === 'number' ? 'number' : 'text'}
                         value={params[key] || ''}
                         onChange={(e) => setParams({ ...params, [key]: type === 'number' ? Number(e.target.value) : e.target.value })}
-                        placeholder={`Enter ${key}`}
+                        placeholder={hints.placeholder || `Enter ${key}`}
+                        helperText={hints.helperText || ''}
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
                     />
                 </Grid>
             );
@@ -494,6 +601,27 @@ export default function CreateActionReaction() {
             );
         }
 
+        if (serviceName === 'dropbox') {
+            return (
+                <Button
+                    variant={connected ? "outlined" : "contained"}
+                    onClick={handleDropboxConnect}
+                    disabled={connected}
+                    startIcon={connected ? <CheckCircleIcon /> : <LinkIcon />}
+                    sx={{
+                        backgroundColor: connected ? 'transparent' : '#0061FF',
+                        borderColor: connected ? '#4ade80' : undefined,
+                        color: connected ? '#4ade80' : 'white',
+                        '&:hover': {
+                            backgroundColor: connected ? 'transparent' : '#004FC5',
+                        }
+                    }}
+                >
+                    {connected ? 'Dropbox Connected' : 'Connect Dropbox'}
+                </Button>
+            );
+        }
+
 
         return null;
     };
@@ -523,6 +651,7 @@ export default function CreateActionReaction() {
                         {renderConnectionButton('google')}
                         {renderConnectionButton('microsoft')}
                         {renderConnectionButton('github')}
+                        {renderConnectionButton('dropbox')}
                     </Box>
 
                     <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
