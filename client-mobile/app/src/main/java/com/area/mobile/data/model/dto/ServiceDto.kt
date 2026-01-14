@@ -10,13 +10,16 @@ data class ServiceDto(
 )
 
 data class UserServiceDto(
-    val id: String,
-    val userId: String,
-    val serviceId: String,
-    val serviceName: String?,
-    val connected: Boolean,
-    val connectedAt: String?
-)
+    val service: ServiceInfo?,
+    val connectedAt: String?,
+    val expiresAt: String?
+) {
+    data class ServiceInfo(
+        val name: String?,
+        val label: String?,
+        val icon: String?
+    )
+}
 
 data class ServiceConnectionResponse(
     val url: String

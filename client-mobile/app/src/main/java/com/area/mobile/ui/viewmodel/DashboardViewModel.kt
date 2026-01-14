@@ -83,15 +83,17 @@ class DashboardViewModel @Inject constructor(
     fun loadUserServices() {
         viewModelScope.launch {
             try {
+                android.util.Log.d("DashboardViewModel", "Loading user services...")
                 val result = serviceRepository.getUserServices()
                 result.onSuccess { ids ->
+                    android.util.Log.d("DashboardViewModel", "✓ Connected services loaded: $ids")
                     _connectedServices.value = ids
                 }.onFailure { e ->
                     // Only show error if we're not just starting up, or maybe log it
-                    android.util.Log.e("DashboardViewModel", "Failed to load services: ${e.message}")
+                    android.util.Log.e("DashboardViewModel", "❌ Failed to load services: ${e.message}")
                 }
             } catch (e: Exception) {
-                android.util.Log.e("DashboardViewModel", "Failed to load services: ${e.message}")
+                android.util.Log.e("DashboardViewModel", "❌ Exception loading services: ${e.message}", e)
             }
         }
     }
@@ -121,8 +123,13 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                // Use the web frontend redirect URI since that's what's registered with OAuth providers
-                val redirectUri = "http://localhost:8081/services/callback"
+                // Determine redirect URI based on service
+                // Twitch needs backend URL, others need frontend URL
+                val redirectUri = if (currentOAuthState.serviceName.equals("twitch", ignoreCase = true)) {
+                    "http://localhost:8080/auth/twitch/callback"
+                } else {
+                    "http://localhost:8081/services/callback"
+                }
                 
                 val result = serviceRepository.finalizeServiceConnection(
                     serviceName = currentOAuthState.serviceName,
@@ -185,10 +192,11 @@ class DashboardViewModel @Inject constructor(
         name: String,
         actionService: String,
         actionType: String,
-        actionParams: Map<String, String>,
+        actionParams: Map<String, Any>,
         reactionService: String,
         reactionType: String,
-        reactionParams: Map<String, String>,
+        reactionParams: Map<String, Any>,
+        active: Boolean = true,
         onSuccess: () -> Unit = {}
     ) {
         viewModelScope.launch {
@@ -204,7 +212,8 @@ class DashboardViewModel @Inject constructor(
                     actionType = actionType,
                     reactionService = reactionService,
                     reactionType = reactionType,
-                    parameters = parameters
+                    parameters = parameters,
+                    active = active
                 )
                 result.onSuccess {
                     loadAreas()

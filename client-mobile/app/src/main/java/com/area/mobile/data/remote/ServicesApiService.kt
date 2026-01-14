@@ -11,7 +11,7 @@ interface ServicesApiService {
     @GET("services/available")
     suspend fun getAvailableServices(): Response<AvailableServicesResponse>
     
-    @GET("services/user")
+    @GET("services")
     suspend fun getUserServices(): Response<List<UserServiceDto>>
     
     @GET("services/{serviceName}/connect")

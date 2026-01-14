@@ -52,12 +52,15 @@ fun AREABuilderScreen(
     // Note: Map is not directly saveable without custom saver, using remember for now 
     // or we could serialize to JSON string if needed, but simple remember might suffice
     // if we fix the recomposition issue. Using rememberSaveable for IDs is key.
-    var actionParams by remember { mutableStateOf(mutableMapOf<String, String>()) }
+    var actionParams by remember { mutableStateOf(mutableMapOf<String, Any>()) }
     
     // Reaction State
     var selectedReactionServiceId by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedReactionType by rememberSaveable { mutableStateOf<String?>(null) }
-    var reactionParams by remember { mutableStateOf(mutableMapOf<String, String>()) }
+    var reactionParams by remember { mutableStateOf(mutableMapOf<String, Any>()) }
+    
+    // Active State
+    var isActive by rememberSaveable { mutableStateOf(true) }
     
     // Derive objects from IDs
     val selectedActionService = services.find { it.name == selectedActionServiceId }
@@ -147,6 +150,24 @@ fun AREABuilderScreen(
                  actionServiceConnected &&
                  reactionServiceConnected
     
+    // Debug logging
+    LaunchedEffect(areaName, selectedActionService, selectedActionType, selectedReactionService, selectedReactionType, actionServiceConnected, reactionServiceConnected) {
+        android.util.Log.d("AREABuilder", """
+            === AREA Builder Debug ===
+            Name: ${if (areaName.isBlank()) "❌ EMPTY" else "✓ '$areaName'"}
+            Action Service: ${selectedActionService?.name ?: "❌ NOT SELECTED"}
+            Action Type: ${selectedActionType ?: "❌ NOT SELECTED"}
+            Action Connected: ${if (actionServiceConnected) "✓" else "❌"}
+            Reaction Service: ${selectedReactionService?.name ?: "❌ NOT SELECTED"}
+            Reaction Type: ${selectedReactionType ?: "❌ NOT SELECTED"}
+            Reaction Connected: ${if (reactionServiceConnected) "✓" else "❌"}
+            Can Save: ${if (canSave) "✓ YES" else "❌ NO"}
+            Action Params: $actionParams
+            Reaction Params: $reactionParams
+            =======================
+        """.trimIndent())
+    }
+    
     Scaffold(
         topBar = {
             TopAppBar(
@@ -159,21 +180,55 @@ fun AREABuilderScreen(
                 actions = {
                     TextButton(
                         onClick = {
-                            if (canSave) {
-                                viewModel.createArea(
-                                    name = areaName,
-                                    actionService = selectedActionService!!.name,
-                                    actionType = selectedActionType!!,
-                                    actionParams = actionParams,
-                                    reactionService = selectedReactionService!!.name,
-                                    reactionType = selectedReactionType!!,
-                                    reactionParams = reactionParams,
-                                    onSuccess = {
-                                        onSave()
-                                        onBack()
+                            // Process parameters to convert strings to numbers where needed
+                            val processedActionParams = actionParams.toMutableMap()
+                            val actionDef = selectedActionService!!.actions.find { it.id == selectedActionType }
+                            actionDef?.parameters?.forEach { param ->
+                                if (param.type == "number") {
+                                    val value = processedActionParams[param.name]
+                                    if (value is String) {
+                                        value.toDoubleOrNull()?.let { num ->
+                                            if (num % 1.0 == 0.0) {
+                                                processedActionParams[param.name] = num.toInt()
+                                            } else {
+                                                processedActionParams[param.name] = num
+                                            }
+                                        }
                                     }
-                                )
+                                }
                             }
+
+                            val processedReactionParams = reactionParams.toMutableMap()
+                            val reactionDef = selectedReactionService!!.reactions.find { it.id == selectedReactionType }
+                            reactionDef?.parameters?.forEach { param ->
+                                if (param.type == "number") {
+                                    val value = processedReactionParams[param.name]
+                                    if (value is String) {
+                                        value.toDoubleOrNull()?.let { num ->
+                                            if (num % 1.0 == 0.0) {
+                                                processedReactionParams[param.name] = num.toInt()
+                                            } else {
+                                                processedReactionParams[param.name] = num
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            viewModel.createArea(
+                                name = areaName,
+                                actionService = selectedActionService!!.name,
+                                actionType = selectedActionType!!,
+                                actionParams = processedActionParams,
+                                reactionService = selectedReactionService!!.name,
+                                reactionType = selectedReactionType!!,
+                                reactionParams = processedReactionParams,
+                                active = isActive,
+                                onSuccess = {
+                                    onSave()
+                                    onBack()
+                                }
+                            )
                         },
                         enabled = canSave && !isLoading
                     ) {
@@ -184,7 +239,10 @@ fun AREABuilderScreen(
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Text("Save", color = if (canSave) PurplePrimary else Slate400)
+                            Text(
+                                "Save", 
+                                color = if (canSave) PurplePrimary else Slate400
+                            )
                         }
                     }
                 },
@@ -229,6 +287,30 @@ fun AREABuilderScreen(
                         ),
                         shape = RoundedCornerShape(12.dp)
                     )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Active immediately",
+                            color = Color.White,
+                            fontSize = 16.sp
+                        )
+                        Switch(
+                            checked = isActive,
+                            onCheckedChange = { isActive = it },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = PurplePrimary,
+                                checkedTrackColor = PurplePrimary.copy(alpha = 0.5f),
+                                uncheckedThumbColor = Slate400,
+                                uncheckedTrackColor = Slate900
+                            )
+                        )
+                    }
                 }
                 
                 // Action Section
@@ -316,7 +398,7 @@ fun AREABuilderScreen(
                                         action.parameters.forEach { param ->
                                             ParameterInput(
                                                 param = param,
-                                                value = actionParams[param.name] ?: "",
+                                                value = actionParams[param.name],
                                                 onValueChange = { newValue ->
                                                     actionParams = actionParams.toMutableMap().apply {
                                                         put(param.name, newValue)
@@ -416,7 +498,7 @@ fun AREABuilderScreen(
                                         reaction.parameters.forEach { param ->
                                             ParameterInput(
                                                 param = param,
-                                                value = reactionParams[param.name] ?: "",
+                                                value = reactionParams[param.name],
                                                 onValueChange = { newValue ->
                                                     reactionParams = reactionParams.toMutableMap().apply {
                                                         put(param.name, newValue)
@@ -427,6 +509,65 @@ fun AREABuilderScreen(
                                         }
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
+                
+                // Show validation hints when save button is disabled
+                if (!canSave) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFFFF9800).copy(alpha = 0.1f)
+                        ),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = "Info",
+                                    tint = Color(0xFFFF9800),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = "Complete the following to save:",
+                                    fontSize = 14.sp,
+                                    color = Color(0xFFFF9800),
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            
+                            // List missing items
+                            if (areaName.isBlank()) {
+                                Text("• Name your workflow", color = Slate300, fontSize = 13.sp)
+                            }
+                            if (selectedActionService == null) {
+                                Text("• Select an action service", color = Slate300, fontSize = 13.sp)
+                            }
+                            if (selectedActionType == null && selectedActionService != null) {
+                                Text("• Choose an action trigger", color = Slate300, fontSize = 13.sp)
+                            }
+                            if (!actionServiceConnected && selectedActionService != null) {
+                                Text("• Connect ${selectedActionService!!.name} service", color = Slate300, fontSize = 13.sp)
+                            }
+                            if (selectedReactionService == null) {
+                                Text("• Select a reaction service", color = Slate300, fontSize = 13.sp)
+                            }
+                            if (selectedReactionType == null && selectedReactionService != null) {
+                                Text("• Choose a reaction", color = Slate300, fontSize = 13.sp)
+                            }
+                            if (!reactionServiceConnected && selectedReactionService != null) {
+                                Text("• Connect ${selectedReactionService!!.name} service", color = Slate300, fontSize = 13.sp)
                             }
                         }
                     }
@@ -562,8 +703,8 @@ fun ServiceItem(
 @Composable
 fun ParameterInput(
     param: Any,
-    value: String,
-    onValueChange: (String) -> Unit
+    value: Any?,
+    onValueChange: (Any) -> Unit
 ) {
     // Handling generic param type since ActionParameter and ReactionParameter are different classes but similar structure
     val name = if (param is ActionParameter) param.name else (param as ReactionParameter).name
@@ -571,6 +712,7 @@ fun ParameterInput(
     val type = if (param is ActionParameter) param.type else (param as ReactionParameter).type
     
     val displayLabel = name.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+    val stringValue = value?.toString() ?: ""
     
     Column {
         Text(
@@ -593,7 +735,7 @@ fun ParameterInput(
                 onExpandedChange = { expanded = !expanded }
             ) {
                 OutlinedTextField(
-                    value = value.ifEmpty { "Select an option" },
+                    value = stringValue.ifEmpty { "Select an option" },
                     onValueChange = {},
                     readOnly = true,
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
@@ -622,13 +764,9 @@ fun ParameterInput(
             }
         } else {
             OutlinedTextField(
-                value = value,
+                value = stringValue,
                 onValueChange = { 
-                    if (type == "number") {
-                        if (it.all { char -> char.isDigit() }) onValueChange(it)
-                    } else {
-                        onValueChange(it)
-                    }
+                    onValueChange(it)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(

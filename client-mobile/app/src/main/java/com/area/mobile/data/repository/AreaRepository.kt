@@ -102,7 +102,8 @@ class AreaRepository @Inject constructor(
         actionType: String,
         reactionService: String,
         reactionType: String,
-        parameters: Map<String, Any>
+        parameters: Map<String, Any>,
+        active: Boolean = true
     ): Result<Area> {
         return try {
             val request = CreateAreaRequest(
@@ -112,7 +113,7 @@ class AreaRepository @Inject constructor(
                 reactionService = reactionService,
                 reactionType = reactionType,
                 parameters = parameters,
-                active = true
+                active = active
             )
             
             val response = areasApiService.createArea(request)

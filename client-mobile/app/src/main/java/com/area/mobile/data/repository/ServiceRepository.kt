@@ -85,14 +85,20 @@ class ServiceRepository @Inject constructor(
             val response = servicesApiService.getUserServices()
             
             if (response.isSuccessful && response.body() != null) {
-                val connectedServiceIds = response.body()!!
-                    .filter { it.connected }
-                    .map { it.serviceName ?: it.serviceId }
-                Result.success(connectedServiceIds)
+                // Server returns: [{service: {name: "google"}, connectedAt: ...}, ...]
+                // We extract service names from connected services
+                val connectedServiceNames = response.body()!!
+                    .mapNotNull { it.service?.name }
+                    .map { it.lowercase() }
+                
+                android.util.Log.d("ServiceRepository", "Connected services from API: $connectedServiceNames")
+                Result.success(connectedServiceNames)
             } else {
+                android.util.Log.e("ServiceRepository", "Failed to fetch user services: ${response.code()} - ${response.message()}")
                 Result.failure(Exception("Failed to fetch user services: ${response.message()}"))
             }
         } catch (e: Exception) {
+            android.util.Log.e("ServiceRepository", "Network error fetching user services: ${e.message}", e)
             Result.failure(Exception("Network error: ${e.message}"))
         }
     }
