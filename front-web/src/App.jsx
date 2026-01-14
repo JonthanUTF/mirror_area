@@ -45,7 +45,6 @@ function App() {
       {/* Public routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
-      <Route path='/createActionReaction' element={<CreateActionReaction/>} />
 
       {/* Protected routes */}
       <Route element={<PrivateRoute/>}>
@@ -55,6 +54,7 @@ function App() {
         <Route path='/home' element={<Home/>} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path='/mobile' element={<MobileAPK/>} />
+        <Route path='/createActionReaction' element={<CreateActionReaction/>} />
       </Route>
       
       <Route path="/" element={<Navigate to="/login" replace />} />
