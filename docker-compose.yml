@@ -6,10 +6,6 @@ services:
     container_name: area_postgres
     ports:
       - "5433:5432"
-    environment:
-      POSTGRES_DB: area_db
-      POSTGRES_USER: area
-      POSTGRES_PASSWORD: area
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
