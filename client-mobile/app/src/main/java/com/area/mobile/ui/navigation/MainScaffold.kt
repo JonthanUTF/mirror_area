@@ -162,5 +162,18 @@ fun BottomNavigationBar(
                 indicatorColor = PurplePrimary.copy(alpha = 0.2f)
             )
         )
+        NavigationBarItem(
+            icon = { Icon(Icons.Default.Settings, contentDescription = "Admin") },
+            label = { Text("Admin") },
+            selected = currentRoute == "admin",
+            onClick = { onNavigate("admin") },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = PurplePrimary,
+                selectedTextColor = PurplePrimary,
+                unselectedIconColor = Slate400,
+                unselectedTextColor = Slate400,
+                indicatorColor = PurplePrimary.copy(alpha = 0.2f)
+            )
+        )
     }
 }

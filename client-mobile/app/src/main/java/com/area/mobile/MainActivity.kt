@@ -238,6 +238,18 @@ fun AREAApp(
             }
         }
         
+        composable("admin") {
+            MainScaffold(
+                navController = navController,
+                currentRoute = "admin",
+                onLogout = onLogout
+            ) { padding ->
+                AdminScreen(
+                    paddingValues = padding
+                )
+            }
+        }
+        
         composable(
             route = "builder/{areaId}",
             arguments = listOf(navArgument("areaId") { type = NavType.StringType })

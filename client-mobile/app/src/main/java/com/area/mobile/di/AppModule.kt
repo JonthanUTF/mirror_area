@@ -3,6 +3,7 @@ package com.area.mobile.di
 import android.content.Context
 import com.area.mobile.data.local.TokenManager
 import com.area.mobile.data.remote.*
+import com.area.mobile.data.repository.AdminRepository
 import com.area.mobile.data.repository.AreaRepository
 import com.area.mobile.data.repository.AuthRepository
 import com.area.mobile.data.repository.ServiceRepository
@@ -97,6 +98,12 @@ object AppModule {
     
     @Provides
     @Singleton
+    fun provideAdminApiService(retrofit: Retrofit): AdminApiService {
+        return retrofit.create(AdminApiService::class.java)
+    }
+    
+    @Provides
+    @Singleton
     fun provideAuthRepository(
         authApiService: AuthApiService,
         tokenManager: TokenManager
@@ -114,5 +121,11 @@ object AppModule {
     @Singleton
     fun provideServiceRepository(servicesApiService: ServicesApiService): ServiceRepository {
         return ServiceRepository(servicesApiService)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideAdminRepository(adminApiService: AdminApiService): AdminRepository {
+        return AdminRepository(adminApiService)
     }
 }
