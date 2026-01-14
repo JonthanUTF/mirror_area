@@ -157,7 +157,7 @@ export default function CreateActionReaction() {
 
     // Check if service requires OAuth
     const serviceRequiresOAuth = (serviceName) => {
-        return ['twitch', 'google', 'microsoft'].includes(serviceName);
+        return ['twitch', 'google', 'microsoft', 'github'].includes(serviceName);
     };
 
     // Check if service is connected
@@ -165,6 +165,7 @@ export default function CreateActionReaction() {
         if (serviceName === 'twitch') return twitchConnected;
         if (serviceName === 'google') return googleConnected;
         if (serviceName === 'microsoft') return microsoftConnected;
+        if (serviceName === 'github') return githubConnected;
         return true; // Non-OAuth services are always "connected"
     };
 
@@ -245,6 +246,36 @@ export default function CreateActionReaction() {
             setResponseText(msg);
             setDialogOpen(true);
             setError(msg);
+        }
+    };
+
+    const handleGitHubServiceConnection = async () => {
+        try {
+            localStorage.setItem('oauth_return', window.location.pathname || '/');
+            localStorage.setItem('oauth_service', 'github');
+            const token = localStorage.getItem("authToken");
+
+            if (!token) {
+                setError("Please login first");
+                return;
+            }
+
+            const res = await fetch(`${API_BASE}/services/github/connect`, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            const connectUrl = data.url || data.connectUrl;
+            if (connectUrl) {
+                window.location.href = connectUrl;
+            }
+        } catch (err) {
+            setError(err?.message || "Failed to connect GitHub");
         }
     };
 
@@ -372,31 +403,6 @@ export default function CreateActionReaction() {
                 </Grid>
             );
         });
-    };
-
-    const handleGitHubServiceConnection = async () => {
-        try {
-            localStorage.setItem('oauth_return', window.location.pathname || '/');
-            localStorage.setItem('pending_service', 'github');
-            const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
-            const token = localStorage.getItem("authToken");
-            const res = await fetch(`${API_BASE}/services/github/connect`, {
-                method: "GET",
-                headers: {
-                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                    "Content-Type": "application/json",
-                },
-            });
-
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data = await res.json();
-            const connectUrl = data.url || data.connectUrl;
-            if (connectUrl) {
-                window.open(connectUrl, "_blank", "noopener,noreferrer");
-            }
-        } catch (err) {
-            setError(err?.message || "Failed to connect GitHub");
-        }
     };
 
     // Render connection button for a service
