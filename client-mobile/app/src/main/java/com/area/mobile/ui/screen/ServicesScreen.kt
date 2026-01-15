@@ -9,13 +9,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -23,6 +22,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.area.mobile.data.model.Service
 import com.area.mobile.ui.theme.*
 import com.area.mobile.ui.viewmodel.ServicesViewModel
+import com.area.mobile.util.ServiceOAuthManager
 
 @Composable
 fun ServicesScreen(
@@ -32,58 +32,98 @@ fun ServicesScreen(
     val services by viewModel.services.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+    val message by viewModel.message.collectAsState()
+    val oauthState by viewModel.oauthState.collectAsState()
     
-    if (isLoading) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator(color = PurplePrimary)
+    val context = LocalContext.current
+    
+    // OAuth and Deep Links handling
+    val pendingOAuthCode by ServiceOAuthManager.pendingCode.collectAsState()
+    val twitchConnected by ServiceOAuthManager.twitchConnected.collectAsState()
+    
+    // Effect to refresh data on entry
+    LaunchedEffect(Unit) {
+        viewModel.refresh()
+    }
+    
+    LaunchedEffect(error) {
+        if (error != null) {
+            android.widget.Toast.makeText(context, error, android.widget.Toast.LENGTH_SHORT).show()
+            viewModel.clearError()
         }
-    } else if (error != null) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = error ?: "Unknown error",
-                    color = RedError,
-                    fontSize = 16.sp,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-                Button(
-                    onClick = { viewModel.loadServices() },
-                    colors = ButtonDefaults.buttonColors(containerColor = PurplePrimary)
-                ) {
-                    Text("Retry")
-                }
+    }
+    
+    LaunchedEffect(message) {
+        if (message != null) {
+            android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+            viewModel.clearMessage()
+        }
+    }
+    
+    // Deep Link Code Handler
+    LaunchedEffect(pendingOAuthCode, oauthState) {
+        if (pendingOAuthCode != null && oauthState != null) {
+            val code = ServiceOAuthManager.consumeCode()
+            if (code != null) {
+                viewModel.finalizeOAuthConnection(code)
             }
         }
+    }
+    
+    // Twitch Passport Handler
+    LaunchedEffect(twitchConnected) {
+        if (twitchConnected) {
+            ServiceOAuthManager.consumeTwitchConnected()
+            viewModel.cancelOAuth()
+            viewModel.loadUserServices()
+            android.widget.Toast.makeText(context, "Connected to Twitch!", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    if (oauthState != null) {
+        // Show OAuth WebView
+        ServiceOAuthScreen(
+            serviceName = oauthState!!.serviceName,
+            authUrl = oauthState!!.authUrl,
+            onCodeReceived = { code -> 
+                viewModel.finalizeOAuthConnection(code)
+            },
+            onCancel = {
+                viewModel.cancelOAuth()
+            }
+        )
     } else {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-                    item {
-                        Text(
-                            text = "Connect your favorite services to automate your workflows",
-                            fontSize = 14.sp,
-                            color = Slate400,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                    }
-                    
-            items(services) { service ->
-                ServiceCard(service = service)
+        if (isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = PurplePrimary)
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                item {
+                    Text(
+                        text = "Connect your favorite services to automate your workflows",
+                        fontSize = 14.sp,
+                        color = Slate400,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+                
+                items(services) { service ->
+                    ServiceCard(
+                        service = service,
+                        onConnect = { viewModel.connectService(service.name) },
+                        onDisconnect = { viewModel.disconnectService(service.name) }
+                    )
+                }
             }
         }
     }
@@ -91,7 +131,11 @@ fun ServicesScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ServiceCard(service: Service) {
+fun ServiceCard(
+    service: Service,
+    onConnect: () -> Unit = {},
+    onDisconnect: () -> Unit = {}
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -109,7 +153,7 @@ fun ServiceCard(service: Service) {
                 modifier = Modifier
                     .size(56.dp)
                     .background(
-                        Color(android.graphics.Color.parseColor(service.color)),
+                        try { Color(android.graphics.Color.parseColor(service.color)) } catch (e: Exception) { Slate500 },
                         RoundedCornerShape(12.dp)
                     )
             )
@@ -122,7 +166,7 @@ fun ServiceCard(service: Service) {
                     .padding(end = 8.dp)
             ) {
                 Text(
-                    text = service.name,
+                    text = service.name.replaceFirstChar { it.titlecase() },
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color.White,
@@ -170,15 +214,20 @@ fun ServiceCard(service: Service) {
             }
             
             if (service.isConnected) {
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = "Connected",
-                    tint = GreenSuccess,
-                    modifier = Modifier.size(24.dp)
-                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "Connected",
+                        tint = GreenSuccess,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    TextButton(onClick = onDisconnect) {
+                        Text("Disconnect", color = RedError, fontSize = 10.sp)
+                    }
+                }
             } else {
                 Button(
-                    onClick = { },
+                    onClick = onConnect,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = PurplePrimary
                     ),
