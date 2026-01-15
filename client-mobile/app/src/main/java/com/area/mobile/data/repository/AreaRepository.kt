@@ -4,6 +4,7 @@ import com.area.mobile.data.model.Area
 import com.area.mobile.data.model.dto.CreateAreaRequest
 import com.area.mobile.data.model.dto.UpdateAreaRequest
 import com.area.mobile.data.model.dto.AreaDto
+import com.area.mobile.data.model.dto.AreaResponse
 import com.area.mobile.data.remote.AreasApiService
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -119,7 +120,7 @@ class AreaRepository @Inject constructor(
             val response = areasApiService.createArea(request)
             
             if (response.isSuccessful && response.body() != null) {
-                val area = mapDtoToArea(response.body()!!)
+                val area = mapDtoToArea(response.body()!!.area)
                 Result.success(area)
             } else {
                 Result.failure(Exception("Failed to create area: ${response.message()}"))
@@ -134,7 +135,7 @@ class AreaRepository @Inject constructor(
             val response = areasApiService.toggleArea(id)
             
             if (response.isSuccessful && response.body() != null) {
-                val area = mapDtoToArea(response.body()!!)
+                val area = mapDtoToArea(response.body()!!.area)
                 Result.success(area)
             } else {
                 Result.failure(Exception("Failed to toggle area: ${response.message()}"))

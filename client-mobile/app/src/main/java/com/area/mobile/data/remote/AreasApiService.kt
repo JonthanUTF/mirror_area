@@ -12,17 +12,17 @@ interface AreasApiService {
     suspend fun getArea(@Path("id") id: String): Response<AreaDto>
     
     @POST("areas")
-    suspend fun createArea(@Body request: CreateAreaRequest): Response<AreaDto>
+    suspend fun createArea(@Body request: CreateAreaRequest): Response<AreaResponse>
     
     @PUT("areas/{id}")
     suspend fun updateArea(
         @Path("id") id: String,
         @Body request: UpdateAreaRequest
-    ): Response<AreaDto>
+    ): Response<AreaResponse>
     
     @DELETE("areas/{id}")
     suspend fun deleteArea(@Path("id") id: String): Response<Unit>
     
     @POST("areas/{id}/toggle")
-    suspend fun toggleArea(@Path("id") id: String): Response<AreaDto>
+    suspend fun toggleArea(@Path("id") id: String): Response<AreaResponse>
 }

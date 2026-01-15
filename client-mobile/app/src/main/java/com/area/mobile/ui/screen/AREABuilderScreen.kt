@@ -94,7 +94,7 @@ fun AREABuilderScreen(
     
     // When Twitch is connected via Passport (deep link callback with twitch_connected=true)
     LaunchedEffect(twitchConnected) {
-        if (twitchConnected && oauthState?.serviceName?.lowercase() == "twitch") {
+        if (twitchConnected) {
             android.util.Log.d("AREABuilder", "Twitch connected via Passport, refreshing services...")
             ServiceOAuthManager.consumeTwitchConnected()
             viewModel.cancelOAuth()

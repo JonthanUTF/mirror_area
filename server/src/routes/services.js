@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Service, UserService } = require('../models');
+const { Service, UserService, User } = require('../models');
 const { authenticateToken } = require('./auth');
 const axios = require('axios');
 
@@ -289,11 +289,23 @@ router.get('/', authenticateToken, async (req, res) => {
             include: [{ model: Service, as: 'service', attributes: ['name', 'label', 'icon'] }]
         });
 
-        res.json(userServices.map(us => ({
+        const servicesList = userServices.map(us => ({
             service: us.service,
             connectedAt: us.createdAt,
             expiresAt: us.expiresAt
-        })));
+        }));
+
+        // Check for Twitch connection in User model (special case)
+        const user = await User.findByPk(req.user.id);
+        if (user && user.twitchAccessToken) {
+            servicesList.push({
+                service: { name: 'twitch', label: 'Twitch', icon: 'twitch' },
+                connectedAt: user.updatedAt,
+                expiresAt: user.twitchTokenExpiresAt
+            });
+        }
+
+        res.json(servicesList);
     } catch (error) {
         console.error('List services error:', error);
         res.status(500).json({ error: 'Failed to retrieve services' });
