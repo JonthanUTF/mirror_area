@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.area.mobile.ui.theme.*
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,6 +103,7 @@ fun MainScaffold(
     }
 }
 
+
 @Composable
 fun BottomNavigationBar(
     currentRoute: String,
@@ -112,67 +115,67 @@ fun BottomNavigationBar(
     ) {
         NavigationBarItem(
             icon = { Icon(Icons.Default.Home, contentDescription = "Dashboard") },
-            label = { Text("Dashboard") },
+            label = { Text("Dashboard", maxLines = 1, overflow = TextOverflow.Visible, softWrap = false, fontSize = 10.sp) },
             selected = currentRoute == "dashboard",
             onClick = { onNavigate("dashboard") },
             colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = PurplePrimary,
+                selectedIconColor = Color.White,
                 selectedTextColor = PurplePrimary,
                 unselectedIconColor = Slate400,
                 unselectedTextColor = Slate400,
-                indicatorColor = PurplePrimary.copy(alpha = 0.2f)
+                indicatorColor = PurplePrimary
             )
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.List, contentDescription = "Services") },
-            label = { Text("Services") },
+            label = { Text("Services", maxLines = 1, fontSize = 10.sp) },
             selected = currentRoute == "services",
             onClick = { onNavigate("services") },
             colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = PurplePrimary,
+                selectedIconColor = Color.White,
                 selectedTextColor = PurplePrimary,
                 unselectedIconColor = Slate400,
                 unselectedTextColor = Slate400,
-                indicatorColor = PurplePrimary.copy(alpha = 0.2f)
+                indicatorColor = PurplePrimary
             )
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.Star, contentDescription = "Activity") },
-            label = { Text("Activity") },
+            label = { Text("Activity", maxLines = 1, fontSize = 10.sp) },
             selected = currentRoute == "activity",
             onClick = { onNavigate("activity") },
             colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = PurplePrimary,
+                selectedIconColor = Color.White,
                 selectedTextColor = PurplePrimary,
                 unselectedIconColor = Slate400,
                 unselectedTextColor = Slate400,
-                indicatorColor = PurplePrimary.copy(alpha = 0.2f)
+                indicatorColor = PurplePrimary
             )
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.Settings, contentDescription = "Profile") },
-            label = { Text("Settings") },
+            label = { Text("Settings", maxLines = 1, fontSize = 10.sp) },
             selected = currentRoute == "settings",
             onClick = { onNavigate("settings") },
             colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = PurplePrimary,
+                selectedIconColor = Color.White,
                 selectedTextColor = PurplePrimary,
                 unselectedIconColor = Slate400,
                 unselectedTextColor = Slate400,
-                indicatorColor = PurplePrimary.copy(alpha = 0.2f)
+                indicatorColor = PurplePrimary
             )
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.Person, contentDescription = "Admin") },
-            label = { Text("Admin") },
+            label = { Text("Admin", maxLines = 1, fontSize = 10.sp) },
             selected = currentRoute == "admin",
             onClick = { onNavigate("admin") },
             colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = PurplePrimary,
+                selectedIconColor = Color.White,
                 selectedTextColor = PurplePrimary,
                 unselectedIconColor = Slate400,
                 unselectedTextColor = Slate400,
-                indicatorColor = PurplePrimary.copy(alpha = 0.2f)
+                indicatorColor = PurplePrimary
             )
         )
     }
