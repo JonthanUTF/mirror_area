@@ -64,7 +64,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
         }
 
         const user = await User.findByPk(req.params.id, {
-            attributes: ['id', 'email', 'name', 'googleId', 'createdAt', 'updatedAt']
+            attributes: ['id', 'email', 'name', 'role', 'googleId', 'createdAt', 'updatedAt']
         });
 
         if (!user) {
@@ -87,13 +87,18 @@ router.put('/:id', authenticateToken, async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized access' });
         }
 
-        const { name, email, password } = req.body;
+        const { name, email, password, role } = req.body;
         const updates = {};
 
         if (name) updates.name = name;
         if (email) updates.email = email;
         if (password) {
             updates.password = await bcrypt.hash(password, 10);
+        }
+
+        // Only admins can update the role
+        if (role && isAdmin(req.user)) {
+             updates.role = role;
         }
 
         const [updated] = await User.update(updates, {
@@ -105,7 +110,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
         }
 
         const user = await User.findByPk(req.params.id, {
-            attributes: ['id', 'email', 'name', 'googleId', 'createdAt', 'updatedAt']
+            attributes: ['id', 'email', 'name', 'role', 'googleId', 'createdAt', 'updatedAt']
         });
 
         res.json({
