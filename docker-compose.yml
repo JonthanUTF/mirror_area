@@ -47,6 +47,8 @@ services:
       - server
     networks:
       - area_network
+    volumes:
+      - ./client-mobile/output:/usr/share/nginx/html/downloads
 
   mobile_builder:
     build:
