@@ -45,6 +45,31 @@ const authFactories = {
             return response.data;
         }
     },
+    github: {
+        getAuthUrl: () => {
+            const rootUrl = 'https://github.com/login/oauth/authorize';
+            const options = {
+                client_id: process.env.GITHUB_CLIENT_ID,
+                redirect_uri: (process.env.CLIENT_URL || 'http://localhost:8081') + '/services/callback',
+                scope: 'user:email repo admin:repo_hook write:discussion'
+            };
+            const qs = new URLSearchParams(options);
+            return `${rootUrl}?${qs.toString()}`;
+        },
+        exchangeCode: async (code, redirectUri) => {
+            const tokenUrl = 'https://github.com/login/oauth/access_token';
+            const values = {
+                client_id: process.env.GITHUB_CLIENT_ID,
+                client_secret: process.env.GITHUB_CLIENT_SECRET,
+                code,
+                redirect_uri: redirectUri
+            };
+            const response = await axios.post(tokenUrl, new URLSearchParams(values).toString(), {
+                headers: { Accept: 'application/json' }
+            });
+            return response.data;
+        }
+    },
     twitch: {
         getAuthUrl: (state) => {
             const rootUrl = 'https://id.twitch.tv/oauth2/authorize';
