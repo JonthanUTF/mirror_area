@@ -175,6 +175,29 @@ fun LoginScreen(
             }
             
             Spacer(modifier = Modifier.height(24.dp))
+
+            // Server IP Field
+            OutlinedTextField(
+                value = serverIp,
+                onValueChange = { serverIp = it },
+                label = { Text("Server IP") },
+                leadingIcon = {
+                    Icon(Icons.Default.Settings, contentDescription = "Server IP")
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = PurplePrimary,
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
+                    focusedLabelColor = PurplePrimary,
+                    unfocusedLabelColor = Slate400,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    cursorColor = PurplePrimary
+                ),
+                shape = RoundedCornerShape(12.dp)
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
             
             if (!isLogin) {
                 OutlinedTextField(
@@ -270,6 +293,9 @@ fun LoginScreen(
             
             Button(
                 onClick = {
+                    coroutineScope.launch {
+                        tokenManager.saveServerIp(serverIp)
+                    }
                     if (isLogin) {
                         viewModel.login(email, password)
                     } else {

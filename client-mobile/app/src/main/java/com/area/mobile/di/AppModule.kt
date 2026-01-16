@@ -51,15 +51,29 @@ object AppModule {
             }
         }
     }
+
+    @Provides
+    @Singleton
+    fun provideBaseUrlInterceptor(tokenManager: TokenManager): BaseUrlInterceptor {
+        return BaseUrlInterceptor {
+            runBlocking {
+                tokenManager.getServerIp().first()
+            }
+        }
+    }
     
     @Provides
     @Singleton
-    fun provideOkHttpClient(authInterceptor: AuthInterceptor): OkHttpClient {
+    fun provideOkHttpClient(
+        authInterceptor: AuthInterceptor,
+        baseUrlInterceptor: BaseUrlInterceptor
+    ): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
         
         return OkHttpClient.Builder()
+            .addInterceptor(baseUrlInterceptor) // Change Host first
             .addInterceptor(authInterceptor)
             .addInterceptor(loggingInterceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
