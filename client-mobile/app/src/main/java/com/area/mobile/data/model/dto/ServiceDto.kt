@@ -1,0 +1,69 @@
+package com.area.mobile.data.model.dto
+
+data class ServiceDto(
+    val id: String,
+    val name: String,
+    val description: String?,
+    val icon: String?,
+    val color: String?,
+    val available: Boolean
+)
+
+data class UserServiceDto(
+    val service: ServiceInfo?,
+    val connectedAt: String?,
+    val expiresAt: String?
+) {
+    data class ServiceInfo(
+        val name: String?,
+        val label: String?,
+        val icon: String?
+    )
+}
+
+data class ServiceConnectionResponse(
+    val url: String
+)
+
+data class AvailableServicesResponse(
+    val services: List<ServiceDbDto>
+)
+
+data class ServiceDbDto(
+    val id: String,
+    val name: String,
+    val label: String,
+    val icon: String?
+)
+
+data class AboutJsonResponse(
+    val client: ClientInfo,
+    val server: ServerInfo
+)
+
+data class ClientInfo(
+    val host: String
+)
+
+data class ServerInfo(
+    val current_time: Long,
+    val services: List<ServiceInfo>
+)
+
+data class ServiceInfo(
+    val name: String,
+    val actions: List<ActionInfo>?,
+    val reactions: List<ReactionInfo>?
+)
+
+data class ActionInfo(
+    val name: String,
+    val description: String,
+    val options: Map<String, Any>?
+)
+
+data class ReactionInfo(
+    val name: String,
+    val description: String,
+    val options: Map<String, Any>?
+)

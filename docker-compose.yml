@@ -1,41 +1,21 @@
-version: '3.8'
+
 
 services:
-  # Base de données PostgreSQL
-  postgres:
+  db:
     image: postgres:15-alpine
     container_name: area_postgres
-    environment:
-      POSTGRES_DB: area_db
-      POSTGRES_USER: area_user
-      POSTGRES_PASSWORD: area_password
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - area_network
+      - area_new_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U area_user"]
+      test: ["CMD-SHELL", "pg_isready -U area -d area_db"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Cache Redis
-  redis:
-    image: redis:7-alpine
-    container_name: area_redis
-    ports:
-      - "6379:6379"
-    networks:
-      - area_network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Serveur d'application NestJS
   server:
     build:
       context: ./server
@@ -43,49 +23,47 @@ services:
     container_name: area_server
     ports:
       - "8080:8080"
+    env_file:
+      - ./.env
     environment:
       NODE_ENV: production
       PORT: 8080
-      DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
-      DATABASE_USER: area_user
-      DATABASE_PASSWORD: area_password
-      DATABASE_NAME: area_db
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
-      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
+      db:
         condition: service_healthy
     networks:
-      - area_network
+      - area_new_network
     volumes:
-      - ./server/logs:/app/logs
+      - ./server/src:/app/src
 
-  # Client web - Serveur Nginx
-  client_web:
+  web:
     build:
-      context: ./client-web
+      context: ./front-web
       dockerfile: Dockerfile
     container_name: area_web
     ports:
       - "8081:80"
-    environment:
-      VITE_API_URL: http://localhost:8080
     depends_on:
       - server
     networks:
-      - area_network
+      - area_new_network
+    volumes:
+      - ./client-mobile/output:/usr/share/nginx/html/downloads
+
+  mobile_builder:
+    build:
+      context: ./client-mobile
+      dockerfile: Dockerfile
+    container_name: area_mobile_builder
+    volumes:
+      - ./client-mobile/output:/output
+    networks:
+      - area_new_network
+    command: sh -c "./gradlew assembleDebug && cp app/build/outputs/apk/debug/app-debug.apk /output/aea-mobile.apk"
 
 volumes:
   postgres_data:
 
 networks:
-  area_network:
+  area_new_network:
     driver: bridge
