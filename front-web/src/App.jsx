@@ -45,11 +45,11 @@ function App() {
       {/* Public routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
 
       {/* Protected routes */}
       <Route element={<PrivateRoute/>}>
         <Route path='/services/callback' element={<ServicesCallback/>} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path='/settings' element={<Settings/>} />
         <Route path='/home' element={<Home/>} />
         <Route path="/admin" element={<AdminPage />} />
