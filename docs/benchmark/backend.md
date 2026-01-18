@@ -147,3 +147,114 @@ We will choose PostgreSQL because:
 - Requires user/OAuth/workflow modeling
 - Needs JSONB for flexible configs
 - Needs strong integrity
+
+---
+
+# Password Hashing
+
+| Technology | Security | Performance | Salt | Complexity | Best Use Case |
+| ---------- | -------- | ----------- | ---- | ---------- | ------------- |
+| **bcrypt** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | Auto | ⭐⭐⭐⭐ | Industry standard for passwords |
+| **argon2** | ⭐⭐⭐⭐⭐ | ⭐⭐ | Auto | ⭐⭐⭐ | Most secure, memory-hard |
+| **scrypt** | ⭐⭐⭐⭐ | ⭐⭐ | Auto | ⭐⭐⭐ | Good alternative to bcrypt |
+| **PBKDF2** | ⭐⭐⭐ | ⭐⭐⭐⭐ | Manual | ⭐⭐⭐⭐ | NIST approved, widely supported |
+| **SHA-256** | ⭐ | ⭐⭐⭐⭐⭐ | Manual | ⭐⭐⭐⭐⭐ | ⚠️ NOT for passwords (too fast) |
+
+## Candidates
+
+### bcrypt
+
+The de facto standard for password hashing in web applications.
+Used in this project via [`bcryptjs`](https://www.npmjs.com/package/bcryptjs).
+
+**Pros:**
+
+- Industry-proven and battle-tested since 1999
+- Adaptive cost factor (work rounds) - currently 10 rounds in AREA
+- Automatic salt generation and storage
+- Resistant to brute-force attacks
+- Excellent library support across all platforms
+- Pure JavaScript implementation available (bcryptjs)
+
+**Cons:**
+
+- Slower than argon2 for same security level
+- Limited to 72-byte passwords
+- Not memory-hard (vulnerable to GPU attacks)
+
+**Implementation in AREA:**
+```javascript
+const bcrypt = require('bcryptjs');
+const hashedPassword = await bcrypt.hash(password, 10); // 10 rounds
+const isValid = await bcrypt.compare(password, hashedPassword);
+```
+
+### argon2
+
+Winner of the Password Hashing Competition (2015).
+Most secure modern algorithm.
+
+**Pros:**
+
+- Memory-hard algorithm (resistant to GPU/ASIC attacks)
+- Configurable memory, time, and parallelism
+- Best choice for high-security applications
+- Recommended by OWASP
+
+**Cons:**
+
+- Newer (less battle-tested than bcrypt)
+- Requires native bindings (harder in Docker)
+- Slightly more complex configuration
+
+### scrypt
+
+Designed to be memory-hard and ASIC-resistant.
+
+**Pros:**
+
+- Memory-hard like argon2
+- Good security properties
+- Used by major platforms (Tarsnap, cryptocurrencies)
+
+**Cons:**
+
+- Less popular than bcrypt/argon2
+- Configuration more complex
+- Requires native bindings
+
+### PBKDF2
+
+NIST-approved standard, widely used in enterprise.
+
+**Pros:**
+
+- NIST/FIPS approved
+- Very widely supported
+- Simple to implement
+- Good for compliance requirements
+
+**Cons:**
+
+- Not memory-hard (vulnerable to GPU attacks)
+- Requires high iteration count (100,000+)
+- Manual salt management
+- Slower than modern alternatives for same security
+
+## Our choice
+
+We chose **bcrypt (bcryptjs)** for AREA because:
+
+- **Maturity**: 25+ years of proven security in production
+- **Simplicity**: Automatic salt generation, single cost factor
+- **Ecosystem**: Excellent Node.js support with pure JS implementation
+- **Docker-friendly**: No native dependencies with bcryptjs
+- **Balance**: Good security/performance trade-off for a web application
+- **Standard**: Expected by developers, well-documented
+
+**Configuration used:**
+- 10 rounds (2^10 = 1,024 iterations)
+- Provides ~100ms hash time (good UX, secure enough)
+- Automatic salt generation per password
+
+**Future consideration**: Migrate to argon2 if high-security requirements emerge, but bcrypt is perfectly adequate for this application's threat model.
