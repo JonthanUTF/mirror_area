@@ -125,7 +125,11 @@ export default function CreateActionReaction() {
 
             if (!res.ok) {
                 setError(message);
-            }
+            } else {
+            setTimeout(() => {
+                navigate("/home");
+            }, 1500);
+        }
         } catch (err) {
             const msg = err?.message || "Network error";
             setResponseOk(false);
@@ -271,6 +275,49 @@ export default function CreateActionReaction() {
                     </Box>
                 </Box>
             </Box>
+
+            {/* Success/Error Dialog */}
+            <Dialog 
+                open={dialogOpen} 
+                onClose={() => {
+                    setDialogOpen(false);
+                    if (responseOk) navigate("/home");
+                }}
+                fullWidth 
+                maxWidth="sm"
+                PaperProps={{
+                    sx: {
+                        backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                        color: '#fff',
+                    }
+                }}
+            >
+                <DialogTitle sx={{ color: '#fff' }}>
+                    {responseOk ? "✅ Success" : "⚠️ Error"}
+                </DialogTitle>
+                <DialogContent>
+                    <Typography sx={{ whiteSpace: "pre-wrap", color: '#fff' }}>
+                        {responseText}
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button 
+                        onClick={() => { 
+                            setDialogOpen(false); 
+                            if (responseOk) navigate("/home");
+                        }}
+                        sx={{
+                            color: '#fff',
+                            backgroundColor: responseOk ? '#a855f7' : '#ef4444',
+                            '&:hover': {
+                                backgroundColor: responseOk ? '#9333ea' : '#dc2626',
+                            }
+                        }}
+                    >
+                        OK
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 }
