@@ -1,0 +1,57 @@
+@startuml
+title Architecture - Class Diagram
+class User {
+  +UUID id
+  +string email
+  +string password_hash
+  +register()
+  +login()
+}
+class Service {
+  +UUID id
+  +string name
+}
+class UserService {
+  +UUID id
+  +UUID user_id
+  +UUID service_id
+  +string oauth_token
+  +datetime token_expiry
+}
+class Action {
+  +UUID id
+  +string name
+  +json schema
+}
+class Reaction {
+  +UUID id
+  +string name
+  +json params
+}
+class Area {
+  +UUID id
+  +UUID user_id
+  +UUID action_id
+  +list reactions
+  +bool enabled
+}
+class HookScheduler {
+  +run()
+  +evaluate(action_event)
+}
+class ServerAPI {
+  +POST /auth/login
+  +POST /areas
+  +GET /services
+}
+
+User "1" -- "*" UserService
+User "1" -- "*" Area
+Service "1" -- "*" Action
+Service "1" -- "*" Reaction
+Area "1" -- "*" Reaction : contains
+HookScheduler ..> Area : reads
+ServerAPI ..> User
+ServerAPI ..> Area
+ServerAPI ..> UserService
+@enduml
