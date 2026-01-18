@@ -1,5 +1,5 @@
-
 # Web Front-end Benchmark
+
 ## Benchmark Objective
 
 Select the optimal front-end stack for building the Web Client that stick with:
@@ -12,6 +12,7 @@ Select the optimal front-end stack for building the Web Client that stick with:
 This benchmark will compare the most relevant front-end stacks for this project.
 
 ## Front-End Requirements Summary
+
 Functional requirements:
 
 - User registration & login (password + OAuth2)
@@ -28,9 +29,9 @@ Non-functional requirements:
 - Good documentation
 - High ecosystem maturity
 - Compatibility with Docker
-- 
 
 ## Simple benchark table
+
 | Stack            | Maturity | Performance | Learning Curve | OAuth2 Support | Notes                  |
 | ---------------- | -------- | ----------- | -------------- | -------------- | ---------------------- |
 | **React + Vite** | ⭐⭐⭐⭐⭐    | ⭐⭐⭐⭐        | ⭐⭐⭐            | Excellent      | Most popular           |
@@ -38,7 +39,9 @@ Non-functional requirements:
 | **Angular 17**   | ⭐⭐⭐⭐⭐    | ⭐⭐⭐         | ⭐              | Excellent      | Enterprise-level       |
 
 ## Detailed benchmark
+
 ### 1. React + Vite
+
 **Pros:**
 
 - Largest ecosystem and community
@@ -65,10 +68,11 @@ Excellent. Entire project matches React's patterns:
 - Fast iteration
 
 **Docker Image Size:**
+
 About 40-60 MB
 
-
 ### 2. Vue 3 + Vite
+
 **Pros:**
 
 - Easiest to learn
@@ -83,13 +87,15 @@ About 40-60 MB
 - Some OAuth2 integrations require manual tuning
 
 **Fit for this project:**
+
 Perfect if the team prefers simplicity and developer experience.
 
 **Docker Image Size:**
+
 About 35-55 MB
 
-
 ### 3. Angular 7
+
 **Pros:**
 
 - Complete all-in-one framework
@@ -112,7 +118,8 @@ About 80-120 MB
 
 ## Our choice
 
-We will choose React + Vite for :
+We will choose React + Vite for:
+
 - Its largest ecosystem and community
 - Thousands of integrations (OAuth2, forms, routing…)
 - Perfect for modular UI-driven projects

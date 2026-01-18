@@ -8,7 +8,6 @@
 | **Python (FastAPI)**   | ⭐⭐⭐   | ⭐⭐⭐⭐⭐    | ⭐⭐⭐⭐      | ⭐⭐⭐              | ⭐⭐⭐     | ⭐⭐⭐⭐            | Fastest to write glue logic             |
 | **Go (Gin)**           | ⭐⭐⭐⭐ | ⭐⭐⭐        | ⭐⭐          | ⭐⭐⭐⭐⭐          | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐           | Best performance & reliability          |
 
-
 ## Candidates
 
 ### Node.js
@@ -59,10 +58,10 @@ But OAuth2 + API SDKs require more manual handling.
 - Less pleasant for complex business logic
 - Weak ecosystem for services like Gmail, Google Drive, etc.
 
-
 ## Our choice
 
-We will choose Node.js for :
+We will choose Node.js for:
+
 - Ecosystem: Most major providers offer first‑class Node SDKs (Google, GitHub, Outlook, Dropbox), reducing integration effort and edge cases.
 - Deployment: Lightweight Docker images.
 
@@ -83,6 +82,7 @@ We will choose Node.js for :
 PostgreSQL is the strongest contender for an automation platform.
 
 **Pros:**
+
 - Most powerful relational database in open-source ecosystem
 - Great for modeling structured entities:
     - Users
@@ -91,7 +91,6 @@ PostgreSQL is the strongest contender for an automation platform.
     - Reactions
     - AREA workflows
     - Hook logs
-
 - Built-in JSONB column type (useful for storing dynamic config)
 - Excellent support from backend frameworks (Node, FastAPI, Go)
 - Runs easily in Docker Compose
@@ -107,23 +106,27 @@ PostgreSQL is the strongest contender for an automation platform.
 Solid alternative if the team is familiar with it.
 
 **Pros:**
+
 - Good performance
 - Easy to Dockerize
 - Works well with ORMs (Prisma, Sequelize, TypeORM)
 
 **Cons:**
+
 - Weaker JSON support than PostgreSQL
 - Less flexible for dynamic config structures
 
 ### SQLite
 
 Useful only for:
+
 - Prototyping
 - PoC
 - Unit tests
 - Very lightweight deployments
 
 **Pros:**
+
 - Extremely easy to use
 - No server required
 - Fast setup for the early PoC milestone
@@ -137,7 +140,7 @@ Useful only for:
 
 ## Our choice
 
-We will choose postgreSql because
+We will choose PostgreSQL because:
 
 - Highly relational
 - Requires clean schemas

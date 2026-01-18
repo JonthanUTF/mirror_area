@@ -14,8 +14,21 @@ entity User {
 
 entity Service {
   id: UUID
-  name: string
+  name: string (unique)
+  label: string
+  icon: string
   active: boolean
+}
+
+entity UserService {
+  id: UUID
+  userId: UUID
+  serviceId: UUID
+  accessToken: text
+  refreshToken: text
+  expiresAt: Date
+  profileId: string
+  username: string
 }
 
 entity Area {
@@ -35,5 +48,6 @@ entity Area {
 }
 
 User ||--o{ Area : has
-User ||--o{ Service : connects (via OAuth tokens - à faire)
+User ||--o{ UserService : connects
+Service ||--o{ UserService : provider
 @enduml

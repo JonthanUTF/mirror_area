@@ -1,5 +1,5 @@
-site_name: AreaDoc - mirror_area
-site_description: Documentation de l'Area (mirror_area)
+site_name: AREA Documentation
+site_description: Documentation officielle du projet AREA - Action REAction
 site_author: JonthanUTF
 site_url: https://JonthanUTF.github.io/mirror_area/
 repo_url: https://github.com/JonthanUTF/mirror_area
@@ -10,69 +10,94 @@ theme:
   name: material
   language: fr
   palette:
-    primary: indigo
-    accent: indigo
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Passer en mode sombre
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Passer en mode clair
   features:
     - navigation.instant
-    - navigation.expand
+    - navigation.tracking
     - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
     - content.code.copy
     - content.code.annotate
+    - search.suggest
+    - search.highlight
+  icon:
+    repo: fontawesome/brands/github
 
 nav:
   - Accueil: index.md
-  - Benchmarks:
-    - Backend:
-        - Overview: BACKEND_BENCHMARK.md
-        - Implementations:
-            - Go (Gin): poc/backend/go.md
-            - Node.js (Fastify): poc/backend/node-js.md
-            - Python (FastAPI): poc/backend/python.md
-    - Web Frontend: WEB_FRONTEND_BENCHMARK.md
-    - POCs:
-        - React: poc/front/web-react/README.md
-        - Vue: poc/front/web-vue/README.md
-        - Angular: poc/front/web-angular/README.md
+  - Architecture: architecture.md
+  - API Reference: api-reference.md
+  - Backend:
+    - Vue d'ensemble: backend/index.md
+    - Services: backend/services.md
+  - Frontend Web:
+    - Vue d'ensemble: frontend/index.md
+  - Application Mobile:
+    - Vue d'ensemble: mobile/index.md
   - Services:
     - Introduction: services/index.md
     - Gmail: services/gmail.md
-    - Github: services/github.md
-    - Twitter: services/twitter.md
-    - DropBox: services/dropbox.md
+    - GitHub: services/github.md
+    - Dropbox: services/dropbox.md
+    - Twitch: services/twitch.md
+    - Microsoft: services/microsoft.md
     - Timer: services/timer.md
+    - Console: services/console.md
   - Cahier des charges:
-      - Introduction: cahier_des_charges/index.md
-      - Contexte & Objectifs: cahier_des_charges/01_contexte_objectifs.md
-      - Architecture globale: cahier_des_charges/02_architecture_globale.md
-      - Spécifications fonctionnelles: cahier_des_charges/03_spec_fonctionnelles.md
-      - Spécifications techniques: cahier_des_charges/04_spec_techniques.md
-      - API REST: cahier_des_charges/05_api_rest.md
-      - Base de données: cahier_des_charges/06_base_de_donnees.md
-      - Organisation & planning: cahier_des_charges/07_organisation_planning.md
-      - Livrables: cahier_des_charges/08_livrables.md
-      - Annexes: cahier_des_charges/09_annexes.md
+    - Introduction: cahier_des_charges/index.md
+    - Contexte & Objectifs: cahier_des_charges/01_contexte_objectifs.md
+    - Architecture globale: cahier_des_charges/02_architecture_globale.md
+    - Spécifications fonctionnelles: cahier_des_charges/03_spec_fonctionnelles.md
+    - Spécifications techniques: cahier_des_charges/04_spec_techniques.md
+    - API REST: cahier_des_charges/05_api_rest.md
+    - Base de données: cahier_des_charges/06_base_de_donnees.md
+    - Organisation & planning: cahier_des_charges/07_organisation_planning.md
+    - Livrables: cahier_des_charges/08_livrables.md
+    - Annexes: cahier_des_charges/09_annexes.md
   - Contribuer: contributor.md
-  - API Reference: api-reference.md
 
 plugins:
   - search:
       lang: fr
 
 markdown_extensions:
+  - admonition
+  - pymdownx.details
   - pymdownx.superfences:
       custom_fences:
-        - name: plantuml
-          class: plantuml
+        - name: mermaid
+          class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
-  # - pymdownx.plantuml:
-  #     format: svg
-  #     # Par défaut on pointe vers un serveur PlantUML local.
-  #     # Option 1 (recommandée en local) : lance un serveur PlantUML via Docker et laisse l'URL ci-dessous.
-  #     server: http://localhost:8080/plantuml
-  #     # Option 2 (publique, moins privée) : utilise le serveur officiel
-  #     # server: http://www.plantuml.com/plantuml
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - tables
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
 
 extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/JonthanUTF/mirror_area
+  generator: false
