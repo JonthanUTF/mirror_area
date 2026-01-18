@@ -1,27 +1,21 @@
 
 
 services:
-  # Base de données PostgreSQL
   db:
     image: postgres:15-alpine
     container_name: area_postgres
-    environment:
-      POSTGRES_DB: area_db
-      POSTGRES_USER: area
-      POSTGRES_PASSWORD: area
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - area_network
+      - area_new_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U area"]
+      test: ["CMD-SHELL", "pg_isready -U area -d area_db"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Serveur d'application Node.js/Express
   server:
     build:
       context: ./server
@@ -30,27 +24,18 @@ services:
     ports:
       - "8080:8080"
     env_file:
-      - ./server/.env
+      - ./.env
     environment:
       NODE_ENV: production
       PORT: 8080
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_USER: area
-      DB_PASSWORD: area
-      DB_NAME: area_db
-      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
-      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-http://localhost:8080/auth/google/callback}
-      # Google credentials are now loaded from ./server/.env
     depends_on:
       db:
         condition: service_healthy
     networks:
-      - area_network
+      - area_new_network
     volumes:
       - ./server/src:/app/src
 
-  # Client Web React/Vite
   web:
     build:
       context: ./front-web
@@ -61,11 +46,24 @@ services:
     depends_on:
       - server
     networks:
-      - area_network
+      - area_new_network
+    volumes:
+      - ./client-mobile/output:/usr/share/nginx/html/downloads
+
+  mobile_builder:
+    build:
+      context: ./client-mobile
+      dockerfile: Dockerfile
+    container_name: area_mobile_builder
+    volumes:
+      - ./client-mobile/output:/output
+    networks:
+      - area_new_network
+    command: sh -c "./gradlew assembleDebug && cp app/build/outputs/apk/debug/app-debug.apk /output/aea-mobile.apk"
 
 volumes:
   postgres_data:
 
 networks:
-  area_network:
+  area_new_network:
     driver: bridge

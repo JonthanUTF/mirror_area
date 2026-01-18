@@ -23,5 +23,20 @@ source .venv/bin/activate
 
 pip install mkdocs mkdocs-material
 mkdocs serve
-# puis ouvrir http://127.0.0.1:8000
 ```
+
+## Lancer
+
+Avant de lancer veuillez créer votre `.env` en suivant l'example de `.env.example`.
+
+Puis:
+```bash
+docker-compose up --build -d
+```
+
+Puis stopper avec:
+```bash
+docker-compose down
+```
+
+(Penser à stopper avant de relancer)

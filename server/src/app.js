@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const passport = require('./config/passport');
 const { sequelize } = require('./models');
 const { startAutomationLoop } = require('./services/automation');
@@ -22,6 +23,9 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, '../public')));
 
 app.use(passport.initialize());
 

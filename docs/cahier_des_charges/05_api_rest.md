@@ -30,5 +30,15 @@ Modification d'une AREA.
 ### DELETE /areas/:id
 Suppression d'une AREA.
 
+## 5.4 Services (`/services`)
+### GET /services
+Liste les services connectés par l'utilisateur (avec date d'expiration).
+### GET /services/:serviceName/connect
+Initie la connexion OAuth2 pour un service donné (ex: `google`). Retourne l'URL d'autorisation.
+### POST /services/:serviceName/callback
+Finalise la connexion OAuth2 (échange du code contre tokens) et sauvegarde les identifiants.
+### DELETE /services/:serviceName
+Déconnecte un service (supprime les tokens).
+
 ## 5.4 about.json
 ### GET /about.json

@@ -7,37 +7,37 @@ class MicrosoftService extends ServiceBase {
         super('microsoft', 'Microsoft (OneDrive / Outlook)', 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Microsoft_logo_%282012%29.svg/960px-Microsoft_logo_%282012%29.svg.png');
 
         // OneDrive actions
-        this.registerAction('onedrive_new_file', 'A new file is present in the specified directory', {
+        this.registerAction('onedrive_new_file', 'OneDrive: A new file is present in the specified directory', {
             watchPath: 'string'
         });
 
-        this.registerAction('onedrive_file_shared', 'A file was shared with the user (sharedWithMe)', {
+        this.registerAction('onedrive_file_shared', 'OneDrive: A file was shared with the user (sharedWithMe)', {
             watchPath: 'string'
         });
 
         // Outlook actions
-        this.registerAction('outlook_new_from', 'Receipt of a message from a given sender', {
+        this.registerAction('outlook_new_from', 'Outlook: Receipt of a message from a given sender', {
             sender: 'string'
         });
 
-        this.registerAction('outlook_subject_contains', 'Receipt of a message whose subject contains a keyword', {
+        this.registerAction('outlook_subject_contains', 'Outlook: Receipt of a message whose subject contains a keyword', {
             keyword: 'string'
         });
 
         // Reactions
-        this.registerReaction('onedrive_upload_file', 'Upload a file to OneDrive', {
+        this.registerReaction('onedrive_upload_file', 'OneDrive: Upload a file to OneDrive', {
             uploadPath: 'string', 
-            content: 'string',
-            contentType: 'string'
+            content: 'string'
+            // contentType is optional, defaults to 'text/plain'
         });
 
-        this.registerReaction('onedrive_create_share', 'Create a share link for a OneDrive item and send it by email', {
+        this.registerReaction('onedrive_create_share', 'OneDrive: Create a share link for a OneDrive item and send it by email', {
             sharePath: 'string',
-            type: 'string',
+            type: 'select:view,edit',
             emailTo: 'string'
         });
 
-        this.registerReaction('outlook_send_email', 'Send an email via Outlook 365', {
+        this.registerReaction('outlook_send_email', 'Outlook: Send an email via Outlook 365', {
             to: 'string',
             subject: 'string',
             body: 'string'

@@ -1,0 +1,14 @@
+.gradle/
+.idea/
+*.iml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+*.apk
+*.aab
+/app/release/
+/app/debug/
+Figma_mobile/node_modules/

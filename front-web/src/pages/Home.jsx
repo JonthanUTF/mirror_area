@@ -14,38 +14,67 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 
-
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import LinkIcon from '@mui/icons-material/Link';
 
-const stats = [
-  {
-    label: "Total workflows",
-    trend: "5",
-    color: "#7c3aed",
-    icon: AccountTreeIcon,
-  },
-  {
-    label: "Active",
-    trend: "3",
-    color: "#16a34a",
-    icon: CheckCircleOutlineIcon,
-  },
-];
-
-
+const API_BASE = import.meta.env.CLIENT_URL || "http://localhost:8080";
 
 export default function Home() {
   const navigate = useNavigate();
   const [areas, setAreas] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [connectedServicesCount, setConnectedServicesCount] = useState(0);
+
+  // Fetch connected services count
+  useEffect(() => {
+    const fetchConnectedServices = async () => {
+      const token = localStorage.getItem("authToken");
+      if (!token) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/services`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setConnectedServicesCount(Array.isArray(data) ? data.length : 0);
+        }
+      } catch (err) {
+        console.error("Failed to fetch connected services:", err);
+      }
+    };
+
+    fetchConnectedServices();
+  }, []);
+
+  const stats = [
+    {
+      label: "Total workflows",
+      value: areas.length.toString(),
+      color: "#7c3aed",
+      icon: AccountTreeIcon,
+    },
+    {
+      label: "Active",
+      value: areas.filter(a => a.active).length.toString(),
+      color: "#16a34a",
+      icon: CheckCircleOutlineIcon,
+    },
+    {
+      label: "Connected Services",
+      value: connectedServicesCount.toString(),
+      color: "#3b82f6",
+      icon: LinkIcon,
+    },
+  ];
 
   const deleteArea = async (id) => {
     if (!window.confirm("Delete this workflow?")) return;
     try {
       const token = localStorage.getItem("authToken");
-      const res = await fetch(`http://localhost:8080/areas/${id}`, {
+      const res = await fetch(`${API_BASE}/areas/${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -63,6 +92,33 @@ export default function Home() {
     }
   };
 
+  const toggleAreaActive = async (id, currentActive) => {
+    setError("");
+    const newActive = !currentActive;
+    // Change active workflow state
+    setAreas((prev) => prev.map(a => a.id === id ? { ...a, active: newActive } : a));
+    try {
+      const token = localStorage.getItem("authToken");
+      const res = await fetch(`${API_BASE}/areas/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ active: newActive }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || data?.message || `HTTP ${res.status}`);
+      }
+    } catch (err) {
+      console.error("Failed to toggle area:", err);
+      setError(err?.message || "Failed to update workflow");
+      // rollback UI on erreur
+      setAreas((prev) => prev.map(a => a.id === id ? { ...a, active: currentActive } : a));
+    }
+  };
+
   useEffect(() => {
     let mounted = true;
     const fetchAreas = async () => {
@@ -70,7 +126,7 @@ export default function Home() {
       setError("");
       try {
         const token = localStorage.getItem("authToken");
-        const res = await fetch("http://localhost:8080/areas", {
+        const res = await fetch(`${API_BASE}/areas`, {
           headers: {
             "Content-Type": "application/json",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -95,22 +151,25 @@ export default function Home() {
   }, []);
 
   const renderAreaCard = (item) => (
-    <Grid size={{ xs: 12, sm: 6 }} key={item}>
+    <Grid item xs={12} sm={6} key={item.id}>
       <Card sx={{ width: "100%", display: "flex", backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 6 }}>
-        <CardContent>
-          <Box sx={{ display: "flex", width: "100%" }}>
+        <CardContent sx={{ width: "100%" }}>
+          <Box sx={{ display: "flex", width: "100%", justifyContent: "space-between" }}>
             <Box sx={{ flex: 1 }}>
               <Typography variant="h6" sx={{ color: "#fefefeff" }}>{item.name}</Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ color: "#fefefeff" }}>
-                {item.active ? "Active" : "Inactive"}
-              </Typography>
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Switch checked={!!item.active} disabled color="warning" />
+              <Switch
+                checked={!!item.active}
+                onChange={() => toggleAreaActive(item.id, !!item.active)}
+              />
               <IconButton
                 aria-label="delete"
                 color="error"
-                onClick={() => deleteArea(item.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteArea(item.id);
+                }}
                 size="large"
               >
                 <DeleteIcon />
@@ -150,8 +209,6 @@ export default function Home() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            gap: 2,
-            py: 1,
           }}
         >
           <Box sx= {{ display: "flex", alignItems: "center", gap: 3 }}>
@@ -220,9 +277,9 @@ export default function Home() {
                       <Icon sx={{ color: "white", fontSize: { xs: 20, sm: 24 } }} />
                     </Box>
 
-                    {/* Trend */}
+                    {/* Value */}
                     <Typography variant="h5" sx={{ color: "#fefefeff" }}>
-                      {stat.trend}
+                      {loading ? <CircularProgress size={20} color="inherit" /> : stat.value}
                     </Typography>
 
                     {/* Label */}
