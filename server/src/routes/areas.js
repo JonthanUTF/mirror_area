@@ -126,6 +126,38 @@ router.put('/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// Toggle area active status (for mobile)
+router.post('/:id/toggle', authenticateToken, async (req, res) => {
+  try {
+    const area = await Area.findOne({
+      where: { 
+        id: req.params.id,
+        userId: req.user.id 
+      }
+    });
+
+    if (!area) {
+      return res.status(404).json({ error: 'Area not found' });
+    }
+
+    // Toggle the active state
+    await area.update({ active: !area.active });
+
+    console.log(`Area "${area.name}" toggled to ${area.active ? 'active' : 'inactive'}`);
+
+    res.json({ 
+      message: 'Area toggled successfully',
+      area 
+    });
+  } catch (error) {
+    console.error('Toggle area error:', error);
+    res.status(500).json({ 
+      error: 'Failed to toggle area',
+      details: error.message 
+    });
+  }
+});
+
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
     const area = await Area.findOne({

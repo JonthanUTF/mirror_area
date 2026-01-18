@@ -8,11 +8,10 @@ import SecurityIcon from '@mui/icons-material/Security';
 
 import Sidebar from "../components/Sidebar";
 
-const API_BASE = import.meta.env.CLIENT_URL || "http://localhost:8081";
 
 export default function MobileAPK() {
     const handleDownload = () => {
-        window.open(`${API_BASE}/download/apk`, '_blank');
+        window.open('/download/apk', '_blank');
     };
 
     return (

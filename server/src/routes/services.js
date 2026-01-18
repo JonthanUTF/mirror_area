@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Service, UserService } = require('../models');
+const { Service, UserService, User } = require('../models');
 const { authenticateToken } = require('./auth');
 const axios = require('axios');
 
@@ -73,9 +73,10 @@ const authFactories = {
     twitch: {
         getAuthUrl: (state) => {
             const rootUrl = 'https://id.twitch.tv/oauth2/authorize';
+            const redirectUri = (process.env.CLIENT_URL || 'http://localhost:8081') + '/services/callback';
             const options = {
                 client_id: process.env.TWITCH_CLIENT_ID,
-                redirect_uri: process.env.TWITCH_CALLBACK_URL || 'http://localhost:8080/auth/twitch/callback',
+                redirect_uri: redirectUri,
                 response_type: 'code',
                 scope: 'user:read:follows user:manage:blocked_users',
                 state: state || ''
@@ -86,11 +87,13 @@ const authFactories = {
         },
         exchangeCode: async (code, redirectUri) => {
             const tokenUrl = 'https://id.twitch.tv/oauth2/token';
+            // Use the same redirect URI as getAuthUrl - they MUST match for OAuth
+            const finalRedirectUri = redirectUri || (process.env.CLIENT_URL || 'http://localhost:8081') + '/services/callback';
             const values = {
                 code,
                 client_id: process.env.TWITCH_CLIENT_ID,
                 client_secret: process.env.TWITCH_CLIENT_SECRET,
-                redirect_uri: redirectUri || process.env.TWITCH_CALLBACK_URL || 'http://localhost:8080/auth/twitch/callback',
+                redirect_uri: finalRedirectUri,
                 grant_type: 'authorization_code',
             };
 
@@ -179,6 +182,20 @@ const authFactories = {
         }
     }
 };
+
+// List all available services
+router.get('/available', authenticateToken, async (req, res) => {
+    try {
+        const services = await Service.findAll({
+            where: { active: true },
+            attributes: ['id', 'name', 'label', 'icon']
+        });
+        res.json({ services });
+    } catch (error) {
+        console.error('List available services error:', error);
+        res.status(500).json({ error: 'Failed to retrieve available services' });
+    }
+});
 
 // Initiate Connection
 router.get('/:serviceName/connect', authenticateToken, async (req, res) => {
@@ -272,11 +289,23 @@ router.get('/', authenticateToken, async (req, res) => {
             include: [{ model: Service, as: 'service', attributes: ['name', 'label', 'icon'] }]
         });
 
-        res.json(userServices.map(us => ({
+        const servicesList = userServices.map(us => ({
             service: us.service,
             connectedAt: us.createdAt,
             expiresAt: us.expiresAt
-        })));
+        }));
+
+        // Check for Twitch connection in User model (special case)
+        const user = await User.findByPk(req.user.id);
+        if (user && user.twitchAccessToken) {
+            servicesList.push({
+                service: { name: 'twitch', label: 'Twitch', icon: 'twitch' },
+                connectedAt: user.updatedAt,
+                expiresAt: user.twitchTokenExpiresAt
+            });
+        }
+
+        res.json(servicesList);
     } catch (error) {
         console.error('List services error:', error);
         res.status(500).json({ error: 'Failed to retrieve services' });
@@ -343,6 +372,92 @@ router.delete('/:serviceName', authenticateToken, async (req, res) => {
         console.error('Disconnect service error:', error);
         res.status(500).json({ error: 'Failed to disconnect service' });
     }
+});
+
+// Mobile callback route - redirects OAuth code to mobile app via deep link
+router.get('/callback', (req, res) => {
+    const { code, state, error } = req.query;
+    
+    console.log('[Services] Mobile callback received:', { code: code ? 'present' : 'missing', state, error });
+    
+    if (error) {
+        // Redirect to mobile app with error
+        return res.redirect(`area://services/callback?error=${encodeURIComponent(error)}`);
+    }
+    
+    if (code) {
+        // Redirect to mobile app with the code
+        const deepLink = `area://services/callback?code=${encodeURIComponent(code)}${state ? '&state=' + encodeURIComponent(state) : ''}`;
+        console.log('[Services] Redirecting to deep link:', deepLink);
+        
+        // Send HTML that attempts deep link redirect (more reliable than HTTP redirect for custom schemes)
+        return res.send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Redirecting...</title>
+                <style>
+                    body {
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        min-height: 100vh;
+                        margin: 0;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        text-align: center;
+                    }
+                    .spinner {
+                        width: 40px;
+                        height: 40px;
+                        border: 4px solid rgba(255,255,255,0.3);
+                        border-top-color: white;
+                        border-radius: 50%;
+                        animation: spin 1s linear infinite;
+                        margin-bottom: 20px;
+                    }
+                    @keyframes spin { to { transform: rotate(360deg); } }
+                    .button {
+                        margin-top: 20px;
+                        padding: 15px 30px;
+                        background: white;
+                        color: #667eea;
+                        border: none;
+                        border-radius: 10px;
+                        font-size: 16px;
+                        cursor: pointer;
+                        display: none;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="spinner"></div>
+                <h2>Returning to AREA...</h2>
+                <p>If the app doesn't open automatically, tap the button below.</p>
+                <button class="button" id="openApp" onclick="window.location.href='${deepLink}'">
+                    Open AREA App
+                </button>
+                <script>
+                    // Try to redirect immediately
+                    setTimeout(function() {
+                        window.location.href = '${deepLink}';
+                    }, 100);
+                    
+                    // Show button after 2 seconds if still on this page
+                    setTimeout(function() {
+                        document.getElementById('openApp').style.display = 'block';
+                    }, 2000);
+                </script>
+            </body>
+            </html>
+        `);
+    }
+    
+    res.status(400).json({ error: 'Missing code parameter' });
 });
 
 module.exports = router;

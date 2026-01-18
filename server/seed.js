@@ -1,4 +1,5 @@
-const { Service, sequelize } = require('./src/models');
+const bcrypt = require('bcryptjs');
+const { Service, User, sequelize } = require('./src/models');
 
 const services = [
     {
@@ -62,6 +63,31 @@ async function seed() {
                 defaults: service
             });
             console.log(`Service "${service.label}" ${created ? 'created' : 'already exists'}.`);
+        }
+
+        console.log('Seeding admin user...');
+        const adminEmail = process.env.ADMIN_EMAIL || 'admin@area.com';
+        const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+        
+        const existingAdmin = await User.findOne({ where: { email: adminEmail } });
+        
+        if (!existingAdmin) {
+            const hashedPassword = await bcrypt.hash(adminPassword, 10);
+            await User.create({
+                email: adminEmail,
+                password: hashedPassword,
+                name: 'Admin',
+                role: 'admin'
+            });
+            console.log(`Admin user created (${adminEmail}) with password: ${adminPassword}`);
+        } else {
+            // Update to ensure role is admin if it somehow changed
+            if (existingAdmin.role !== 'admin') {
+                await existingAdmin.update({ role: 'admin' });
+                console.log('User updated to admin role.');
+            } else {
+                console.log('Admin user already exists.');
+            }
         }
 
         console.log('Seeding completed successfully.');
