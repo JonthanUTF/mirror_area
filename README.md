@@ -25,3 +25,10 @@ pip install mkdocs mkdocs-material
 mkdocs serve
 # puis ouvrir http://127.0.0.1:8000
 ```
+
+## Lancer
+
+
+```bash
+docker-compose up --build -d
+```
