@@ -4,8 +4,10 @@ import com.area.mobile.data.model.Area
 import com.area.mobile.data.model.dto.CreateAreaRequest
 import com.area.mobile.data.model.dto.UpdateAreaRequest
 import com.area.mobile.data.model.dto.AreaDto
+
 import com.area.mobile.data.model.dto.AreaResponse
 import com.area.mobile.data.remote.AreasApiService
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -19,15 +21,15 @@ class AreaRepository @Inject constructor(
             id = dto.id,
             name = dto.name,
             actionServiceId = dto.actionService,
-            actionServiceName = dto.actionService.capitalize(),
+            actionServiceName = dto.actionService.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
             actionId = dto.actionType,
-            actionName = dto.actionType.replace("_", " ").capitalize(),
+            actionName = dto.actionType.replace("_", " ").replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
             actionIconName = getServiceIcon(dto.actionService),
             actionColor = getServiceColor(dto.actionService),
             reactionServiceId = dto.reactionService,
-            reactionServiceName = dto.reactionService.capitalize(),
+            reactionServiceName = dto.reactionService.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
             reactionId = dto.reactionType,
-            reactionName = dto.reactionType.replace("_", " ").capitalize(),
+            reactionName = dto.reactionType.replace("_", " ").replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
             reactionIconName = getServiceIcon(dto.reactionService),
             reactionColor = getServiceColor(dto.reactionService),
             isActive = dto.active,

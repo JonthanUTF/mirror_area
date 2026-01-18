@@ -287,11 +287,11 @@ fun AREABuilderScreen(
 
                             viewModel.createArea(
                                 name = areaName,
-                                actionService = selectedActionService!!.name,
-                                actionType = selectedActionType!!,
+                                actionService = selectedActionService.name,
+                                actionType = selectedActionType,
                                 actionParams = processedActionParams,
-                                reactionService = selectedReactionService!!.name,
-                                reactionType = selectedReactionType!!,
+                                reactionService = selectedReactionService.name,
+                                reactionType = selectedReactionType,
                                 reactionParams = processedReactionParams,
                                 active = isActive,
                                 onSuccess = {
@@ -393,24 +393,24 @@ fun AREABuilderScreen(
                     )
                     
                     if (selectedActionService != null) {
-                        val needsOAuth = serviceRequiresOAuth(selectedActionService!!.name)
-                        val isConnected = isServiceConnected(selectedActionService!!.name)
+                        val needsOAuth = serviceRequiresOAuth(selectedActionService.name)
+                        val isConnected = isServiceConnected(selectedActionService.name)
                         
                         // Show connect button if service requires OAuth and not connected
                         if (needsOAuth && !isConnected) {
                             Spacer(modifier = Modifier.height(8.dp))
                             Button(
                                 onClick = { 
-                                    viewModel.connectService(selectedActionService!!.name)
+                                    viewModel.connectService(selectedActionService.name)
                                 },
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = getOAuthButtonColor(selectedActionService!!.name)
+                                    containerColor = getOAuthButtonColor(selectedActionService.name)
                                 )
                             ) {
                                 Icon(Icons.Default.Link, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Connect ${selectedActionService!!.name.replaceFirstChar { it.titlecase() }}")
+                                Text("Connect ${selectedActionService.name.replaceFirstChar { it.titlecase() }}")
                             }
                         } else if (needsOAuth && isConnected) {
                             Spacer(modifier = Modifier.height(8.dp))
@@ -426,10 +426,10 @@ fun AREABuilderScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    "${selectedActionService!!.name.replaceFirstChar { it.titlecase() }} Connected",
-                                    color = GreenSuccess,
-                                    fontSize = 14.sp
-                                )
+                                        "${selectedActionService.name.replaceFirstChar { it.titlecase() }} Connected",
+                                        color = GreenSuccess,
+                                        fontSize = 14.sp
+                                    )
                             }
                         }
                         
@@ -437,7 +437,7 @@ fun AREABuilderScreen(
                         Text("Select Trigger:", color = Slate400, fontSize = 14.sp)
                         
                         // Action/Trigger Dropdown
-                        selectedActionService!!.actions.forEach { action ->
+                        selectedActionService.actions.forEach { action ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -494,24 +494,24 @@ fun AREABuilderScreen(
                     )
                     
                     if (selectedReactionService != null) {
-                        val needsOAuth = serviceRequiresOAuth(selectedReactionService!!.name)
-                        val isConnected = isServiceConnected(selectedReactionService!!.name)
+                        val needsOAuth = serviceRequiresOAuth(selectedReactionService.name)
+                        val isConnected = isServiceConnected(selectedReactionService.name)
                         
                         // Show connect button if service requires OAuth and not connected
                         if (needsOAuth && !isConnected) {
                             Spacer(modifier = Modifier.height(8.dp))
                             Button(
                                 onClick = { 
-                                    viewModel.connectService(selectedReactionService!!.name)
+                                    viewModel.connectService(selectedReactionService.name)
                                 },
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = getOAuthButtonColor(selectedReactionService!!.name)
+                                    containerColor = getOAuthButtonColor(selectedReactionService.name)
                                 )
                             ) {
                                 Icon(Icons.Default.Link, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Connect ${selectedReactionService!!.name.replaceFirstChar { it.titlecase() }}")
+                                Text("Connect ${selectedReactionService.name.replaceFirstChar { it.titlecase() }}")
                             }
                         } else if (needsOAuth && isConnected) {
                             Spacer(modifier = Modifier.height(8.dp))
@@ -527,17 +527,17 @@ fun AREABuilderScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    "${selectedReactionService!!.name.replaceFirstChar { it.titlecase() }} Connected",
-                                    color = GreenSuccess,
-                                    fontSize = 14.sp
-                                )
+                                        "${selectedReactionService.name.replaceFirstChar { it.titlecase() }} Connected",
+                                        color = GreenSuccess,
+                                        fontSize = 14.sp
+                                    )
                             }
                         }
                         
                         Spacer(modifier = Modifier.height(16.dp))
                         Text("Select Reaction:", color = Slate400, fontSize = 14.sp)
                         
-                        selectedReactionService!!.reactions.forEach { reaction ->
+                        selectedReactionService.reactions.forEach { reaction ->
                              Row(
                                 modifier = Modifier
                                     .fillMaxWidth()

@@ -71,7 +71,7 @@ class DashboardViewModel @Inject constructor(
                 val result = serviceRepository.getAllServices()
                 result.onSuccess { serviceList ->
                     _services.value = serviceList
-                }.onFailure { error ->
+                }.onFailure { _ ->
                     // Silent fail for services, not critical
                 }
             } catch (e: Exception) {

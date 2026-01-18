@@ -185,6 +185,7 @@ fun OAuthWebViewScreen(
                     .replace("; Mobile", "; Mobile Chrome")
                 
                 webViewClient = object : WebViewClient() {
+                    @Deprecated("Deprecated WebViewClient method, required for legacy support")
                     override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
                         url?.let {
                             // Intercepter le callback avec le token

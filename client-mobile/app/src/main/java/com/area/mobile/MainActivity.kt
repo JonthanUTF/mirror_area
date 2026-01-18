@@ -64,7 +64,6 @@ class MainActivity : ComponentActivity() {
                     AREAApp(
                         oauthToken = oauthTokenState.value,
                         isOAuthCallback = isOAuthCallback.value,
-                        serviceOAuthCode = serviceOAuthCode.value,
                         onClearOAuth = {
                             oauthTokenState.value = null
                             isOAuthCallback.value = false
@@ -129,7 +128,6 @@ class MainActivity : ComponentActivity() {
 fun AREAApp(
     oauthToken: String? = null, 
     isOAuthCallback: Boolean = false,
-    serviceOAuthCode: String? = null,
     onClearOAuth: () -> Unit = {}
 ) {
     val navController = rememberNavController()
